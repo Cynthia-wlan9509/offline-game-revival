@@ -705,3 +705,15 @@ Method that cracked it: re-pack the identical CAB with your own minimal UnityFS 
 **A once-per-save reward mail misses rewards added later (2026-10-18)**
 - Symptom: players who already claimed the perk mail never get a voucher added afterwards (店铺升满券).
 - Fix: store the item IDs already claimed through the mail; attachments = all minus claimed. When new ones appear after a claim, flip the same mail back to unread with a "补发" (top-up) title. Old saves without the record get the first-version list written for them.
+
+**A server-side relaxation never takes effect because the client checks the same rule locally first (2026-10-19, 案例 B)**
+- Symptom: the offline server lowered "auto explore" from 10 cans to 1 and the unit tests passed, but on the device the button did nothing. The client checks `num < 10` itself, shows a toast, and never sends the request.
+- Fix: before relaxing a number on the server, grep the client handler for a local check of the same rule (button handlers, `if (... < N) { showTip; return; }`). If it is hard-coded, either keep the original value or patch the client too. Then tap the button on the device; a server test cannot catch this.
+
+**A collection UI exists but nothing in the offline server ever grants its items (2026-10-19, 案例 B)**
+- Symptom: the album/collection screen works, its query and "crack/unlock" routes are implemented and tested, but every entry stays 0/3 forever. The items were dropped by a server-side roll (here: cat explore "有几率获得线索") that the offline rewrite never added.
+- Fix: for every item type that a collection screen counts, find at least one grant site in the offline server (`grep "type: <N>"` in the modules). Read the UI help text: it usually names the source. Add an end-to-end test that goes from the source to the collection screen.
+
+**List cells pick icons by a type whitelist, so a valid item shows blank (2026-10-19, 案例 B)**
+- Symptom: a shop cell shows the right name but no icon. The cell only looks up the item image for one type and uses `capital_icon_60_<type>` for everything else; the item's type has no such image.
+- Fix: check the cell renderer's branches. Report a display-only type that the renderer handles, and grant by the real type on purchase. Also make the "持有数量" (held count) query read the ledger that the real type is stored in.
