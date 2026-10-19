@@ -1,0 +1,15 @@
+{
+  "name": "offline-game-revival",
+  "owner": { "name": "Cynthia-wlan9509" },
+  "metadata": {
+    "description": "Bring shut-down mobile games back to life as fully offline memorial builds, and rescue lost game data from player screenshots and screen recordings."
+  },
+  "plugins": [
+    {
+      "name": "offline-game-revival",
+      "source": "./",
+      "description": "Turn server-dead mobile games into offline, playable preservation builds (recon, anchor-asserted patches, local fake server, repack, on-device acceptance) and recover server-side numbers from screenshots/recordings with local keyframes + dedupe + OCR.",
+      "category": "game-preservation"
+    }
+  ]
+}

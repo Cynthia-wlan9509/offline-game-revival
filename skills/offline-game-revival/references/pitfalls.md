@@ -1,0 +1,707 @@
+# 失败账本
+
+现象 → 原因 → 修法。下次遇到同样症状直接查这里。
+
+## 启动阶段
+
+**进离线入口后中途报错，落回登录界面**
+- 原因：进得太早，配置表还在解析
+- 修法：等数据表就绪再进，把入口挂到解析完成之后
+- 实例：案例 A `ParseDataTable` 未结束时进 `OfflineEnter`，拿到空表
+
+**新包一启动就闪退，日志是"分配内存失败"而不是脚本错误**
+- 症状：启动约 2 秒原生崩溃；日志有 `Could not allocate memory ... MemoryLabel: String`（要分配的字节数是个天文数字），随后 `Fatal signal 5 (SIGTRAP) ... UnityPreload`。上一个包还好好的，这次只多了几百字节脚本。
+- 原因（原先的判断）：往某个脚本文件里注入的代码把它顶过了加载器的体积界限（案例 A：261184 字节能启动，261352 字节崩）。**2026-10-18 更正：很可能不是体积界限，而是某块「压缩后恰好等于原始大小」被 Unity 当原样读——见文末 "compressed size equals its raw size" 一节；日志特征一模一样。**
+- 修法：打完全部补丁后给宿主文件统一瘦身（去整行注释、空行、行首缩进；长字符串内部不动；瘦身必须在最后做，否则前面靠缩进原文当锚点的补丁会找不到位置）。更重要的是在打包脚本里加体积断言，留足余量，让它在打包时失败。
+- 教训：每次装新包后先确认进程还活着再点屏幕。闪退后屏幕是桌面，盲点会点进别的应用。
+
+**黑屏 / 卡住，日志有 `CRC Mismatch`**
+- 原因：改了 bundle，校验字段没更新
+- 修法：把生效的 manifest 里 CRC 改成 `0` 或 Unity 日志给出的正确值
+- 注意：可能有多个 manifest，要试出游戏真正读的那个
+
+**黑屏且画面完全不动，但调试通道照常响应（JS 引擎）**
+- 判据：`Laya.timer.currFrame`（或引擎的帧计数）不再增长；日志里只有一两条 `JS onFrame error`。
+- 原因：引擎主循环是 `rAF(loop)` 里先渲染再续帧，渲染抛一次异常就不再续帧。离线后资源偶发加载失败、回调拿到空数据仍去建对象，是常见触发源。
+- 修法：给每帧入口（如 `stage._loop`）包 try/catch，再给触发源对象加空数据保护。只修触发源不够，下一个空资源还会冻住。
+- 实例：案例 B 的剧情 1-1 的粒子 `.part` 加载失败，`new Particle2D(undefined)`，见 `case-b-laya-native.md`。
+
+**改了一处伪造回包后，资源开始随机加载失败（重试在同一毫秒内全部失败）**
+- 原因：引擎复用网络请求对象（连接池/加载器池）。伪造回包时把 `status`、`readyState` 钉死在实例上（例如 `defineProperty` 写成只读），后面复用这个实例的请求一发出就"已完成、失败"。
+- 修法：伪造字段只在当次有效，下次 `open()` 前删掉。上线前用"同一对象连发两次请求"自测。
+- 实例：案例 B 的 v0.3d，为 `""` 皮肤伪造的 404 毒化了 Laya Loader 的 XHR，剧情 1-1 打不开。
+
+**授权码：所有玩家的本机码一样 / 设备上验签代码报 BigInt 未定义**
+- 原因：引擎自带的"设备信息"多是 MAC/IMEI，新版 Android 统一返回假值；嵌入式 JS 引擎（如 LayaNative 的 V8）可能很老，没有 BigInt。
+- 修法：本机码从 Java 层取 `ANDROID_ID`（smali 加一个静态方法，走引擎已有的 JS→Java 反射桥）；验签用不依赖 BigInt 的实现，并与标准库对拍。
+- 实例：案例 B，见 `case-b-laya-native.md`「授权码 + 水印」。
+
+**功能点下去没反应，日志有 `NullReferenceException`**
+- 原因：离线时网络层抛异常，打断了调用方
+- 修法：所有离线调用点用 `pcall` 包住
+
+## UI 层级
+
+**某个面板打开后盖住别的画面 / 整屏黑**
+- 原因：为抬高某层改了 `Canvas.sortingOrder` / `overrideSorting`，之后没还原
+- 修法：抬升前先记住原状态，退出时还原。**每次抬层都要配一个还原**
+
+**地图盖住界面，或反过来按钮点不动**
+- 原因：不同 canvas 抢排序
+- 修法：明确分层（地图 / HUD / 面板 / 对白各一档），新面板接入时确认不会打乱已有分层
+
+**弹窗被底下的界面盖住，早期的绕法是"弹窗一开就把底下那层藏起来"**
+- 症状：关卡详情弹窗背后不是关卡列表，而是更底下的地图。翻补丁发现有人写了"打开详情时隐藏列表，避免详情被列表盖住"。
+- 根因：另一个补丁为了让某个入口卡片"肯定在地图上面"，把它所在的画布层级直接设成 9000——那块画布其实是整个主界面的根。
+  游戏自己的弹窗管理器把弹窗固定从 100 排起（并且每次显示都会重设），所以之后所有弹窗都被 9000 压住。
+- 修法：先搞清游戏原有的层级带（这里：地图内部 <= 35、主界面按钮 40-47、弹窗 >= 100），自己加的层级一律落在带内（改成 60）。
+  不要用"抬得比谁都高"解决遮挡，也不要去和管理器抢弹窗自己的层级（设了也会被它改回去）。
+- 排查办法：写一个只打印的函数，量出"下层面板用到的最高层级"（根画布 + 往上的祖先画布 + 它里面单独排序的小画布）和上层面板的根画布、渲染模式，打一行日志。
+  数字一出来就知道是谁不对（这次一眼看到 baseRoot=UIList/9000）。
+- 教训：见到"把 A 藏起来免得挡住 B"的补丁，多半是层级没理顺留下的债，值得回头找根因。
+
+**界面元素只在"完整刷新"时才开关，而离线版切页面走的是快路径**
+- 症状：某个小图标去过别的页签再回来就不见了；反方向又残留在不该出现的页签上。
+- 原因：原版在重新初始化界面时按当前模式设它的显隐；离线版为了省加载时间复用了已经建好的界面，不再经过那个初始化。
+- 修法：在快路径的"应用目标页面"函数里，把依赖模式的显隐各设一次。写快路径的时候，把原版初始化函数里所有 SetActive 过一遍，逐个确认。
+
+## 存档
+
+**每次重启回到最初关卡、等级或经验**
+- 原因：服务端下发的会话态（关卡、等级、经验、任务领奖等）只改了内存，没有完整落盘；只保存一个字段同样会让状态互相脱节
+- 修法：在每个状态变更点统一保存，并在进入 UI / 应用存档前先恢复；改完必须做杀进程重启测试，不能只在进程内验证
+- 分层验证：先单独验证保存路径，再构造“保留待测状态键、其他键恢复默认”的恢复用存档，确认读路径真的应用了持久化值，而不是误走了默认/拉满分枝
+
+**每次启动被「种子数据」重置回初始值（等级 / 突破 / 星级）**
+- 原因：为了让玩家开局就拥有内容，离线补丁会在每次登录时**遍历配置表重新下发一份全量数据**。
+  如果这份种子把可成长字段（卡等级、突破等级、星级…）按初始值写死，玩家的养成成果每次重启就归零。
+- 特征：只保存「星级/碎片」这类显眼字段还不够——**凡是玩家能练的维度都要各自落盘**，缺一个就少一条成长线。
+- 修法：给每个可成长维度一个独立的 prefs key（`XXX_LVLS_V1` / `XXX_BREAKS_V1`），
+  种子构造信息时用「落盘值 or 初始值」，并在每个变更点写完即存。
+- 实例：案例 A 的剧情战斗卡牌只落了星级和碎片，`iLvl` / `iBreakThroughLvl` 每次启动被重造为 1 / 0，
+  于是「升级」「突破」两条线在重启后全部作废。
+
+**改档 / 抬状态前先备份 prefs，验证链的中间档丢了就不能重放**
+- 原因：低等级档、未通关档这类"验证链起点"不是游戏会自动重建的东西；一旦被覆盖或推进过头，
+  只能 `pm clear` 从零再来，而"从零再来"复现不了当时的中间状态。
+- 修法：每次开始"从低等级往上验证"之前先把 `shared_prefs` 拷出来存进项目 `logs\<轮次>-...\`，
+  并在快照里写清"这个包/这个档对应什么状态、备份在哪、怎么还原"。
+- 判据：报告里说"已验证 1-6 通关、停在 1-7"时，必须同时能回答"怎么回到那一刻"。
+
+## 本地回包 / 伪造服务器数据
+
+**界面显示 `1970年01月01日`（或类似的纪元默认值）**
+- 原因：为了让卡片/条目走「已解锁 / 已读」分支，把服务器下发的**时间戳字段**用非零哨兵常量顶上去
+  （典型写法 `iFirstReadTime = 1`）。下游拿到这个字段直接当 Unix 秒去 `os.date('%Y', t)`，
+  1 秒就是 1970-01-01。分支判断（`~= 0`）过了，显示就露馅。
+- 修法：**伪造服务器字段时按它的真实语义取值，不要只满足分支条件。** 时间戳就给真实时间（
+  `os.time()`），并按条目/章节持久化（例如 PlayerPrefs key 带条目 ID），首次写入后续复用，
+  这样日期稳定、重启不变、也不会回落到「未读」分支。
+- 实例：案例 A `<角色约会卡片项>:SetCardItem` 的 `chapterInfo.iFirstReadTime`，
+  三处本地回包都写过常量 `1`，全部要换成 `OfflineEF_RoleReadTime(chapterID)`。
+
+**某个入口按钮/菜单永久不出现，点上去像「空按钮」**
+- 原因：原版代码用**某个状态值**来 gate 入口，而离线回包把这个状态硬编码成了「临时态」。
+  典型：热卖/活动/限时状态本来只在活动期 > 0，离线种子为了「让数据看起来有」写死一个非零值，
+  于是 `ShowXxx(not IsHotSaleTime())` 这类判断永远走隐藏分支，入口再也没有打开过。
+- 排查：在反编译代码里搜这个状态的 getter（如 `IsHotSaleTime` → `sellInfo.iLeftFastSellTime > 0`），
+  再搜谁读它、读到之后是显示还是隐藏。
+- 修法：**离线种子要把状态落在「正常态」**（能让玩家自己触发的初始状态），不要落在「临时态」。
+  「有数据」和「处在限时状态」是两件事。
+- 实例：案例 A 的店铺 `iLeftFastSellTime = 1000` 让「热卖中」永不过期，
+  `StoreBuildPanel` 的 热卖/上架/升级 三按钮被永久隐藏 → 商业街上架面板没有入口。
+
+**别跨模块调用「注入进去的全局函数」——它们可能是惰性定义的**
+- 症状：自己在补丁模块 A 里调用模块 B 提供的全局函数（如 `OfflineWareHouseApplyItem`），
+  调用处明明在 `pcall` 里"没报错"，但**功能静默失效**（东西没发出去、状态没变）。
+- 原因：补丁常把模块文件的内容**整段替换进某个函数体**（例如把抽卡模块塞进
+  `XxxManager:SendLuckDrawReq`）。于是模块里那些看似全局的 `function Foo()` 定义，
+  **只有在该函数第一次被调用时才会执行**——在那之前 `_G.Foo` 就是 `nil`。
+- 排查：在调用点先打印 `tostring(_G.那个函数)`。是 `nil` 就中招了。
+- 修法：**只用同一模块内已有的工具函数**，或把需要的工具定义在一定会先加载的地方。
+  本项目里 `offline_all_features.lua` 自带 `OfflineEF_ApplyItem`（且内置 fallback），
+  种植模块改用它之后就正常了。
+- 附带教训：**发放/扣减这类关键动作不要只包在 `pcall` 里静默失败**，
+  至少在失败时打一条日志，否则"没报错但没效果"会查很久。
+
+**同一个种子函数喂多个消费方，筛选口径被"一刀切"**
+- 症状：某个列表/商店/背包里出现**明显不该出现的内容**（礼包、月卡、货币被摆上货架）。
+  链路能跑通，所以容易被归为"小问题"而长期挂着。
+- 原因：离线补丁常写一个"造数据"函数同时喂两个入口，筛选条件取了两边的**并集**（或干脆按宽口径）。
+  但两边合理内容其实不同：NPC 商店卖消耗品，玩家货架只该摆"商品"。
+- 排查：**去配置表找权威对应关系**，别凭字段类型猜。
+  例：本项目 `reptGoodsNpc` 列的是"顾客会买的 70 件商品"，一查全是 `iItemType == 5` —— 这就定义了"商品"。
+- 修法：给种子函数加**口径开关**（如 `onlyGoods`），**只改有问题的那一侧**，
+  已验证过的另一侧保持原样，避免把修 bug 变成回归。
+- 附带教训：**改了函数签名或调用行，要顺手搜一遍断言/测试里有没有写死旧签名的**，
+  否则补丁会以"断言失败"的形式报出来（这次连中两条）。
+
+**同一行数据被多个消费方用不同字段名读取，某处算术/取值崩在 nil**
+- 原因：反编译产物里同一个数据结构在不同 UI 里读法不一致（旧命名 `iItemID`/`iCount`
+  vs 新命名 `iItemId`/`iItemCount`）。伪造数据行只满足了一边，另一边拿到 nil，
+  报错形如 `attempt to perform arithmetic on field 'iItemCount' (a nil value)`。
+- 排查：拿到报错的文件行号，去那一行看它读的字段名；再全量搜**同一份数据**的其它消费方，
+  列出所有用到的字段别名。
+- 修法：**伪造行把所有别名都写上**（`row.iItemID` + `row.iItemId`、`row.iCount` + `row.iItemCount`）。
+  多余字段对 Lua table 无副作用，漏一个就有一处 UI 挂掉。
+- 实例：案例 A `OfflineEF_ShopGoods` 只给 `iItemID`/`iCount`（NPC 商店读法），
+  `RetailPanel`/`StoreGoodsItem` 读 `iItemId`/`iItemCount`，一开店面板就报错。
+
+**点击完全没反应，但日志里连请求都没有（静默 gate）**
+- 原因：交互函数里有一个**不报错的边界判断**直接 return，常见是容量/上限/数量判断，
+  如 `if (not (itemTotalCount >= self.totalCapacity)) then ... end`。
+  离线种子把数量堆到超过上限（`50 x 999 = 49950` vs `iMaxStorage = 1580`），
+  于是后续所有点击都被这个分支吞掉。
+- 排查：搜该交互函数名，逐条看它开头的提前 return；同时**去看 UI 上自己的数字**
+  （容量条、计数、进度）——超限往往就写在界面上，只是不显眼。
+- 修法：种子数量必须**尊重界面自己展示的上限**（读配置表的上限字段，别用拍脑袋的大数）；
+  需要「给足」时就贴着上限给，不要突破。
+- 实例：案例 A 的货架容量条显示 `49950/1580`，`OnClickWarehouseItem` 因此静默挡死上架。
+
+**自造的数值字段（战力/属性/评分）只满足分支条件，丢掉了成长维度**
+- 原因：原版这类字段由**服务器算好下发**（如卡牌 `stPropInfo`）。离线补丁只能自己造，
+  常见做法是拿配置表里的基础值乘一个显眼因子（典型 `基础值 × 星级`），
+  而客户端里其实**已经有一份权威算法**（如 `CommonFuncion:GetCardAttribute`）。
+  自己手搓的版本漏掉等级、突破、加成等任一维，数值表面上「看起来正常」，成长链却是断的。
+- 症状：玩家升级/突破/强化**照扣材料、数字照涨，战力一点不动**；或反过来，数值虚高到门槛毫无意义。
+- 排查：先在反编译代码里搜这个字段的读取方，再搜客户端**自己**算它的函数（往往用在对比/预览 UI 上），
+  两者对照就能看出漏了哪几项。
+- 修法：**照搬客户端权威公式**，把输入的每个维度都接上；然后拿配置表离线算出理论上限，
+  和关卡门槛比一次（上限 ≪ 门槛 → 公式漏项；上限 ≫ 门槛 → 门槛形同虚设）。
+- 实例：案例 A 的剧情战斗要求 1650 / 5250，离线公式只有「卡面×星级」，
+  满星上限 1550 / 1500 → 怎么练都过不去；补回等级项与突破加成后上限 52005。
+  客户端公式：`floor(0.01 × 卡面 × param) + 突破加成`，`param = (iAbilParam + lvl×250/(lvl+250)) × (1 + star/4)`。
+- 附带教训：**别急着下「门槛太高、玩家会被卡死」的结论**。先确认成长链是通的，
+  否则会把「公式漏项」误判成「设计不合理」，进而去做错误的下调门槛。
+
+**"服务器推过来"的玩法（随机事件、报恩、通知类）：先找谁打开那个面板**
+- 做法：从请求名 / 通知名搜到 manager 的回调，再到 model 存到哪张表，再搜谁读这张表、谁 `ShowPanel`。只看面板代码会走偏：客户端里留着从来没人打开的旧面板（案例 A 的 `<宠物互动面板>` 有一整套"摸宠物找惊喜"逻辑，全工程没有一处打开它；真正在用的是后院气泡 → `<宠物事件面板>`）。
+- 触发规则在服务器上查不到时：定一条离线规则，写进代码注释和用户文档，标明"离线版定的"；规则里的数（概率、次数）单独列成常量。
+- 面板关掉时只发界面内通知、靠另一个界面元素接着发请求的（这里是后院里那只宠物），元素不在场就没人接：在 model 的通知函数后面加一个兜底调用，处理函数自己保证只发一次奖励。
+
+**"获得 XX"的通知弹窗数错（套装已收集 0/3）**
+- 原因：弹窗读的是 model 里某一类的已有列表，这张表要先收到"整页数据"的回包才有；这次登录没进过那个页面时是空的。
+- 修法：发通知前先按"得到之前"的样子把整页数据灌一次（注意别顺手把页面打开：先把 manager 上"收到数据就开面板"的开关关掉再灌），再记账、再发通知。顺便核对整页数据里有没有漏掉的类别（这里漏了宠物收藏 104，收藏界面里永远看不到）。
+
+**把"结算用的数"显示到界面上，会照出结算函数的老毛病**
+- 症状：让情报页的"总实力"改用结算同一个函数后，17 级的档显示 20144（应为 10342）。
+- 原因：结算函数靠遍历顺序去重（"先遇到链头就把后面的步骤标成已算"），步骤表的顺序不固定，后面的步骤排在前面时整条链被算了两遍。以前结算数字只进日志，没人看见。
+- 修法：先扫一遍找出"排在别的步骤后面"的步骤，只从链头算。教训：界面和结算各算各的时候，先让界面显示结算的数，再看数字合不合理。
+
+**规则有好几种条件，本地只判了一种，其余等于全放行**
+- 症状：某类关卡 / 功能新档一进去就全开；高阶材料随便刷，后面章节的门槛形同虚设。玩到高等级的测试档看不出来，因为它本来就满足条件。
+- 原因：原版解锁表里有「先通过某一关 / 主角等级 / 好感等级」几种条件，本地实现只写了其中一种，遇到不认识的条件类型就返回"已解锁"。
+- 修法：写解锁判断前先把表里实际出现的条件类型数一遍（按类型分组计数），每种都实现；不认识的类型默认**锁住并打日志**，不要默认放行。验证必须用全新档。
+- 同类：上限公式要先看存的是什么。突破等级存的是 0 / 10 / 20，按"突破了几次"去乘就算出一个离谱的上限。
+
+**奖励串里的"类型"没分发，全当成道具塞进仓库**
+- 症状：奖励写着"店铺知名度 100"，领了不涨；好感、藏品类奖励领了不见。
+- 原因：奖励格式是 `类型;编号;数量`，类型不同去处不同（道具 / 货币 / 店铺知名度 / 好感 / 藏品…）。本地入账函数只认道具。
+- 修法：入账函数按类型分发；先在全部配置表里统计奖励串出现过哪些类型，逐个确定去处，没处理的类型打日志而不是静默入仓。
+
+**原版"先发请求、紧接着改标记"，离线同步回包后标记卡死**
+- 症状：某个按钮第一次点正常，第二次点没反应或状态不对；注入式自测全过。
+- 原因（我的推断，和"同一帧销毁再重建"是同一类）：联网时回包晚几帧到，处理函数运行时标记已经置好；离线回包在发送函数内部就同步处理完了，随后才执行"置标记"那一行，标记留在"等待中"。自测直接调处理函数，不走客户端的发送函数，所以抓不到。
+- 修法：静态扫一遍"调完 Send 立刻赋值"的写法，逐处判断；新接的功能在界面上把同一种操作至少连点两次。
+
+**新手指引在另一条指引进行中被触发，两条串在一起卡死**
+- 症状：遮罩和手指一直盖着，只能重启。出现在一次连开好几个新功能的节点。
+- 原因：原版"开始指引"不检查当前有没有指引在跑，直接换编号；步骤内容还是旧的，对不上。联网时这些触发被服务器节奏隔开，离线时同一刻满足。
+- 修法：有指引没走完时，新指引一律推迟，结束后再触发。
+
+## 随机与异步
+
+**十连后崩溃（`SIGSEGV`）**
+- 原因：本地抽卡与原版动画流程的交互（未完全定位）
+- 修法：未根治。抽卡是最高风险点，任何相关改动都要做完整回归（单抽→十连→返回→重进→重启）
+
+## 工程与文档
+
+**文档自相矛盾，新 Agent 按旧文档走错路**
+- 原因：多份文档各自演化；构建脚本存在新旧两套，旧的仍留在推荐路径上
+- 修法：定一份"当前事实源"，其余文档指向它；废弃脚本明确标注，不要让它出现在推荐流程里
+
+**手工修在产物里的补丁丢失**
+- 原因：改动只落在 APK / bundle / 解包目录，没回到补丁脚本
+- 修法：产物一律视为可再生；定期核对临时脚本是否已合并进主入口，确认后删除或纳入
+
+**未提交改动被误清理**
+- 原因：脏工作区 + 清理脚本
+- 修法：清理前先看 `git status`；禁止 `git reset --hard` / `git checkout -- .` / `git clean`
+
+**交付包不能自证基线 → 装了旧包才发现改动没进去**
+- 原因：产物目录里堆着多个历史包，包名只带时间戳；构建清单不记录策略开关（如门禁 bypass、
+  各调试旋钮），于是"哪个包是哪个配置"不可考。本轮实测：真正要装的"最新改动 + 默认策略"包
+  根本不存在，只有"最新改动 + 实验策略"和"旧改动 + 默认策略"两种，光看目录判断不出来。
+- 修法：把**策略注入值写进构建清单**（manifest 记 `gate_bypass` 之类的开关取值）；发/装之前先比
+  「包构建时间 vs 最近改动时间」；交接文档里把"**重新出包**"写成第一步，别写"直接装某个现成的包"。
+
+**支线/实验收尾必须回到默认基线并重签**
+- 原因：为验证某个开关（门禁、封锁、调试旋钮）临时改了策略文件，验证完忘了改回来，
+  之后每个包都带着实验配置，而清单里看不出来。
+- 修法：支线停放时显式恢复 `policy.json` 一类策略文件的默认值、重签签名文件、并重出一版默认包；
+  在快照里写明"现为默认值 X，行为等同做该支线之前"。
+
+**交接要给"第一件必做事"，不是给一堆背景**
+- 原因：新 Agent 没有会话记忆，只凭文档判断"现在该干嘛"，于是最容易在第一步就装错包 / 走旧链路。
+- 修法：写一份**可直接复制**的接力提示文件（基线时间戳 + 第一步命令 + 硬纪律 + 指向压缩快照），
+  用显式"复制开始/结束"标记包裹，别用嵌套代码块（复制时容易截断）。
+
+**两个会话同时改同一个仓库，互相重做、互相覆盖**
+- 症状：一边修好的系统级问题另一边没有；同一个共享文件出现两种改法；一边的包把另一边的设备状态弄乱。
+- 修法（案例 A 2026-10-13 的做法）：
+  1. 每条线一个 git worktree、一条分支；构建目录、日志、存档各用各的，只读输入用目录联接共享。
+  2. 每条线一台设备（真机 / 模拟器），模拟器走单独的 adb 服务端口，让两边互相看不见对方的设备。
+  3. 按"谁拥有哪些文件"分工：一条线拥有共享主体文件和发布包；另一条线只写自己的模块文件，在主入口里只加登记行。
+  4. 共享代码里发现的 bug 用一条消息告诉拥有方，由拥有方核实后修；另一方只合并，不重做。合并方向固定（发布线 → 探索线）。
+  5. 探索线的模块要进发布包，由发布线自己拿、自己在发布设备上验证；"在模拟器上过了"不算发布线的验证。
+- 接手时先看两边的 `git log` 和各自的总览文档，再回答"现在做到哪了"；只读一边的快照会漏掉另一边一半的事实。
+
+**"章节打通了"被当成"可以发了"**
+- 回答"是不是彻底完成"要分开四件事，各自要有证据：① 内容：全新档按玩家顺序打到终点（哪个包、哪份报告）；② 修复：每条修复在**最终那个包**上复验过，不是在修它的那个中间包上；③ 交付物：正式包重新打过、哈希记下、已装到用户的正式安装、对外副本目录是同一个哈希；④ 发布卫生：调试开关、注入后门、未开放内容是否还在包里。
+- 常见的假完成：章节在候选包上通关 → 之后又修了十几处 → 用户设备上和对外目录里还是旧包。
+
+## 方向误判（最贵的错误）
+
+**长时间调不通某个注入 / 加载机制，认定卡点就在这里**
+- 原因：真正的阻塞在别处。运行时看不到"某个分支永远不会触发"这类事实
+- 修法：**先把上一阶段留下的日志读完，再动手调。**
+- 实例：前一阶段花了大量时间调 Frida Gadget 自动脚本模式。后来读 logcat 才发现，卡点是另一个"8 秒后弹窗盖住画面"的强制跳转，而它的触发条件（`sendCount >= 3`）在整份日志里永远不可能满足——**即使 Gadget 修好也照样进不去**
+
+**越依赖运行时探针，效率越低**
+- 原因：注入类工具对 C# 对象遍历不稳定、反复超时，会话越长越容易失败
+- 修法：运行时只用来**生成假设**；关键结论用静态方式复核（在包里查字符串、比对文件内容）
+
+**把侦察工具当成交付方案**
+- 原因：注入方案在调试机上"能跑"，但验收标准要求"不 root、不用电脑、只装 APK"
+- 修法：明确区分阶段。侦察用什么工具都行；交付必须落到包内改写。不要在让注入方案"跑通"上继续投入
+
+**功能"没有反应"其实是被离线补丁主动关掉的（用一个哨兵值关掉整块功能）**
+- 症状：某个系统（新手引导、活动、限时玩法）在游戏里**完全看不到、也不触发**，
+  既不报错也不卡——因为它根本没被调用。
+- 排查：不要只搜"这个功能怎么实现"，**先搜它是怎么被关的**。离线补丁为了让流程跑通，
+  常会写下类似 `_G.OFFLINE_DISABLE_XXX = true` 的总闸，或者给状态字段灌一个哨兵值
+  （如 `guideFlag = -1`）让 `IsXXX()` 直接走"已完成/已跳过"分支。
+- 实例：案例 A 的离线版用 `_G.OFFLINE_DISABLE_GUIDES = true` + `ng.guideFlag = -1` 关掉了整条
+  新手引导链。关键在 `IsGuided()` 的写法：**对负数一律 `return true`**，
+  于是"标记为 -1"等于"所有引导都已完成"，一行就把 18 组引导全部静默关闭。
+- 教训：**看到 `= -1` / `= 999` 这类哨兵值，先确认下游对它的处理是不是"全放行/全跳过"**。
+  想恢复时，先把它改成"读存档/默认值"，再补上本地持久化，别直接改回 0 就完事。
+
+**全屏引导遮罩在离线/模拟环境必然吞点击 —— 要分层处理**
+- 症状：引导一开，底部导航/返回按钮全部点不动，只能停在某一个界面；日志里点击只报
+  `Button On Click empty`（打在遮罩自己身上）。
+- 原因：引导遮罩通常有**两层**：视觉提示层（高亮、手指动画）和**点击屏蔽层**
+  （全屏 Raycast 组件 `Empty4Raycast`、以及 prefab 里的 `btn_xxxMaskBg` 这类全屏按钮）。
+  原版靠点击屏蔽强制玩家只能点目标；离线版一旦有某步等不到服务器事件，屏蔽层就永远不撤。
+- 修法：**保留视觉提示，拆掉点击屏蔽**——不要为了"安全"把整个引导关掉。
+  实测两处注入点即可：挡住组件创建（`AddComponent(typeof(T_Empty4Raycast))` 那行）+
+  让遮罩按钮永不激活（`SetActive(false)`）。这样引导能照常提示，导航永远不会被吞。
+- 判断是否修好：点一个底部导航按钮，日志里应出现**真实按钮事件**
+  （`Button On Click:<按钮名> instanceID:...`）而不是 `Button On Click empty`。
+
+## 游戏内 UI / 弹窗
+
+**自己弹一个对话框，结果是一块空白白框（没文字、没按钮图案）**
+- 原因：绕过游戏 UI 框架，直接用 `AnimatedPopLayout` / `PopUtils` 加载裸 prefab
+  （典型 `prefab/ui/dialog_common_msg`）。prefab 里的 `Text.font` 是 `nil`、按钮贴图依赖主题/皮肤 bundle，
+  离线流程没走那套 UI 初始化，于是只剩默认白底。
+- 排查：加载后用 `GetComponentsInChildren(typeof(Text))` 打印每个 Text 的
+  `name / activeInHierarchy / font / text`。`font=nil` 基本就确认是没走原生对话框/皮肤。
+- 修法：**优先用游戏原生的对话框 API**，不要自己拼 prefab。在 il2cpp `dump.cs` 里查 `DialogUtils`
+  的静态方法；Unity Lua 侧通常是 `GameNS.<框架>.PopPanel.DialogUtils`：
+  - 双选项（自定义按钮文字 + 两个回调）：`ShowTxtDialogCustom(txt, mode, confirmCb, confirmText,
+    cancelCb, cancelText, isSystemDialog, isBlurBg, tweenFinishCb, title)`
+  - 单按钮确认：`ShowConfirmDialog(txt, mode, confirmCb, isSystemDialog, isBlurBg, tweenFinishCb, title)`
+  - 单按钮 + 取消回调：`ShowTxtDialog(txt, mode, confirmCb, cancelCb, isSystemDialog, isBlurBg, tweenFinishCb)`
+  这些接口自带主题、字体与按钮，不需要自己注入字体。
+- 实例：案例 A 的新玩家开局「等级 / 资源 / 解锁」三步选择，第一版裸 prefab 渲染成空白白框，
+  改成 `ShowTxtDialogCustom` 后文字、双按钮、主题全部正常。
+
+## 工具链 / 环境（实测坑）
+
+**Frida 探针从注入线程调用 Unity / 配置表 API 直接把游戏搞崩**
+- 症状：`Error: access violation accessing 0x...`，脚本在 `LuaDoString` 那一行炸掉，游戏进程也可能不稳。
+- 原因：注入线程不是 Unity 主线程；`CSLTypes.DataTableMgr.getInstance()` 这类会碰 Unity 对象的调用不安全。
+- 实测**安全**的调用：`UnityEngine.PlayerPrefs`（读写+Save）、部分纯逻辑单例（`ComUIPanelMgr.GetIntance()`）。
+- 修法：探针只做「读结果 / 写 PlayerPrefs」这种轻量动作，把结果落到 `shared_prefs` 再读回来；
+  需要读配置表就**离线解包**，别在运行时穿。
+
+**正确姿势：让注入的代码「在主线程上跑」——用游戏的调度器中转（本篇最有价值的一条）**
+- 背景：注入工具（Frida 等）的回调跑在**自己的线程**上，直接碰 Unity / 配置表 / UI 必崩或卡死。
+  但"只看不敢摸"会让验证退化成猜。
+- 解法：注入时**只做一件事——把真正的工作登记给游戏自己的调度器**，让它在主线程执行：
+  ```lua
+  local holder = {}                       -- tolua 需要 table+function 形式
+  local function body()                   -- 这段会在 Unity 主线程跑
+    local dt = CSLTypes.DataTableMgr.getInstance()
+    -- 这里可以安全地读配置、读/写模型、调游戏自己的业务函数
+    GameNS.UnityEngine.PlayerPrefs.SetString('PROBE_OUT', 结果)
+    GameNS.UnityEngine.PlayerPrefs.Save()
+  end
+  -- 关键：第一个参数传 nil！见下方说明
+  CSLTypes.LuaScheduler.delay(nil, 0.2, CSLNewfunc(holder, body))
+  ```
+- **`obj` 参数一定要传 `nil`**。很多调度器的实现是「obj 为空则挂到全局系统对象」，
+  例如本项目 `LuaScheduler._getNode(nil)` 会回退到 `LuaFrame.LuaGameSystem.Instance.gameObject`。
+  这样外层段落**完全不需要在注入线程上取任何 GameObject**——而"取 GameObject"正是导致
+  `access violation` / 游戏进程被杀的主要原因（实测约 1/3 概率崩，且会把游戏带下去）。
+  传 nil 后连续多次调用都稳定。
+- 反例：写 `CSLTypes.CommonFuncion.GetIntance():GetCurRunUIList().gameObject` 虽然多数时候能过，
+  但要在这个不稳定的调用上赌运气，没必要。
+- 取结果：写进 `PlayerPrefs`，再从 `shared_prefs` 的 XML 里读回来（跨线程/跨进程都稳）。
+- 注意：**外层段落本身仍在注入线程**。`GetCurRunUIList()` 这类取 GameObject 的调用多数时候能过，
+  但并非绝对安全（实测会偶发 `access violation`）。要更稳就把"取 go"也放进更早一次调度里，
+  或者干脆只调用这个已知可用的取法。
+- 收益：用这个方式可以**直接调游戏自己的业务函数做端到端验证**，
+  不用辛辛苦苦走 UI（实测用它验证了「卡牌升级 / 突破 → 属性真的上涨 → 落盘」整条链）。
+- 纪律：**动了玩家存档要还原**。验证完把临时写入的 prefs 键删掉并重启让种子重建，
+  确认关键字段回到原值，再向用户汇报。
+
+**从注入线程调用会「改 UI」的游戏函数 → 游戏整体卡死（比 crash 更阴）**
+- 症状：进程还活着、无异常日志、CPU 空闲，但画面定格、点击毫无反应。
+  用 `dumpsys gfxinfo <pkg>` 会看到 `Total frames rendered: 0`（正常应是持续增长），`50th percentile` 是个巨大值。
+- 触发例：从探针线程直接调 `SomeUI:OnCancel()` / `popLayout:dispose()` 这类会动 Unity UI 对象的方法。
+- 平反：这**不是游戏 bug**，重启即恢复。别据此判定"修复把游戏搞坏了"。
+- 修法：**交互必须走主线程**。要么用 `adb shell input tap`（走系统输入链路，安全），
+  要么只让探针做"读状态"，然后用游戏自己的日志回读判断进度。
+- 关键习惯：**游戏自己的 `[TAG]` 日志就是最好的断言器**。驱动交互时每步 grep 日志
+  （如 `xxx show step=N` / `xxx completed`）比截图判断可靠得多，也能立刻分辨
+  "没推进"到底是"没点中"还是"逻辑错了"。
+
+**离线解配置表：protobuf 描述符 + 数据文件**
+- 路子：`analysis/protocols/*.bytes`（FileDescriptorSet）+ `src/phone_data.bytes`，
+  用 `google.protobuf.descriptor_pb2 / descriptor_pool / message_factory` 还原 `TAllGameCfg`，再按表名取行。
+- 好处：可复现、不依赖设备、可以反复试算（算理论上限、查门槛、对结构）。
+
+**`adb install` 报空错误时改用 push + pm install**
+- 症状：`Failed to install xxx.apk: `（原因串为空），1 秒就返回，像是没传文件。
+- 修法：`adb push xxx.apk /data/local/tmp/a.apk` 然后 `adb shell pm install -r /data/local/tmp/a.apk`，
+  报错会完整得多，也能装上。
+
+**模拟器（BlueStacks）里 `input tap` 命中区域偏**
+- 症状：按钮视觉位置正确，点上去只听到点击音、日志 `Button On Click empty`，弹窗/入口毫无反应。
+- 排查：用坐标扫描（同一点附近 ±40px 打几发）确认是「命中区偏移」而不是「事件没绑」；
+  再调 Lua 直接触发回调对照——回调能跑就说明逻辑没坏，纯是输入层问题。
+- 修法：优先改成**游戏内 Lua / 回调驱动**的验证路径；必须用点击时多试几个坐标，
+  别把「点不中」误判成「功能坏了」。
+
+**原生弹窗不会自己消失，必须手动 `dispose()`；而且它不一定在「你以为的那个」PopManager 里**
+- 症状：自己用游戏原生 `DialogUtils.ShowTxtDialogCustom(...)` 弹的窗，点完按钮流程走完了，**弹窗还留在屏幕上**，
+  它的全屏拦截层吞掉所有点击（日志只报 `Button On Click empty`），玩家被困住，只能重启。
+- 原因：原生 Dialog 与 `PopLayout` **不会自动关闭**，得调用方显式收。若流程是"每步新建一屏"，最后一屏没人收。
+- 权威样例（照抄它）：`CommonMsgDlg:onClickCancelBtn → doClose → self.popLayout:dispose()`
+  —— **在按钮回调里直接 dispose 是官方写法，安全**，不用担心"自己关自己"。
+- 两个实测坑：
+  1. `ShowTxtDialogCustom` 的返回值经 tolua 绑定**取不到（恒为 nil）**，不能存句柄。要关只能从 PopManager 里拿。
+  2. 同一个引擎里可能有多个 `PopManager`。本例中弹窗注册在
+     `Frame.SystemManager.getInstance().PopManager`，而 `CommonFuncion:GetIntance():GetPopManager()`
+     是**另一个空实例**（`GetPoplayoutCount()` 恒为 0）——查错了会误判成"弹窗不在任何管理器里"。
+- 修法：`SystemManager.getInstance().PopManager:GetTopPopLayout()` 取顶层，**核对 prefab / resName 再 dispose**，
+  避免误关别的面板；`ShowStep()` 每次新建前先收上一屏，避免层叠。
+- 兜底：如果拿不准关闭 API，`PopManager` 通常还有 `RemoveAllDialog()` / `RemovePopPanel(pop)` 可用。
+
+**动手验证前先想清楚「副作用会不会自己消失」**
+- 离线版常常**每次启动用配置表重造仓库/背包**（如本项目把所有道具按 `OFFLINE_START_COUNT` 重发一遍）。
+  这类种子会让"花掉的消耗品、抽到的东西"在**重启后回到种子值**——测试副作用天然消失，无需手工还原。
+- 但**受 PlayerPrefs 落盘的状态**（等级、突破、星级、剧情进度、引导进度）不会自己回去，必须手工清理。
+- 做法：验证前后各读一次关键字段 → 重启 → 再读一次。
+  数值回到种子值 ⇒ 属于前者，不用管；仍然保留 ⇒ 属于后者，**要删 prefs 键再重启**，并复查。
+
+**`adb shell input text` 灌不了长文本：会被按键序列打断，还有单次长度上限**
+- 症状：把授权码 / token 一类长串（几百字符）灌进输入框，结果只剩尾部几十个字符，或半路触发
+  ESC / TAB 把界面搅乱；看起来像"校验失败"，实际是输入根本没进全。
+- 原因：`input text` 走的是按键事件模拟，特殊字符要转义，且单次调用有长度上限。
+- 修法：长文本别指望自动化输入——**留给人手工粘贴**，或换通道（先写进 prefs / 文件再让游戏读）。
+  验证"输入 → 放行"这类链路时，如果自动化输入失败，只能报告"输入通道未验证"，
+  不要写成"授权码校验不通过"。
+
+**Windows / PowerShell 下改文件：别把补丁文本内联当命令行参数**
+- 症状：`apply_patch` 之类工具用内联字符串传参时报 `ParserError: '<' operator is reserved`，
+  或中文变成乱码导致替换失配。
+- 修法：改用 PowerShell 字面 here-string `@'...'@` 赋给变量再 `Set-Content -Encoding utf8`，
+  或用 python 以 `utf-8` 读写（`io.open(..., encoding='utf-8')`）做字符串替换；
+  脚本输出非 ASCII 时先 `$env:PYTHONUTF8=1`，否则 GBK 控制台会 `UnicodeEncodeError`。
+- 附带：删除文件若被沙箱拦截，用 `python -c "import os;os.remove(...)"` 或 `shutil.rmtree`。
+
+**用内联脚本改源码时，反斜杠被工具层吃掉一层**
+- 症状：用 `python - <<'EOF'` 这类内联脚本做"按原文查找再替换"，要找的那几行里有字面量的"反斜杠 + n"（例如补丁脚本里一行行拼起来的 Lua 字符串），怎么都匹配不上；打印出来看一模一样。
+- 原因：命令字符串经过一层转义，脚本里写的两个反斜杠到 Python 手里只剩一个，"反斜杠 + n"变成了真的换行。（写这条笔记时又被它坑了一次。）
+- 修法：逐字符比对找出第一个不同的位置（一下就能看出来）；需要字面反斜杠时用 `chr(92)` 拼，或者把脚本先写成文件再执行。
+
+**注入通道在一次失败的调度之后一直超时**
+- 症状：往游戏主线程排一段脚本，日志报调度失败；之后每次注入都 `TransportError: timeout`，游戏本身还活着。
+- 修法：重启游戏再注入。调度用的宿主对象换成一直存在的那个（主界面），不要用"当前界面列表"。
+
+**本地应答函数「查不到就什么都不做」，剧情晾在原地**
+- 症状：剧情走到某个小游戏，对白框消失、画面停住，怎么点都不动；日志里没有报错，也没有"未处理的请求"。只在某个分支选项里出现，别的分支正常。
+- 原因：原版把"向服务器要小游戏结果"换成了本地函数，函数里查配置表用错了表名（表其实叫 `rept某某Cfg`，写成了 `rept某某`，取出来是空），于是返回"没启动"；调用处在"没启动"时什么都不做。客户端自己随机的小游戏不走这条路，所以大多数小游戏正常，只有"结果由服务器给"的那几个起不来。
+- 修法：表名对着配置管理器里的赋值语句核一遍；本地函数失败时必须留一行日志，并且走一条不卡死的退路（这里是跳过小游戏接着播）。
+- 举一反三：靠试玩覆盖不到所有剧情分支。配置里有"是否由服务器决定"这类字段时，直接把这类条目和用到它们的对白全列出来（真机上注入一段只读脚本打日志即可），逐个确认有本地实现。服务器回包里的数值（落点、次数）没有原始记录时，看小游戏结束后接的那几句台词，剧情要什么结果就给什么结果。
+
+**误删函数，语法检查和打包自检都是绿的**
+- 症状：真机报 `attempt to call global '某函数' (a nil value)`，而这个函数昨天还在。
+- 原因：用"从标记 A 到标记 B 整段替换"的办法改源码，A 和 B 之间夹着另一个不相干的函数，一起被换掉了。Lua 的语法检查只管语法，调用不存在的全局函数要运行到那一行才报错。
+- 修法：打包自检里加一步：离线模块里调用的自家函数（按前缀认）必须在某个模块里有定义。整段替换前先打印被替换的内容看一眼有多长。
+
+**账号字段是"空"和是 0 不一样**
+- 症状：主界面头像是一个空圆；点头像没反应。
+- 原因：本地造的账号没填头像 / 头像框编号。原版代码对 0 有兜底（显示默认头像），对"空"没有：既不走兜底，也查不到配置，什么都不画。点头像没反应是另一回事：面板等的那条资料请求没人回（改名、换头像这些"写"请求早就接了，偏偏漏了打开面板的那条"读"请求）。
+- 修法：本地造账号时，协议里的数值字段都给上默认值，默认值去全局配置里找（这里是"默认头像 / 默认头像框"那一条）。接一个面板时，把它打开、读、写三类请求列全，别只接写。
+
+**面板同一帧销毁再重建，新面板的按钮全失效**
+- 症状：某个页面出来了但点哪都没反应，或关不掉；日志是 `某面板.Instance`（静态的"当前实例"）为空。只在"从 A 面板直接跳到同类的新面板"的路径上出现。
+- 原因：Unity 的销毁延迟到帧末。旧实例的 `OnDestroy` 在新实例的 `Awake` 之后才跑，无条件把静态引用清成空。原版靠网络回包隔了几帧所以碰不到；离线版回包是同步的，就撞上了。
+- 修法：`OnDestroy` 里改成"静态引用是自己才清"。同一种写法的面板一起改，别等一个个撞。
+
+**本地应答时调了原版的"回包处理"，它顺手又开了一条流程**
+- 症状：打完一关回到列表，关列表时冒出一段没见过的对白，后面还跟一场多余的战斗。
+- 原因：离线版自己直接开了战斗页，同时为了"记下当前关卡"调了原版的开始回包处理；那个函数还会通知列表面板去走原版流程（对白 → 对白里进战斗）。两条流程并存，原版那条被压在下面没人管。
+- 修法：调原版回包处理前把它读到底，看它通知了谁。只需要其中一两行副作用时，自己写那一两行，不要整个调。
+
+**脚本包解压后超过 16 MiB，游戏启动即退出**
+- **2026-10-18 更正：没有 16 MiB 上限**（17.07 MB / 131 块的包实测能进主界面）。当时撞上的是「某块压缩后恰好等于原始大小」，见文末 "compressed size equals its raw size" 一节。
+- 症状：加了几个模块后新包起不来，日志 `archive:/CAB-… is corrupted! [Position out of bounds!]`，进程收到信号 5。和"单个文件太大分配不了内存"不是一回事。
+- 事实（另一条开发线量的）：这个包按 128 KB 一块压缩，线正好在 128 块 = 16,777,216 字节；退回线内就能起。是引擎上限还是打包库回写的问题没分清。
+- 修法：打包自检里量解压后的大小，留余量，超了直接失败。要腾空间就给没打过补丁的原版文件做瘦身（去注释和空白），别动打过补丁的（自检断言靠注释字样）。
+
+**注入的脚本里遍历宿主语言的容器，游戏原生层直接崩**
+- 症状：往游戏里注入一段只读的诊断脚本，进程直接退出，`pcall` 接不住。
+- 实例：用游戏自带的遍历函数（`CSLEach`）走 C# 字典 `m<玩法>CardDic`，两次复现。
+- 修法：要枚举就从配置表拿编号，再逐个问模型的查询函数；不要在注入线程里直接遍历 C# 容器。
+- 相关：游戏连续运行近一小时、注入过几十次后，一次普通注入也可能崩在注入工具自己的线程里（`gum-js-loop`）。长测试隔一段重启一次，崩了先看栈在谁的线程，别急着怀疑游戏逻辑。
+
+**系统悬浮条（录屏、游戏加速条）会自己挪位置，固定的"禁点区"不可靠**
+- 症状：照着坐标点游戏里的按钮，点到了压在上面的录屏悬浮条，打开了系统相册，游戏被盖住。
+- 修法：每次点击前看当前截图里悬浮条在哪，而不是记一个固定区域；开测前请设备主人把悬浮条关掉最省事。点出去以后立刻停手，报告前台是谁，不要在别的应用里继续点。
+
+**提示文字（飘字）在某些页面上一句都看不见，点击处理和文字都是对的**
+- 原因：Unity 里「相机层」画布永远画在「叠加层」画布下面，层级数字设多大都没用。为了修层级，把某些面板的根画布改成了叠加层；飘字还挂在相机层的 UI 根下，于是在这些面板上被整块盖住。给飘字自己加画布、把层级设到 31000，反而在所有页面都看不见了。
+- 查法：别靠点一下再截图（飘字一秒就没，截图要一两秒）。往游戏里注入一段用游戏计时器连续 15 秒、每 0.5 秒飘一句的脚本，同一段在主界面和出问题的页面各跑一次再截图，结论一眼就清楚。日志里先确认「处理函数跑了、文字算对了」，把问题缩到显示层。
+- 修法：建一块单独的叠加层画布（缩放设置照抄原 UI 根，字的大小位置不变），每次飘字后把飘字对象挂过去；第一次飘字时预制体是异步加载的，晚 0.2 秒再挂一次。
+- 注入试验脚本时，PowerShell 默认写出的 UTF-8 带 BOM，Lua 加载器会静默失败（注入工具照样回报成功）。用不带 BOM 的写法生成脚本，并在脚本末尾打一行日志确认装上了。
+
+**两个区之间切换后画面换了，底部导航高亮还停在旧按钮上，玩家以为「点不过去」**
+- 原因：原版换区要等新场景加载完，由场景回调（案例 A 里是 `MainPanel:ChangeSubPanel`）移动导航高亮。离线版为了快，在两个共用同一张地图的区之间「复用地图、只换内容」，不再加载场景，那个回调永远不来。从别的界面进去走的是完整加载，所以只有「从 A 区点 B 区」这一条路坏。
+- 查法：在日志里看同一下点击走的是哪条路径（复用路径和完整加载路径各打一行），再对照截图看内容和高亮是不是一致。玩家说「点不过去」时先分清是内容没换、还是只有高亮没换。
+- 修法：凡是绕过原版加载流程的快捷路径，都要把原版回调里做的界面收尾（高亮、当前页签记录）自己补一遍。
+
+**进出某个全屏页面时主界面卡一下**
+- 原因：为了避免层级冲突，进全屏页前把底下的地图面板「关掉」；关面板会让面板管理器把主界面舞台重新显示一遍（背景音乐都会切），回来时再从零重建整张地图。原版关全屏页时自己还会做一次资源卸载（约 0.45 秒），两段加起来将近 1 秒。
+- 查法：日志时间戳逐行看「关页面 → 资源卸载开始 / 结束 → 地图重新加载 → 地图对象创建」各花了多久，就知道卡在哪。
+- 修法：底下的面板只隐藏（`SetActive(false)`）不关，回来时直接显示并重排层级；隐藏失败（面板已不在）再走老路。原版自己的资源卸载别动。
+
+**地图被改成叠加层画布后，C# 层弹出的确认框（按返回键的「确认退出」等）被地图盖住看不见**
+- 原因：同上一条飘字问题——叠加层永远盖住相机层。Lua 层的面板能在面板显示钩子里抬层，但 C# 自己弹的对话框不经过 Lua 的面板管理器。
+- 对策：凡是把某块大画布改成叠加层，就要列一遍还有哪些弹窗来自 C#（在 Lua 源码里搜不到文案的就是），给它们单独想抬层的办法。
+
+**想在游戏里加「从相册选图」，以为必须改 Java / dex**
+- 先在 IL2CPP 的 dump.cs 里搜 `Permission` / `Gallery`：很多手游自带权限封装（案例 A 有 `AndroidPermissionsManager.IsPermissionGranted(string)` 和 `RequestPermission(string[], 回调)`），脚本层直接调就能弹系统授权框。目标版本低于 29 的包在新安卓上仍是旧式存储（`appops` 里看 `LEGACY_STORAGE`），授权后按 `/sdcard/...` 路径直接读。
+- 脚本桥的坑：桥接层的「数组初始化」函数可能返回脚本表而不是 C# 数组，要用 `System.Array.CreateInstance(typeof(String), n)`；造不出 C# 委托时给回调对象传空，结果靠轮询「是否已授权」拿。
+- 授权框要设备主人自己点，agent 不代点；可以点「拒绝」测拒绝路径。
+
+**Windows 的 Git Bash 里 `adb push x /sdcard/...` 报 `secure_mkdirs failed`，目标路径变成了 `<Git 安装目录>/sdcard/...`**
+- 原因：Git Bash 会把以 `/` 开头的参数当成 Unix 路径转换成 Windows 路径。
+- 修法：命令前加 `MSYS_NO_PATHCONV=1`，或者用 PowerShell 调 adb。
+
+
+**授权码 / 兑换码 / 存档迁移这类「纯逻辑」模块，不要等上机才发现错——用 lupa 在电脑上跑真的 Lua，GameNS 用 Python 模拟**
+- 做法：`pip install lupa`，把要发布的 `.lua` 模块（和门禁一起，顺序同构建拼接）原样 `execute` 进去；在 Lua 里先建一个 `GameNS = {UnityEngine={PlayerPrefs=...}, System={Text=..., Convert=..., Security=..., IO=...}}` 的模拟层，`CSLNew / CSLNewfunc / CSLArrayGet / CSLTypes` 也各给一个。真签发（pycryptodome + 私钥）→ 真验签（模拟层的 RSA 用 `release_public.xml` 里的公钥，和游戏里是同一把）。案例 A 的 `tools/tier_selftest.py` 就是这么做的：150 项，分钟级，抓住了好几处只有真跑才暴露的语法 / 逻辑错。
+- 模拟 .NET 的 `byte[]`：**用十六进制字符串**表示。lupa 把 Lua 字符串当 UTF-8 解码，二进制（签名字节）放进 Lua 字符串会炸。
+- 写完测试再做「突变」：把关键判断（到期比较、设备码比对、`to` 比对）一个个改坏，确认测试会红；不会红的测试等于没测。
+- 时钟、权限、文件系统都放进模拟层里可控（`V3_Now`、`IsPermissionGranted`、内存文件系统），才能测 05:00 边界、无权限退路。
+
+**签名绑定要「载荷里签过名的值」对「包内 / 本机的生效值」逐项比，别只验签名就放行**
+- 授权码载荷里的群号、设备码、到期日、功能位都取自签过名的载荷，再和包里的群号、本机设备码、今天的日期比；功能位不要另存一个可手改的数字，存授权码**原文**，每次启动重新验签再算。
+- 到期日别和包里的常量做字符串相等（改包里常量就绕过了，签发新到期日也会全部失效）；`YYYY-MM-DD` 字符串可直接按字典序和今天比大小，注意用固定时区（北京时间 +8）。
+- 过期的授权码不要把已经玩过的人挡在门外：保留旧的「已解锁」标记当兜底，档位退回最低档。
+- 门禁整体关闭开关（`gate_bypass`）要在**正式包构建的自检里断言为 false**，不要只断言赋值存在。
+
+**Unity Android 的 PlayerPrefs xml（`shared_prefs/<包名>.v2.playerprefs.xml`）里键名和字符串值都是 URL 编码，且区分 `<string> / <int> / <float>`**
+- 导出全部存档键时：从 xml 里取键名和类型（键名要 URL 解码），值仍然走 `PlayerPrefs.GetString/GetInt/GetFloat`（避开 xml 转义）；整数键用 `GetString` 读会得到默认值。应用自己能读写自己的 `/data/data/<包名>/shared_prefs/`，不需要权限。
+- 脚本桥（tolua 一类）调不了 `AndroidJavaObject.Call<T>` 这类泛型方法，别指望 `SharedPreferences.getAll()`；读 xml 更省事。
+- 存档文件里的键和值都 base64，换行 / 竖线 / 等号 / 百分号都不会破坏格式；`SUM` 管误码，**真正管归属的是开发者私钥的签名**（只有 SUM 的话，改 `src` 重算 SUM 就能把档克隆到多台设备）。
+- 导入 = 先备份当前存档（备份失败就取消）→ `DeleteAll` → 写入 → **保留本机原有的授权键** → 关游戏让 Lua 全局缓存重读；别试图热替换。
+
+**用 Bash 工具的 heredoc（`python - <<'EOF'`）写含双反斜杠的补丁脚本，工具会把 `\\` 先折成 `\`，于是 Python 里的 `'\\n'` 变成真换行，Lua 里就报 `unfinished string`**
+- 症状：往 `.lua` 里插字面量 `'\n\n'`，文件里却成了真换行（字符串断成三行）；看 `sed` 输出才发现。
+- 注意：连这份文档本身用 heredoc 追加时也被折了一次——写含反斜杠的内容一律用 Write / Edit 工具。
+- 修法：补丁脚本用 Write 工具落成 `.py` 文件再运行（文件里的反斜杠不会被改），或用 `chr(92)` 拼；改完立刻 `grep -n` 看那一行。
+- 同类：`pip download xxx` 会把 wheel 下载到当前目录，工作区里多出一个 `.whl`，提交前 `git status` 一定要看。
+
+## 分档 / 授权开关（案例 A 2026-10-17 合并时）
+
+**「载入时算一次」的开关跟不上授权：授权码是登录时才验、还能在设置页中途换**
+- 症状：封顶章节写成模块顶层的 `if ... then MAX = X end`，载入时授权模块还没验码（或玩家后来升档），封顶就一直是旧值。
+- 修法：做成函数（`V3C_ApplyCap(why)`），载入时、登录钩子最前面各调一次，并把它暴露给授权模块在换码后调；依赖封顶的其它改写（七日任务恢复原版）也挪进这个函数，降档时能放回去。
+
+**开发用的覆盖键一定要挂在开发开关下面**
+- 症状：调试时加的「存档键 X 存在就把封顶改成 X」在正式包里照样生效，能动存档（Android 备份还原）的人就能绕过付费 / 授权位。
+- 修法：所有 `*_DEV_*` 存档键只在 `OFFLINE_V3_DEV = true` 时读；正式包打包时把开发开关关掉（`--final`），自测脚本里断言这一点。
+
+**按开期过滤活动：在「判当前期」的唯一入口把关，但规划 / 诊断类调用要另给一个不过滤的版本**
+- 做法：十几个活动模块判「现在是哪一期」都经过同一个 `TrackState`，把授权和开期规则塞进它，模块一行不用改。
+- 坑：有些模块拿同一个函数扫未来几十天算日历、查和别的活动撞不撞期；过滤后它们看到的是「全关」，算出来的日历是错的。把原函数改名 `TrackCalendar`（纯日历），扫日历的调用和自测里核对日历的断言改调它。
+- 外部窗口函数（兑换码 / 自排）由别的会话提供：不存在、报错、返回 nil 一律当没有；进行期以外的兑换期由本线按轨道参数补，接口文档里写清楚「返回的是进行期」。
+
+**合并两条长期分叉的分支：先看清哪边的文档只是旧副本**
+- 探索线里的发版说明 / 用户反馈表是从发布线早期抄过去的副本，没有自己的新行；直接取发布线那份即可，不用重新编号。动手前用 `git diff <merge-base> HEAD -- 文件` 看本分支到底加了什么。
+- 同一仓库里 `.py` 是 CRLF、`.lua` 是 LF：用 Python 精确替换前先 `repr()` 看一眼换行，别让断言「找不到」浪费一轮。
+
+## 分档第二批：开局拉满 / 资源券（2026-10-17，会话 C）
+
+**「一键拉满」不能只写存档，也不能指望热刷新界面**
+- 缓存分两类：每次变更即读盘的键（`V3_LoadMap` 类，角色好感 / 藏品 / 持有卡牌）写完就是真值；启动时读进内存、之后只写回不读盘的（道具覆盖层、卡牌星 / 级 / 突破、宠物成长、店铺等级）必须**同时改内存表再落盘**，否则进程里下一次普通落盘会拿旧内存把拉满的值盖回去。
+- 界面（卡牌 / 宠物 / 好感）读的是已建好的模型对象，没有统一的刷新入口；做法是写完存档 + 内存缓存后弹原版确认框「退出游戏」，让玩家重开。拉满函数留 `noQuit` 参数给注入自测用。
+- 备份要读**存档**而不是内存：自测里先在内存里抬了一个探针值、没落盘，备份里自然没有它，还原断言就失败（自测写错，不是产品错）。
+
+**拉满的「只增不减」：每个键各写各的比较，别整张表覆盖**
+- 每个映射键取 `max(现有, 目标)`；已有值更高就保留；自测里先把一个材料抬到 55555、一个角色好感抬到上限 +777、一张卡抬到 100 级，拉满后断言它们没被压回；再拉一遍断言「什么都不再涨」（幂等）。
+- 备份只留**第一份**（拉满前）：第二次拉满时存档已经是满的，覆盖等于丢了真正的「拉满前」。备份失败就不拉。
+- 存档键没法枚举（PlayerPrefs 无 getAll）：备份清单 = 构建期扫所有模块里 `'OFFLINE_...'` 字面量 + 运行时的清档名单。带动态后缀的键（`OFFLINE_V3_UNLOCK_SEEN_<按钮名>` 一类）进不了清单，文档里要写明这个上限。
+
+**原版确认框（DialogUtils.ShowTxtDialogCustom）的文字区只有 4~5 行高**
+- 一页列 11 行选项，真机只露出前 3 行，其余被裁掉且不能滚。做「翻页选择」：一页放一项（▶ 当前项 + 第 n/N 项 + 剩余张数），「换下一项」翻页，最后一页放「暂不兑换」。
+- 对话框按钮按下后不会自己关：`PopManager:GetTopPopLayout()` 核对 `resName == 'Dialog_Confirm_Cancel_UI'` 再 `dispose()`；翻页要延迟 0.3 秒再开下一页（同一帧开会叠）。
+
+**往背包加一个「使用」弹自选面板的道具：配置行 + 现成的礼包使用消息**
+- 配置库 `reptItem` 加一行（`iItemType=6`、`iUseType=2`、`iSubItemType=0`、`sSource='999|活动'`）。`sSource` 为空时详情面板不显示「使用」；`iSubItemType` 101~103 走礼包预览面板 122、104 走原版自选礼包，都不要。点「使用」发 `E_SVR_MSG_ID_OPEN_PACKAGE`，离线分发表里按 `iPktID` 拦自己的券，别的礼包交给原来的处理。
+- 原版 `<宠物自选礼包面板>` / `<角色自选礼包面板>` 只有宠物 / 角色两种固定样式，没有通用列表，别指望复用。
+- 加配置行走 protobuf：parse → `reptItem.add()` → 序列化 → 回读断言（行数 +1、字段逐个对、别的表行数不变）→ 同一输入加两遍结果相同（幂等）。新道具号先在配置库里查空号（本次用 59001）。
+
+**新模块放进独立的小宿主，登录钩子放在 MsgManager 尾部**
+- 宿主文件有体积闸（LoginController / MsgManager 258000 B），新模块各寄生在一个小管理器文件末尾（`SettingManager.lua` / `DailyTaskManager.lua`，锚点 `\nreturn <名>`），MsgManager 只加一个 600 B 的 `V3_OnLogin` 包装去 `CSLTypes.<宿主>` 触一下（懒加载）再调 `Install`。包装排在最后 = 分发表包装在最外层，能抢在先装的处理器前拦消息。
+- 设置页加按钮：借用原版一个没用的按钮（`btn_limit` 点了开浏览器）改字改点击；锚点选在 `InitPanel` 中段的音量行，避开别的会话改的开头，两边补丁互不重叠。
+- 新检测「新档」用现成信号：新手选择键 `OFFLINE_NEWBIE_CHOICE_V1` 写入之前的那一次进主界面 = 新档；再加「等级 ≤ 3 且主线 ≤ 10103」兜底（弹窗没答完就杀进程）。授权接口没装时 `V3_TierAllows` 兜底：开发包全开、正式包全关。
+
+**工具链**
+- 在 Bash 工具的 heredoc 里写含 `\n` 的 Python / Lua 源码，工具层会把 `\` 吃成 `\`，字符串里出现真换行、断言「找不到」。含反斜杠转义的源码一律用 Write 工具落盘再执行，或用 r''' 原始串。
+- `v3_dev.py restore` / `restart` 后要等到「公告点掉 → 主界面」再 `luamain`，否则脚本进了没起来的调度器、什么日志都没有；用「先注入一条 ping 日志确认能回」再注入自测。
+- 设备占用表是每个 worktree 一份，别的会话看不到你写的那一行：别人装包会把你分身里的包覆盖（`dumpsys activity exit-info` 里 reason=PACKAGE UPDATED 就是被人装了包）。上机前先 `exit-info` / `dumpsys package <pkg> | grep lastUpdateTime` 看有没有人在用，上机时直接给对方会话发消息。
+
+**注入的宿主脚本悄悄长到上限边缘，下一个小改动就启动闪退**
+- 现象：把多个离线模块拼进同一个宿主脚本文件（案例 A 是 `LoginController.lua`），文件过大时 Unity 在预加载阶段分配字符串失败直接闪退（实测约 261 KB）。构建自检只断言「不超过上限」，没人注意余量：2026-10-17 发现它已到 257.5 KB，余量不到 500 字节。
+- 对策：每次构建都打印各宿主的大小和余量，余量低于 10 KB 就报警；新模块一律放独立宿主。要腾空间时，挑一个「没有和别的模块共享局部变量、也没被别的模块在加载时取用」的模块整体搬到另一个先于使用点加载的宿主，构建自检里引用它内容的断言一并改指新宿主（按次数计数的断言改成统计两个宿主合计）。
+- 搬之前用脚本查两件事：它定义的局部名有没有被同宿主其他模块用到；它定义的全局函数有没有被其他模块在顶层赋给局部变量（加载顺序一变就成了 nil）。
+
+## 游戏内读相册 / 自定义图片（案例 A 2026-10-17，tier/custom-media）
+
+**Lua 绑定层的「同名重载」只有部分能用，先注入一段探针挨个试再写代码**
+- 实测（Unity 2017.4 + 这套 CSL/ToLua 绑定）：`ImageConversion.LoadImage(tex, bytes)` 抛 `C++ exception`，三参数 `LoadImage(tex, bytes, true)` 能用；`Graphics.Blit(src, dst)` 能用，带材质或带 scale/offset 的重载都抛异常；`GL.Color` 抛异常（其余 GL 调用都行）；`FileStream:Read` 不存在，用 `BinaryReader:ReadBytes`；`EncodeToPNG/JPG` 只能经 `ImageConversion` 静态类调；游戏里没有 `cjson`（`require` 失败），要自带 JSON。
+- `tostring(long 属性)`、`tostring(枚举)` 会报 `field or property __tostring does not exist`：打日志前包 pcall。`GameNS.<不存在的命名空间>` 也返回一张表，不能拿来判断类型存不存在。
+- 裁 / 缩 / 转图不用逐像素：`UI/Default` 材质 + `GL.Begin(QUADS)` 画四边形（四角 uv 按旋转算好）进 `ARGB32` 临时 RenderTexture，再 `ReadPixels`。手机竖拍 JPEG 像素多是横的，要读 EXIF 0x0112 转正。
+
+**pbc 解出来的配置行读「不存在的字段」直接抛错**
+- 症状：认表时写 `if row.iStar then`，对没有这个字段的表报 `[string "protobuf_pbc"]:215: iStar`，整个钩子中断（而且前面已经改了一半的表）。
+- 修法：探测字段统一走 `pcall(function() return r[k] end)`。
+
+**配置表在 Lua 里是普通表：预留行 + 运行时改字段 / 拿掉行，比运行时新建行稳**
+- 构建期往配置库加「空槽位」行（同模板克隆），运行时包住 `DataTableMgr:convertToLocalTable`，每解出一张表就把没填内容的槽位行 `t[id] = nil`：所有「遍历整表」的列表（头像页、卡牌集、碎片页）都看不见。这一步早于登录种子灌入，按整表发碎片的种子也碰不到它。
+- 模块挂在 `DataTableMgr.lua` 末尾最早；但它还没 `return` 时别碰 `CSLTypes.DataTableMgr`（会重入加载），用文件里的局部类表。主块局部变量有 200 个上限，模块里几乎全用全局函数。
+- 运行时把行放回表后，清掉别的模块按表建的索引缓存（这里是 `_G.V3_CFG_CACHE`）。
+
+**注入测试的代码太长时：先 adb push 到游戏目录，再注入一小段 `loadstring(File.ReadAllText(...))()`**
+- `v3_dev.py luamainfile` 把整段代码放进命令行，60 KB 的模块报 `WinError 206 文件名或扩展名太长`。
+
+**真机是用户自己的手机：他一碰屏幕就停手**
+- 本轮两次：安装后用户正好在用手机，脚本拒绝重启；进游戏后进程被用户划掉（logcat 只有 `signal 9 (Killed)`，前后没有任何 Lua / Unity 报错）。先用 `phone_guard.seconds_since_user_activity()` 等到空闲几分钟再继续，别把「被杀」当成自己的 bug 去查。
+
+**剥资源的正式包：活动「入口」和「面板」不在同一个资源包里**
+- 活动图标在共享包（案例 A 是 `prefab/<活动目录>`），面板在各自的包（`prefab/activity/<名字>`）。只剥面板时入口照样出现，点进去才 asset isnull。
+- 修法：保留名单和「运行期允许开哪些活动」用同一份清单（`release_content.json` 的 activities 由打包脚本填进 Lua），不在清单里的活动有兑换码也不开。
+- 验收要用「资源按正式包剥、脚本开发开关还开着」的测试包，才能在没有真授权码时模拟高档位；真正的 `--final` 包只能验无位的情况。
+
+**群里按日期发的活动码，在某些玩家手机上提示「已过期」**
+- 原因：离线版的统一时钟带着「开发时间偏移」（测试时用来模拟过天），正式包为了不打乱已有存档的天数进度，会沿用存档里的偏移。按真实日期签发的码，拿游戏时钟去比就错开了偏移的天数。
+- 修法：码「现在有没有生效」用真实时间判断；交给活动面板的开始 / 结束时间再加上偏移，平移成游戏时钟，这样活动里显示的剩余时间也一致。授权码的到期日同理。
+- 查法：上机检查时故意用一份带偏移的存档跑一次。
+
+**把模块搬去别的宿主时，新宿主文件自己的顶层 local 会遮住同名全局；要「晚于某模块执行」就包成函数、在原位置留桩调用**
+- 例：章节模块载入时要覆盖 memorial 的函数，必须在它之后执行。做法：整块包成 `function X_ModuleLoad() ... end` 挂到新宿主（选载入时不 require 别人的小文件），**桩里不要在宿主载入时 require 别的文件**（案例 A 的实测：装好后第一次冷启动正常，再启动时 require 打断了 Lua 源码的载入，排在后面的宿主全变回原版、模块全没了，且不报错）。桩只定义 `X_EnsureLoaded()`（只执行一次），在进游戏的入口函数第一行和登录钩子里调；验证时一定连续冷启动几次。
+- 搬前除了「共享 local / 顶层取用」两件事，还要查第三件：新宿主文件的顶层 local（反编译文件常有 `local F_GetInt` 之类）有没有和搬过去的代码里的名字重复。
+- 也可以在打包时按标题行从大文件里切出一整节（源文件不动，别的分支还在改它），但要加断言保证那一节只有函数定义、没有顶层语句。
+- Windows 的 Git Bash 里 `sed -i` 会把整个 CRLF 文件改成 LF（不报错）。补丁脚本里的精确替换随即全部对不上。改这种文件一律用 Python（newline=''）。
+
+**Unity VideoPlayer 在安卓读本地文件：给绝对路径，不要 `file://`**
+- 症状：`vp.url = 'file://' .. persistentDataPath .. '/x.mp4'`，画面全黑，logcat `AndroidVideoMedia: Error opening extractor: -10002`。读安装包里 streamingAssets 的视频（jar: 地址）没这个问题，所以样例里的写法搬过来就错了。
+- 修法：`vp.url = '/storage/emulated/0/Android/data/<包名>/files/...'`。
+
+**frida 注入 `luamain` 会和主线程抢 Lua 虚拟机：偶尔直接 SIGSEGV（tolua_getvaluetype）**
+- 主界面静止时注入一段只读状态的代码，主线程在 `lua_pcall` 里崩、画面冻住、进程还活着（frida 吞了信号）。看起来像「自己的模块把游戏卡死了」，其实是注入。
+- 做法：上机验收尽量点界面 + 模块自己打的日志（把状态写进 `installed ...` 这类日志行），注入只在必要时用，崩了先查崩溃栈里有没有 frida / 注入时间点。
+
+**脚本用裸 `adb shell input` 点屏幕，会被当成「用户在用手机」**
+- `phone_guard` 只认 `v3_dev.py` 自己发的输入；裸 adb 点完立刻 `v3_dev.py restart` 会被拒绝。要么全程用 `v3_dev.py tap`，要么等 60 秒以上。
+
+**脚本资源包整体超过 16 MiB，游戏启动就退出（`archive:/CAB-... is corrupted! [Position out of bounds!]`）**
+- **2026-10-18 更正：没有 16 MiB 上限**（17.07 MB / 131 块的包实测能进主界面）。当时撞上的是「某块压缩后恰好等于原始大小」，见文末 "compressed size equals its raw size" 一节。
+- 原因：把离线模块注入进 Unity 的脚本 AssetBundle 后，包解开后的 CAB 超过 16 MiB（案例 A 的实测 128 块 × 128 KB）就读不出来。单个宿主文件有上限，整个包也有上限，两层都要盯。
+- 对策：构建自检打印包总量和余量；空间不够时，给**没打过补丁的原版脚本**批量去掉整行注释、空行和缩进（反编译出来的源码里这三样占很大比例），先挑收益最大的一批。做之前加一条自检：瘦身前后每个文件里的长字符串和含换行的字符串字面量完全一致，再跑语法检查和真机冷启动。
+- 给后续开发留足余量（案例 A 第二阶段的目标 ≥1.5 MB），别等到只剩几十 KB 才处理。
+
+## Worktrees with junctions to the main repo (2026-10-17)
+
+Worktrees that link `src/`, `private/` (keystore!) and `analysis/` back to the main repo through junctions must have those junctions removed first (`rmdir` without `/s`). Check that the main repo's keystore is still there, and only then run `git worktree remove`. Archiving a session that cleans up its worktree carries the same risk, so remove the junctions before archiving.
+
+**注入工具（Frida 把 Lua 源码当命令行参数传）在 Windows 上有长度上限**
+- 超过约 32k 字符的自测脚本直接 `WinError 206`，脚本根本没跑；批量跑自测时如果把输出丢掉，看起来就像「没有任何日志」。要么拆小脚本，要么让注入工具改成读文件。
+- 另一个现象（案例 A BlueStacks）：跑完带拨时间的长自测后，排到主线程执行的注入（ScheduleOnce 回调）常常不再触发，普通注入照常；冷启动恢复。批量跑时每个之前先做一次主线程 ping，失败就冷启动。
+
+**注入探测要排到游戏主线程跑，不要在注入线程里直接执行 Lua**
+- 案例 A：`v3_dev.py lua`（Frida 线程里直接跑 Lua）在游戏开着时探测几次，游戏主线程就卡死：点不动、Unity 日志停，进程还在。`luamain`（排到主线程的定时器里跑）一直没事。
+- 卡死后再用 `luamain` 也不执行，像是「注入坏了」，其实是游戏已经卡住。批量自测前后、探测状态，一律走主线程。
+
+**Windows 的 Git Bash 没有 pkill**：`pkill -f xxx 2>/dev/null` 静默失败，以为停了的后台脚本其实还在跑，会和新开的脚本抢设备。用 PowerShell 的 `Get-CimInstance Win32_Process | ? CommandLine -like '*xxx*' | Stop-Process`。
+
+**整行注释删除要认得块注释**：只删「以 `--` 开头的行」时，块注释 `--[[ ... --]]` 的结尾行 `--]]` 也会被删，注释关不上，后面的代码全被吞掉（语法检查才抓得到，运行时是静默少了一大段）。瘦身器必须跟踪长括号状态（含 `--[[` 开头和同一行就关上的 `[[...]]`），并且对瘦身的每个文件做「长字符串内容前后一致 + 语法」两条自检。
+
+## 改了「发哪些内容」的清单，正式包的派生文件要跟着重算（案例 A 2026-10-18）
+- 现象：发布清单从第 1-5 章改成第 1-15 章，`--final` 打出来的包第 6-15 章对白全没了，构建全绿。
+- 原因：正式包读的是一份预先剥离好的配置文件，只有手动跑剥离脚本才更新；构建脚本只打印「using stripped config」。
+- 做法：正式构建里无条件重算所有由清单派生的文件；或者至少比较派生文件和清单的修改时间，旧了就失败。
+
+## 驱动任务链的开发脚本遇到原版占位任务会「抬门槛」（案例 A 2026-10-18）
+- 原版最后一条任务常是「未完待续」占位，条件不可达（如等级 999）。自动抬门槛的脚本会把存档改成 999 级。
+- 做法：驱动到「最后一条真实任务」为止（DRIVE_LAST），或让脚本对超出表上限的门槛直接停下。
+
+## frida 注入的「排到主线程执行」也会偶发崩溃（案例 A 2026-10-18）
+- 连续两次注入（设参数 + 跑文件）或连跑多个自测时，主线程在 lua_pcall → strstr → frida 钩子里 SIGSEGV。
+- 做法：把参数拼进同一个脚本文件一次注入；每次注入之间留几秒；崩了冷启动，别把它记成游戏 bug（栈里有 frida-gadget 就是工具问题）。
+
+## Device booking table inside git branches (2026-10-18)
+
+A booking file committed in git has one copy per branch or worktree. Two sessions each edited their own copy, and both used the emulator at the same time; one swapped the package and the save under the other's test run. Keep exactly one booking file: an absolute path in the main checkout's working tree. Edit it directly; don't wait for merges.
+
+## Your own `adb input text` trips the "someone is using the device" guard (2026-10-18)
+
+The guard reads the system's last-user-activity time. Input sent with raw `adb shell input text/tap` (not through the tool that records its own input times) counts as a human. Every later scripted tap is then refused. If the refusal message is piped to /dev/null, this looks exactly like "the button does nothing" and gets misread as a game bug. Send all input through the same guarded tool, or wait about 60 s afterwards, and never discard the tool's output.
+
+## License entry must be reachable after first launch
+
+Once a device is unlocked, the startup gate is skipped, so upgrading needs an in-game entry. Ours is avatar → System Settings → "授权码 / 兑换码". The original panel's text fields were sized for short strings; enable `resizeTextForBestFit` and show the device code plus the current tier on two lines. The chapter cap is computed at load, so tell the player to reopen the game after redeeming.
+
+## Rebuilt bundle crashes at preload: a block whose compressed size equals its raw size (2026-10-18, root cause found)
+
+Symptom (Unity 2017.4): at preload, the `UnityPreload` thread dies with `The file 'archive:/CAB-…' is corrupted! [Position out of bounds!]`. A variant of the same bug shows `Could not allocate memory … Trying to allocate: 1844674407…B … MemoryLabel: String` instead. It looks size-dependent: padding a different build to the same final size crashes too, and 144 bytes less boots.
+Root cause: Unity's UnityFS reader treats any block whose compressed size equals its uncompressed size as stored, and it ignores the LZ4HC flag. UnityPy (`CompressionHelper.chunk_based_compress`) falls back to raw only when the compressed size is strictly greater (`>`). On a tie it writes the LZ4 stream and flags it LZ4HC. Unity then copies those 131072 LZ4 bytes into the CAB as if they were data. The next object header inside that block reads a garbage length. A huge positive length gives "Position out of bounds" (the CachedReader limit); a negative one gives the size_t allocation failure. Encrypted Lua barely compresses, so each block lands near 131072. Measured odds are about 0.09% per block, roughly 1 in 10 per 112-block bundle. "Same size crashes" only meant the same leading content, which yields the same blocks.
+Proof (案例 A): every one of 15 saved builds that crashed had exactly one block with `cs == us` and flag 3, and none of the booting builds had one. Unity's exact crashing output with only that block rewritten raw boots. A known-good bundle with one block deliberately re-encoded to exactly 131072 bytes (still valid LZ4) crashes. The allocation size it requested matches the offline simulation byte for byte. In libunity, the message comes from `CachedReader::OutOfBoundsError` (read past the object's end, past the file length, or before its start), which fits a garbage length field. The `cs == us` branch in the archive reader itself was not located in the disassembly; the A/B tests establish it.
+Fix: after any UnityPy save, store every compressed block with `cs >= us` raw (flags with the compression bits cleared). Then assert at build time that no compressed block has `cs >= us`, that no block carries the 0x40 bit, that the block-info table is smaller than raw when compressed, and that the sizes add up. Apply this to every UnityFS bundle you write. Plain serialized files (e.g. `assets/bin/Data/<hash>`) have no blocks, so skip them, or the build breaks. 案例 A: `unityfs_store_incompressible_blocks` + `assert_unityfs_loadable` in `tools/case_a_lua.py`. LZMA also sidesteps the bug, but it is not needed and costs a whole-bundle decompress at startup.
+Myths this retires: there is no "16 MiB / 128-block" bundle limit (a 17.07 MB, 131-block bundle boots), and the per-script "261 KB" limit was very likely the same tie (its log was the allocation variant). Neither was the cause. The old failed experiments are explained too. Packer `(0x40, 0x43)` put 0x43 into every block's flags (UnityPy's tuple is `(data_flag, block_flag)`), which set the 0x40 "streamed" bit, so the loader returned null.
+Verification trap: "process alive after N s" is not a pass, because a white screen with a loader NullReferenceException is alive too. Require the main screen or a log line from after Lua loads.
+Method that cracked it: re-pack the identical CAB with your own minimal UnityFS writer. If that boots, the cause is in the container layout, not the content, and a block-table diff shows it immediately.
+
+**At runtime the config table name has a `Cfg` suffix that the dumped table name lacks; reading the wrong name silently gives 0 rows (2026-10-18, 案例 A)**
+- Symptom: the code that unlocks everything says it worked, and the self-test passed, but the count stayed 0. `dt.reptXxx` is nil at runtime; the real table is `dt.reptXxxCfg`. Some tables have no suffix (`reptCGProp`, `reptPet`). Grep the original client code for how it reads that table (`DataTableMgr.<name>`, `GetAll…Cfg`).
+- Fix: try both names (`dt.xCfg or dt.x`), and give every count check `> 0`. Otherwise "0 == 0" passes and hides the bug.
+
+**A client getter that the decompiler emits as `return nil` was filled by the server; offline it stays empty forever (2026-10-18)**
+- Example: `BackRoomModel:GetCollectorCGIDs()` decompiles to `return nil`, so the CG album is dark even when the save owns every CG. Override the method on the class at login and build the list from the offline save.
+
+**"Unlock everything" exposes dead buttons the original never shipped (2026-10-18)**
+- Symptom: after a perk that makes every unlock check pass, the main screen shows entries that do nothing when tapped (案例 A: the "升星" button btn_petStarUp on a 某系统界面, and the blank 好友 button).
+- Cause: the prefab still contains unreleased entries that the original kept hidden through unreachable unlock conditions (level 130 > max 120). They have no click handler.
+- Fix: keep a list of button names that stay hidden offline. Check it first in the single show/hide entry (IsFunctionUnLocked): SetActive(false) and return "locked". Also drop those buttons from the "new feature" popup.
+
+**A once-per-save reward mail misses rewards added later (2026-10-18)**
+- Symptom: players who already claimed the perk mail never get a voucher added afterwards (店铺升满券).
+- Fix: store the item IDs already claimed through the mail; attachments = all minus claimed. When new ones appear after a claim, flip the same mail back to unread with a "补发" (top-up) title. Old saves without the record get the first-version list written for them.

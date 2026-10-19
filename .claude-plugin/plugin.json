@@ -1,0 +1,10 @@
+{
+  "name": "offline-game-revival",
+  "version": "1.0.0",
+  "description": "Turn server-dead mobile games into offline, playable preservation builds, and recover lost game data from player screenshots and screen recordings.",
+  "author": { "name": "Cynthia-wlan9509" },
+  "homepage": "https://github.com/Cynthia-wlan9509/offline-game-revival",
+  "repository": "https://github.com/Cynthia-wlan9509/offline-game-revival",
+  "license": "MIT",
+  "keywords": ["game-preservation", "offline", "shut-down-game", "apk", "lua", "unity", "layaair", "ocr", "screen-recording", "keyframes", "agent-skills", "claude-code"]
+}
