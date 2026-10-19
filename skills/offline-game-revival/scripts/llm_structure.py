@@ -85,6 +85,13 @@ def parse_json(text):
     return json.loads(text[s:e + 1])
 
 
+def key_fields(sec, row):
+    """已知分类用 KEYS；自定义分类（如 gift_favor）取前两个非 image 字段当键。"""
+    if sec in KEYS:
+        return KEYS[sec]
+    return tuple([k for k in row if k not in ("image", "chunk", "conflict", "note")][:2])
+
+
 def merge(raw_dir):
     merged = {k: [] for k in KEYS}
     index = {k: {} for k in KEYS}
@@ -94,13 +101,14 @@ def merge(raw_dir):
         except Exception:
             continue
         for sec, rows in d.items():
-            if sec not in merged or not isinstance(rows, list):
+            if not isinstance(rows, list):
                 continue
+            merged.setdefault(sec, []); index.setdefault(sec, {})
             for r in rows:
                 if not isinstance(r, dict):
                     continue
                 r.setdefault("chunk", os.path.basename(f)[:-5])
-                k = tuple(json.dumps(r.get(x), ensure_ascii=False) for x in KEYS[sec])
+                k = tuple(json.dumps(r.get(x), ensure_ascii=False) for x in key_fields(sec, r))
                 body = json.dumps({x: v for x, v in r.items() if x not in ("image", "chunk", "conflict")}, ensure_ascii=False, sort_keys=True)
                 prev = index[sec].get(k)
                 if prev is None:

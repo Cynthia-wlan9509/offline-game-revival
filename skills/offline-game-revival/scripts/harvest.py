@@ -5,14 +5,16 @@
 全程离线、不花 token：
   1. 视频抽关键帧：只保留"画面变了、而且停稳了"的帧（跳过转场动画和滚动途中的模糊帧）；
      一直在变（长列表滚动）时每隔 --max-gap 秒兜底取一帧。
-  2. 近似去重：差值哈希（dHash，256 位，裁掉顶部状态栏）+ 汉明距离；截图和录屏帧跨来源也能去重。
+  2. 近似去重：差值哈希（dHash，256 位，裁掉顶部状态栏）+ 汉明距离初筛，再比 OCR 文字：
+     画面像、文字也一样（数字完全相同）才算重复。同一界面只换了数字（送礼好感、卡牌等级、委托奖励）会被保留。
+     截图和录屏帧跨来源也能去重。
   3. 本地 OCR：RapidOCR（ONNX，CPU 可跑，中英日韩通用模型），输出文字 + 坐标 + 置信度，按阅读顺序拼行。
   4. 按界面分类：关键词规则（可用 --rules 自定义 JSON），每类一个文本文件，并切成适合喂给大模型的分块。
   可中断续跑：已处理的源文件记录在 <out>/state.json，OCR 结果追加写入 <out>/ocr.jsonl。
 
 依赖：pip install opencv-python-headless numpy pillow rapidocr_onnxruntime
 用法：
-  python harvest.py <输入目录> <输出目录> [--scene 0.12] [--stable 0.02] [--max-gap 4] [--hash-dist 24]
+  python harvest.py <输入目录> <输出目录> [--scene 0.04] [--stable 0.02] [--max-gap 3] [--hash-dist 24] [--text-sim 0.9]
                     [--rules rules.json] [--no-ocr] [--limit N] [--chunk-chars 12000]
 输出：
   <out>/frames/        录屏抽出的关键帧（jpg，文件名含来源与时间点）
@@ -97,32 +99,75 @@ def dhash_bits(img, size=16, crop_top=0.06):
     return np.packbits(bits)
 
 
+NUM_RE = re.compile(r"\d+")
+
+
+def text_key(text):
+    """比较用的文字：去空白；数字单独拿出来要求完全一致（数值界面往往只有数字在变）。"""
+    s = re.sub(r"\s+", "", text or "")
+    return NUM_RE.sub("#", s), tuple(NUM_RE.findall(s))
+
+
+def same_text(a, b, sim):
+    if a[1] != b[1]:
+        return False
+    if a[0] == b[0]:
+        return True
+    import difflib
+    m = difflib.SequenceMatcher(None, a[0], b[0], autojunk=False)
+    return m.quick_ratio() >= sim and m.ratio() >= sim
+
+
 class Deduper:
-    def __init__(self, max_dist):
+    """dHash 近似 + （有 OCR 时）文字相同 才算重复。"""
+
+    def __init__(self, max_dist, text_sim=0.9):
         import numpy as np
         self.np = np
         self.max_dist = max_dist
+        self.text_sim = text_sim
         self.hashes = None
         self.owner = []
+        self.keys = []
 
-    def check(self, h, name):
-        """返回已存在的近似重复图名；否则登记并返回 None。"""
+    def find(self, h, text=None):
+        """返回已存在的重复图名，没有则 None。text 为 None 时只看哈希。"""
         np = self.np
-        if self.hashes is not None and len(self.owner):
-            x = np.bitwise_xor(self.hashes, h[None, :])
-            d = np.unpackbits(x, axis=1).sum(axis=1)
-            i = int(d.argmin())
-            if d[i] <= self.max_dist:
-                return self.owner[i]
-        self.hashes = h[None, :] if self.hashes is None else np.vstack([self.hashes, h[None, :]])
-        self.owner.append(name)
+        if self.hashes is None or not len(self.owner):
+            return None
+        x = np.bitwise_xor(self.hashes, h[None, :])
+        d = np.unpackbits(x, axis=1).sum(axis=1)
+        idx = np.nonzero(d <= self.max_dist)[0]
+        if text is None:
+            return self.owner[int(idx[d[idx].argmin()])] if len(idx) else None
+        k = text_key(text)
+        for i in idx[np.argsort(d[idx])]:
+            other = self.keys[int(i)]
+            if other is None or same_text(k, other, self.text_sim):
+                return self.owner[int(i)]
         return None
+
+    def add(self, h, name, text=None):
+        self.hashes = h[None, :] if self.hashes is None else np_vstack(self.np, self.hashes, h)
+        self.owner.append(name)
+        self.keys.append(text_key(text) if text is not None else None)
+
+    def check(self, h, name, text=None):
+        dup = self.find(h, text)
+        if dup is None:
+            self.add(h, name, text)
+        return dup
+
+
+def np_vstack(np, a, h):
+    return np.vstack([a, h[None, :]])
 
 
 # ---------------------------------------------------------------- 视频抽帧
 def video_keyframes(path, scene, stable, max_gap, step_s=0.25):
-    """逐 step_s 秒采样：画面相对上一张保留帧变化 > scene，且相对上一采样 < stable（停稳了）才保留。
-    持续变化超过 max_gap 秒（长列表滚动、播放动画）时兜底保留当前帧。yield (秒, BGR图)。"""
+    """逐 step_s 秒采样，产出候选帧：画面停稳（相对上一采样 < stable）且相对上一候选变化 > scene；
+    画面停着不动时每 max_gap 秒也出一个候选（只有数字在变的界面靠这个）；一直在变（长列表滚动）时同样每 max_gap 秒兜底。
+    候选帧是否保留由 OCR 文字决定（见 Deduper）。yield (秒, BGR图)。"""
     import cv2
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
@@ -145,7 +190,8 @@ def video_keyframes(path, scene, stable, max_gap, step_s=0.25):
             g = small_gray(img)
             moving = frame_diff(g, prev)
             changed = frame_diff(g, kept)
-            if kept is None or (changed > scene and moving < stable) or (changed > scene and t - kept_t >= max_gap):
+            gap = t - kept_t >= max_gap
+            if kept is None or (moving < stable and (changed > scene or gap)) or (changed > scene and gap):
                 kept, kept_t = g, t
                 yield t, img
             prev = g
@@ -205,9 +251,12 @@ def reading_order(lines):
     return out
 
 
-def as_text(lines):
+def as_text(lines, skip_top=0):
+    """按行拼文字；box 下沿在 skip_top 像素以上的（状态栏：时间、电量）不要。"""
     rows, last_y = [], None
     for l in lines:
+        if l["box"][3] <= skip_top:
+            continue
         cy = (l["box"][1] + l["box"][3]) / 2
         h = max(1, l["box"][3] - l["box"][1])
         if last_y is None or abs(cy - last_y) > h * 0.5:
@@ -248,11 +297,13 @@ def main():
     ap = argparse.ArgumentParser(description="screenshots & screen recordings -> keyframes -> dedupe -> OCR -> categorized text")
     ap.add_argument("input")
     ap.add_argument("output")
-    ap.add_argument("--scene", type=float, default=0.12, help="与上一保留帧的平均灰度差 > 此值才算新画面（0~1）")
+    ap.add_argument("--scene", type=float, default=0.04, help="与上一候选帧的平均灰度差 > 此值算新画面（0~1）")
     ap.add_argument("--stable", type=float, default=0.02, help="与上一采样差 < 此值才算停稳")
-    ap.add_argument("--max-gap", type=float, default=4.0, help="持续变化时每隔多少秒兜底取一帧")
+    ap.add_argument("--max-gap", type=float, default=3.0, help="画面静止或持续变化时，每隔多少秒取一个候选帧交给 OCR 比对")
     ap.add_argument("--hash-dist", type=int, default=24,
-                    help="256 位 dHash 汉明距离 ≤ 此值视为重复（实测：同一界面截图 vs 录屏帧 2~12，不同界面 ≥60）")
+                    help="256 位 dHash 汉明距离 ≤ 此值才进一步比文字（实测：同一界面截图 vs 录屏帧 2~12，不同界面 ≥60）")
+    ap.add_argument("--text-sim", type=float, default=0.9,
+                    help="画面相近时，去掉数字后文字相似度 ≥ 此值且数字完全相同，才算重复")
     ap.add_argument("--rules", help="分类规则 JSON：{分类名: [关键词...]}，与默认规则合并（同名覆盖）")
     ap.add_argument("--no-ocr", action="store_true", help="只抽帧去重，不做 OCR")
     ap.add_argument("--limit", type=int, default=0, help="最多处理多少个源文件（试跑用）")
@@ -267,7 +318,7 @@ def main():
     state = json.load(open(state_p, encoding="utf-8")) if os.path.exists(state_p) else {"done": {}, "stats": {}}
     ocr_p = os.path.join(a.output, "ocr.jsonl")
     ocr = None if a.no_ocr else OCR()
-    dedup = Deduper(a.hash_dist)
+    dedup = Deduper(a.hash_dist, a.text_sim)
 
     # 续跑：把已保留的图重新登记进去重表
     if os.path.exists(ocr_p):
@@ -278,7 +329,7 @@ def main():
                 continue
             img = load_bgr(r["image"])
             if img is not None:
-                dedup.check(dhash_bits(img), r["image"])
+                dedup.add(dhash_bits(img), r["image"], r.get("text") if ocr else None)
 
     st = state["stats"]
     for k in ("sources", "videos", "images", "frames", "kept", "dup"):
@@ -307,17 +358,18 @@ def main():
                 items = [(None, img, path)] if img is not None else []
             kept_here = 0
             for t, img, name in items:
-                if dedup.check(dhash_bits(img), name) is not None:
+                h = dhash_bits(img)
+                rec = {"image": name, "source": key, "t": t, "w": int(img.shape[1]), "h": int(img.shape[0])}
+                if ocr:
+                    lines = ocr(img)                       # 先 OCR 再去重：只换了数字的界面哈希几乎不变
+                    rec["lines"] = lines
+                    rec["text"] = as_text(lines, skip_top=int(img.shape[0] * 0.06))
+                    rec["category"] = classify(rec["text"], rules)
+                if dedup.check(h, name, rec.get("text") if ocr else None) is not None:
                     st["dup"] += 1
                     continue
                 if t is not None:
                     save_jpg(img, name)
-                rec = {"image": name, "source": key, "t": t, "w": int(img.shape[1]), "h": int(img.shape[0])}
-                if ocr:
-                    lines = ocr(img)
-                    rec["lines"] = lines
-                    rec["text"] = as_text(lines)
-                    rec["category"] = classify(rec["text"], rules)
                 fo.write(json.dumps(rec, ensure_ascii=False) + "\n")
                 kept_here += 1
                 st["kept"] += 1
