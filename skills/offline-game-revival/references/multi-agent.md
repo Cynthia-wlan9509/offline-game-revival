@@ -1,0 +1,56 @@
+# 多 agent 分工：贵模型做判断，便宜模型干体力活
+
+一款游戏的离线化动辄几百个接口、几十万行反编译代码、几十 GB 录屏。全交给最强的模型，额度烧得很快；
+全交给便宜模型，又会在关键推断上出错，还会自信地宣布"已完成"。实践下来最划算的是分三层：
+
+| 角色 | 做什么 | 适合的模型（举例，按你手头有的选） |
+|---|---|---|
+| **主 agent（lead）** | 定方案、做关键推断（补丁点、校验算法、存档结构）、定位疑难 bug、**检查下面两层交回来的结果** | Claude Opus / GPT 旗舰 / DeepSeek-R1 这类推理强的 |
+| **worker** | 规格已经写清楚的执行：按清单实现一组接口、写回归测试、批量生成数值表、按方案重构 | Claude Sonnet / GPT 中档 / DeepSeek-V3 / Qwen |
+| **scout** | 只读的大范围体力活：全仓搜调用方、通读长日志并摘要、反编译产物初筛、OCR 文本结构化 | Claude Haiku / GPT mini / DeepSeek-V3 / 本地 Qwen |
+
+人类负责：真机上的操作确认、对外发布、任何账号和密钥。
+
+## 每个阶段怎么拆
+
+| 阶段 | 主 agent | 可以并行外包的 |
+|---|---|---|
+| 侦察 | 判断逻辑层在哪、加密/校验方式 | scout：列出全部网络调用点、搜所有 `localStorage` / 存档读写、统计资源目录 |
+| 接口清单 | 定输出格式、抽查 | scout ×N：按模块分组（案例 B 把 315 个接口分成 A/B/C 三组并行）逐个记下"调用方读了哪些字段" |
+| 写假服务器 | 设计存档结构、核心模块、公共工具 | worker ×N：每人一组接口，**不碰别人的文件**，各自带 timewarp 用例 |
+| 补丁 | 找锚点、写主入口 | — （补丁点之间耦合强，别拆） |
+| 时间快进测试 | 定门槛和清单 | worker：按 `timewarp.md` 的清单补用例 |
+| 真机验收 | 判断"通过"的标准、读失败现场 | scout：读长日志找第一个异常；人类：点手机 |
+| 数值抢救 | 把结构化结果对上配置 id、处理冲突 | 本地脚本（0 token）→ scout 级模型做结构化（`llm_structure.py`） |
+
+不该拆的：几次工具调用就能做完的小活（子 agent 从零开始，要重新读上下文，反而更贵）；
+两个任务改同一批文件；后一步依赖前一步的推断结果。
+
+## 交接格式（照抄就行）
+
+**派活（主 agent → worker / scout）**，每一项都要写：
+
+```text
+目标：一句话说明要交付什么
+背景：只给必要的（存档结构在 offline/00_core.js 第 20~60 行；接口规格在 api/B.json 的 delegate/* 部分）
+范围：只改 offline/32_delegate.js 和 tests/delegate.test.js；不要动其它文件
+完成标准：node tests/delegate.test.js 全绿；新增用例覆盖 timewarp.md 清单的"计时类"三条
+交付格式：改了哪些文件 / 测试输出最后 5 行 / 没做完或拿不准的点（单列）
+```
+
+**交付（worker / scout → 主 agent）**：做了什么、证据（测试输出、文件行号）、**拿不准的点单列**。
+不允许只写"已完成"。
+
+**主 agent 收货**：自己重跑一遍测试，抽查 diff，确认没越界改文件，再告诉用户。子 agent 的结论是线索，不是事实。
+
+## 在不同工具里怎么落地
+
+- **Claude Code**：本仓库作为插件安装时自带 `agents/revival-scout.md`、`agents/revival-worker.md`、`agents/revival-verifier.md`，
+  主 agent 会按描述自动派活；也可以复制到 `~/.claude/agents/` 单独用。
+- **支持子 agent 的其它工具**（OpenCode、Codex 等）：把 `agents/*.md` 的正文当成子 agent 的系统提示词，模型按上表选。
+- **只有聊天网页（DeepSeek / ChatGPT / Kimi 网页版）**：开两个对话。一个贴 `prompts/chat-playbook.md` 当主 agent，
+  它会告诉你要跑什么命令、要把什么结果贴回来；另一个专门做体力活（比如把 `for_llm/` 分块逐个贴进去）。
+  能用 API 的话，体力活直接交给 `scripts/llm_structure.py` 批量跑，不用手贴。
+- **用 DeepSeek 驱动整套 agent**：任何支持自定义 OpenAI 兼容接口的 agent 工具都能接 DeepSeek
+  （OpenCode、Cline、Roo Code 等）；DeepSeek 也提供 Anthropic 兼容接口，Claude Code 可通过设置 `ANTHROPIC_BASE_URL` 接入，具体以 DeepSeek 官方文档为准。
+  这时建议 R1 类推理模型当主 agent、V3 类当 worker。

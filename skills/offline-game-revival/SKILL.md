@@ -20,11 +20,18 @@ metadata:
 1. **侦察** — 解包，定位逻辑层（脚本 / 数据 / 资源），确认加密与校验方式。→ `references/recon.md`
 2. **定补丁点** — 找出必须拦截的入口：启动流程、登录、网络发送、资源校验、进度存档。
 3. **写补丁** — 锚点替换 + 断言，逻辑放独立模块，打标记。→ `references/patch.md`
-4. **重打包** — 合并资源、替换产物、修正校验字段、签名、对齐。
-5. **真机验收** — 断网冷启动、全链路功能、杀进程重启。→ `references/verify.md`
-6. **正常游玩复测** — 功能都通了之后，从全新档按玩家顺序玩一遍，量资源和门槛。→ `references/playtest.md`
-7. **数值抢救** — 服务端配置随停服消失，用玩家截图/录屏还原：本地抽帧 + 去重 + OCR（`scripts/harvest.py`，0 token）→ 文本模型结构化 → 写进数值表。→ `references/media-harvest.md`
-8. **固化** — 把"已实现"和"已验证"分开写，记录失败账本。
+4. **时间快进自测** — 上真机之前，把假服务器放进虚拟时钟沙箱：每日重置、签到、体力、计时、限购、重启持久化，并对账"回包说给了的东西存档里真有"。→ `references/timewarp.md`（`scripts/timewarp/`）
+5. **重打包** — 合并资源、替换产物、修正校验字段、签名、对齐。
+6. **真机验收** — 断网冷启动、全链路功能、杀进程重启。→ `references/verify.md`
+7. **正常游玩复测** — 功能都通了之后，从全新档按玩家顺序玩一遍，量资源和门槛（可先用 timewarp 的 `simulate` 跑 30 天经济曲线）。→ `references/playtest.md`
+8. **数值抢救** — 服务端配置随停服消失，用玩家截图/录屏还原：本地抽帧 + 去重 + OCR（`scripts/harvest.py`，0 token）→ 任意便宜文本模型批量结构化（`scripts/llm_structure.py`）→ 写进数值表。→ `references/media-harvest.md`
+9. **固化** — 把"已实现"和"已验证"分开写，记录失败账本。
+
+## 分工
+
+量大的阶段（接口清单、按模块实现假服务器、读长日志、OCR 结构化）适合拆给子 agent 并行：主 agent 做判断和收货，
+worker 按规格实现，scout 只读搜索。交接格式、各阶段怎么拆、在不同工具（含只有聊天网页的 DeepSeek / ChatGPT）里怎么落地：
+`references/multi-agent.md`。子 agent 交回的结论要自己复核后再告诉用户。
 
 ## 四条硬规则
 
@@ -48,6 +55,9 @@ metadata:
 - `references/playtest.md` — 全新档正常游玩复测、门槛分项记录、数值校准顺序
 - `references/media-harvest.md` — 从玩家截图/录屏抢救数值：抽关键帧、去重、本地 OCR、分类、交给文本模型的提示词与 JSON 格式
 - `scripts/harvest.py` — 上面流程的脚本（OpenCV + RapidOCR，可中断续跑）
+- `scripts/llm_structure.py` — 把 OCR 分块批量交给任意 OpenAI 兼容模型（DeepSeek / OpenAI / 通义 / Kimi / Ollama）结构化并合并
+- `references/timewarp.md` — 时间快进测试：虚拟时钟、重启持久化、奖励对账、N 天经济模拟（`scripts/timewarp/`，Node 零依赖）
+- `references/multi-agent.md` — 主 agent / worker / scout 分工与交接格式
 - `references/pitfalls.md` — 失败账本（现象 → 原因 → 修法）
 - `references/distribution.md` — 发新包不丢存档、一种包按授权码分档、活动开期、玩家自定义内容、存档迁移
 - `references/case-a-unity-lua.md` — 完整案例：案例 A（Unity + Lua 手游）离线纪念版

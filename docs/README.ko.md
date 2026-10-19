@@ -30,7 +30,9 @@
 | 🖥️ **로컬 가짜 서버** | HTTP/JSON 계층을 가로채 수백 개의 엔드포인트에 로컬 세이브 데이터로 응답합니다. 모든 엔드포인트의 호출처와 읽는 값을 파악해 안전한 기본값을 생성하는 방법론을 담았습니다. |
 | 📦 **리패키징 & 재서명** | 엔진 캐시 체크섬 재계산, 리소스 테이블 재구성, zipalign, 서명까지. 리버스 엔지니어링으로 밝혀낸 캐시 체크섬 알고리즘과 LayaAir native용 로더 패치도 포함되어 있습니다. |
 | ✅ **실기기 검수** | "화면이 열린다"와 "동작한다"는 다릅니다. 상태가 실제로 바뀌고 콜드 리스타트 후에도 유지되어야 합니다. 튜토리얼 기반 테스트로, 게임 자체의 가이드 단계를 실제 탭으로 그대로 따라갑니다. |
-| 🎞️ **스크린샷·녹화 영상에서 데이터 구출** *(신규)* | 상점 가격, 가챠 확률, 보상, 카드 능력치 같은 서버 측 수치는 서버와 함께 사라집니다. `scripts/harvest.py`는 **수십 GB의 플레이어 스크린샷과 화면 녹화**를 분류된 수백 KB의 텍스트로 바꿔 줍니다. 키프레임 추출 → 유사 중복 제거 → 로컬 OCR → 화면별 그룹화 순으로 진행되며, **완전 오프라인에 토큰 소모 0**입니다. 이후 저렴한 텍스트 LLM에 구조화만 맡기면 됩니다. |
+| 🎞️ **스크린샷·녹화 영상에서 데이터 구출** *(신규)* | 상점 가격, 가챠 확률, 보상, 카드 능력치 같은 서버 측 수치는 서버와 함께 사라집니다. `scripts/harvest.py`는 **수십 GB의 플레이어 스크린샷과 화면 녹화**를 분류된 수백 KB의 텍스트로 바꿔 줍니다. 키프레임 추출 → 유사 중복 제거 → 로컬 OCR → 화면별 그룹화 순으로 진행되며, **완전 오프라인에 토큰 소모 0**입니다. 이후 `scripts/llm_structure.py`가 DeepSeek / OpenAI / Qwen / Kimi / 로컬 Ollama로 일괄 처리해 하나로 병합된 JSON + CSV를 만들어 줍니다. |
+| ⏩ **타임트래블 테스트** *(신규)* | `scripts/timewarp`는 가짜 서버를 가상 시계가 있는 샌드박스에서 실행합니다. 며칠씩 빨리 감기하고, 앱을 재시작하고, **모든 보상을 감사**합니다. 응답에는 "보석 +50"이라고 되어 있는데 세이브가 그대로라면 실패로 처리됩니다. 30일치 플레이를 1초 만에 시뮬레이션해서 각 관문이 며칠째에 열리는지 확인할 수 있습니다. 의존성 없음. |
+| 🤝 **어떤 에이전트든, 어떤 모델이든** *(신규)* | `SKILL.md` + `AGENTS.md`로 Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI 등에서 동작합니다. scout / worker / verifier 서브 에이전트 역할이 포함되어 있어, 비싼 모델은 판단을 맡고 저렴한 모델은 잡무를 처리합니다. 에이전트가 아예 없나요? `prompts/chat-playbook.md`를 DeepSeek / ChatGPT에 붙여 넣고, 모델이 알려 주는 명령을 실행하면 됩니다. |
 | 📚 **실패 대장** | 실제로 겪은 함정 80 KB 분량: 증상 → 근본 원인 → 해결 순서로 정리했습니다. 시작 시점 레이스로 인한 크래시, 조용히 화면 밖으로 밀려난 UI, 가짜 응답에 "오염"된 풀링 XHR 객체, 디스크에 쓰이지 않던 세이브…… |
 
 ## 🏆 실제 게임으로 검증
@@ -51,12 +53,17 @@
 /plugin install offline-game-revival@offline-game-revival
 ```
 
-**`SKILL.md`를 읽는 모든 에이전트** — 폴더를 에이전트의 skills 디렉터리로 복사하세요. Claude Code의 경우:
+**Agent Skills를 지원하는 모든 에이전트**(Claude Code, OpenAI Codex, Cursor, GitHub Copilot, OpenCode, Goose…) — 폴더를 해당 에이전트의 skills 디렉터리로 복사하세요:
 
 ```bash
 git clone https://github.com/Cynthia-wlan9509/offline-game-revival
-cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/
+cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/   # Claude Code
+cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Codex
 ```
+
+그 밖의 에이전트는 [`AGENTS.md`](../AGENTS.md)를 읽고, 이 파일이 스킬로 안내합니다. 서브 에이전트 역할은 [`agents/`](../agents)에 있습니다.
+
+**채팅만 가능한 경우 (DeepSeek / ChatGPT / Kimi 웹)** — 첫 메시지로 [`prompts/chat-playbook.md`](../prompts/chat-playbook.md)를 붙여 넣으세요. 모델이 총괄 엔지니어가 되고, 사용자는 모델이 알려 주는 명령을 실행한 뒤 출력을 다시 붙여 넣으면 됩니다.
 
 그다음엔 그냥 말하면 됩니다. *"이 게임 서버가 종료됐어. 오프라인으로 플레이할 수 있게 만들어 줘"* 또는 *"15 GB짜리 화면 녹화에서 상점 가격이랑 가챠 확률을 뽑아 줘."*
 
@@ -68,12 +75,24 @@ cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/
 pip install -r skills/offline-game-revival/scripts/requirements.txt
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out --limit 50   # trial run
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out              # full run, resumable
+export DEEPSEEK_API_KEY=sk-...                                                               # 또는 OPENAI_API_KEY, DASHSCOPE_API_KEY… (PowerShell: $env:DEEPSEEK_API_KEY="sk-...")
+python skills/offline-game-revival/scripts/llm_structure.py ./out --limit 2                  # 2개 청크만 구조화해서 품질 확인
+python skills/offline-game-revival/scripts/llm_structure.py ./out                            # 전체 → out/structured/merged.json
 ```
 
 - **의미 있는 키프레임만**: 화면이 *바뀐 뒤 안정되었을 때*만 프레임을 남기고, 전환 애니메이션과 모션 블러는 건너뜁니다. 길게 스크롤되는 목록도 빠짐없이 샘플링합니다.
 - **소스 간 중복 제거**: 스크린샷과 녹화 영상에 같은 화면이 있으면 하나로 합칩니다(상태 표시줄은 무시).
 - **로컬 OCR**(RapidOCR / ONNX, CPU 전용, CJK + 라틴 문자 지원): 바운딩 박스와 읽기 순서를 함께 제공합니다.
-- **출력**: `for_llm/*.txt` 청크와, 바로 쓸 수 있는 프롬프트 및 JSON 스키마([`media-harvest.md`](../skills/offline-game-revival/references/media-harvest.md) 참고).
+- **출력**: `for_llm/*.txt` 청크와, 바로 쓸 수 있는 프롬프트 및 JSON 스키마([`media-harvest.md`](../skills/offline-game-revival/references/media-harvest.md) 참고); `llm_structure.py`가 모든 응답을 병합하고 서로 충돌하는 수치를 표시합니다.
+
+## ⏩ 타임트래블 테스트 (단독 실행)
+
+```bash
+node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js            # 51개 통과
+BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js    # 심어 둔 버그 3개를 잡아냄
+```
+
+`timewarp.create({ files, entry, inventory, granted })`를 직접 만든 가짜 서버에 연결하세요. 테스트해 볼 만한 시간 관련 버그 체크리스트(리셋 시각, 출석 루프, 회복 상한, 타이머, 재시작 후 지속성)는 [`timewarp.md`](../skills/offline-game-revival/references/timewarp.md)에 있습니다.
 
 ## 🧭 철학
 
@@ -100,4 +119,4 @@ python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out 
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 서비스 종료 · 서비스 종료 게임 · 오프라인화 · 게임 보존 · 모바일 게임 복구 · 화면 녹화 OCR</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 타임트래블 테스트 · 멀티 에이전트 · 시간 여행 테스트 · 서비스 종료 · 서비스 종료 게임 · 오프라인화 · 게임 보존 · 모바일 게임 복구 · 화면 녹화 OCR</sub>

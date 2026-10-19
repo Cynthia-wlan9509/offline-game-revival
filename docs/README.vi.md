@@ -30,7 +30,9 @@ Mỗi năm có hàng trăm game mobile đóng cửa. File APK vẫn nằm trong 
 | 🖥️ **Máy chủ giả cục bộ** | Chặn tầng HTTP/JSON và trả lời hàng trăm endpoint từ dữ liệu lưu cục bộ. Kèm phương pháp lập bản đồ xem ai gọi từng endpoint và nó đọc gì, rồi sinh ra các giá trị mặc định an toàn. |
 | 📦 **Đóng gói lại & ký lại** | Tính lại checksum cache của engine, dựng lại bảng tài nguyên, zipalign, ký. Gồm thuật toán checksum cache được dịch ngược và các bản vá loader cho LayaAir native. |
 | ✅ **Nghiệm thu trên thiết bị** | "Màn hình mở được" ≠ "chạy được". Trạng thái phải thực sự thay đổi và còn nguyên sau khi khởi động lại hoàn toàn. Kiểm thử theo hướng dẫn: làm theo từng bước hướng dẫn của chính game bằng những cú chạm thật. |
-| 🎞️ **Cứu dữ liệu từ ảnh chụp & video quay màn hình** *(mới)* | Các con số phía máy chủ (giá cửa hàng, tỉ lệ gacha, phần thưởng, chỉ số thẻ) sẽ mất cùng máy chủ. `scripts/harvest.py` biến **hàng chục GB ảnh chụp và video quay màn hình của người chơi** thành vài trăm KB văn bản đã phân loại — khung hình chính → loại bỏ ảnh gần trùng → OCR cục bộ → gom nhóm theo từng màn hình — **hoàn toàn offline, không tốn token**, sẵn sàng để bất kỳ LLM văn bản giá rẻ nào cấu trúc hóa. |
+| 🎞️ **Cứu dữ liệu từ ảnh chụp & video quay màn hình** *(mới)* | Các con số phía máy chủ (giá cửa hàng, tỉ lệ gacha, phần thưởng, chỉ số thẻ) sẽ mất cùng máy chủ. `scripts/harvest.py` biến **hàng chục GB ảnh chụp và video quay màn hình của người chơi** thành vài trăm KB văn bản đã phân loại — khung hình chính → loại bỏ ảnh gần trùng → OCR cục bộ → gom nhóm theo từng màn hình — **hoàn toàn offline, không tốn token**, sau đó `scripts/llm_structure.py` xử lý hàng loạt qua DeepSeek / OpenAI / Qwen / Kimi / Ollama cục bộ và gộp thành JSON + CSV. |
+| ⏩ **Kiểm thử du hành thời gian** *(mới)* | `scripts/timewarp` chạy server giả của bạn trong sandbox có đồng hồ ảo: tua nhanh nhiều ngày, khởi động lại app và **kiểm toán mọi phần thưởng** — nếu phản hồi ghi "+50 gem" mà file save không đổi thì test thất bại. Mô phỏng 30 ngày chơi trong một giây và xem mỗi cột mốc mở được vào ngày thứ mấy. Không phụ thuộc thư viện nào. |
+| 🤝 **Agent nào, model nào cũng được** *(mới)* | Chạy được với Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… qua `SKILL.md` + `AGENTS.md`. Có sẵn các vai trò sub-agent (scout / worker / verifier) để model đắt tiền ra quyết định, còn model rẻ làm phần việc chân tay. Không có agent nào cả? Dán `prompts/chat-playbook.md` vào DeepSeek / ChatGPT rồi chạy các lệnh nó đưa ra. |
 | 📚 **Sổ ghi lỗi** | 80 KB những cái bẫy có thật: triệu chứng → nguyên nhân gốc → cách sửa. Crash do race condition lúc khởi động, UI âm thầm trôi ra ngoài màn hình, đối tượng XHR trong pool bị phản hồi giả "đầu độc", dữ liệu lưu không bao giờ được ghi xuống đĩa… |
 
 ## 🏆 Đã kiểm chứng trên game thật
@@ -51,12 +53,17 @@ Cả hai case study (đã ẩn danh) đều có trong [`references/`](../skills/
 /plugin install offline-game-revival@offline-game-revival
 ```
 
-**Bất kỳ agent nào đọc được `SKILL.md`** — chép thư mục vào thư mục skills của agent, ví dụ với Claude Code:
+**Bất kỳ agent nào hỗ trợ Agent Skills** (Claude Code, OpenAI Codex, Cursor, GitHub Copilot, OpenCode, Goose…) — chép thư mục vào thư mục skills của agent đó:
 
 ```bash
 git clone https://github.com/Cynthia-wlan9509/offline-game-revival
-cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/
+cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/   # Claude Code
+cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Codex
 ```
+
+Các agent khác sẽ đọc [`AGENTS.md`](../AGENTS.md), file này chỉ dẫn chúng tới skill. Các vai trò sub-agent nằm trong [`agents/`](../agents).
+
+**Chỉ có chat (DeepSeek / ChatGPT / Kimi bản web)** — dán [`prompts/chat-playbook.md`](../prompts/chat-playbook.md) làm tin nhắn đầu tiên. Model sẽ trở thành kỹ sư trưởng của bạn; bạn chạy các lệnh nó đưa ra rồi dán kết quả trả lại.
 
 Sau đó chỉ cần nhờ: *"Máy chủ của game này đã đóng — hãy làm cho nó chơi được offline"* hoặc *"Trích giá cửa hàng và tỉ lệ gacha từ 15 GB video quay màn hình này."*
 
@@ -68,12 +75,24 @@ Công cụ thu thập này chạy được mà không cần agent:
 pip install -r skills/offline-game-revival/scripts/requirements.txt
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out --limit 50   # trial run
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out              # full run, resumable
+export DEEPSEEK_API_KEY=sk-...                                                               # hoặc OPENAI_API_KEY, DASHSCOPE_API_KEY… (PowerShell: $env:DEEPSEEK_API_KEY="sk-...")
+python skills/offline-game-revival/scripts/llm_structure.py ./out --limit 2                  # cấu trúc hóa 2 đoạn để kiểm tra chất lượng
+python skills/offline-game-revival/scripts/llm_structure.py ./out                            # toàn bộ → out/structured/merged.json
 ```
 
 - **Chỉ giữ khung hình chính có ý nghĩa**: chỉ giữ một khung hình khi màn hình *đã thay đổi và đã ổn định* — bỏ qua hiệu ứng chuyển cảnh và nhòe chuyển động; các danh sách dài cuộn được vẫn được lấy mẫu.
 - **Loại trùng giữa các nguồn**: cùng một màn hình từ ảnh chụp và từ video sẽ được gộp lại (bỏ qua thanh trạng thái).
 - **OCR cục bộ** (RapidOCR / ONNX, chỉ cần CPU, hỗ trợ CJK + Latin) kèm khung bao và thứ tự đọc.
-- **Đầu ra**: các đoạn `for_llm/*.txt` cùng một prompt dựng sẵn và JSON schema trong [`media-harvest.md`](../skills/offline-game-revival/references/media-harvest.md).
+- **Đầu ra**: các đoạn `for_llm/*.txt` cùng một prompt dựng sẵn và JSON schema trong [`media-harvest.md`](../skills/offline-game-revival/references/media-harvest.md); `llm_structure.py` gộp mọi câu trả lời và đánh dấu các con số mâu thuẫn nhau.
+
+## ⏩ Kiểm thử du hành thời gian (chạy độc lập)
+
+```bash
+node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js            # 51 test đạt
+BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js    # bắt được 3 bug cài sẵn
+```
+
+Trỏ `timewarp.create({ files, entry, inventory, granted })` vào server giả của riêng bạn. Danh sách các lỗi liên quan đến thời gian đáng kiểm thử (giờ reset, vòng lặp điểm danh, giới hạn hồi phục, bộ đếm giờ, lưu bền sau khi khởi động lại) nằm ở [`timewarp.md`](../skills/offline-game-revival/references/timewarp.md).
 
 ## 🧭 Triết lý
 
@@ -100,4 +119,4 @@ Nếu dự án này đã cứu một tựa game bạn yêu thích, một ⭐ s�
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · game ngừng hoạt động · đóng máy chủ · chơi offline · bảo tồn game · game mobile không cần server · hồi sinh game</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · kiểm thử du hành thời gian · đa agent · nhiều AI agent · game ngừng hoạt động · đóng máy chủ · chơi offline · bảo tồn game · game mobile không cần server · hồi sinh game</sub>

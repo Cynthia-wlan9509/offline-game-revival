@@ -30,7 +30,9 @@ Chaque année, des centaines de jeux mobiles ferment leurs portes. L'APK reste s
 | 🖥️ **Faux serveur local** | Intercepte la couche HTTP/JSON et répond à des centaines d'endpoints à partir d'une sauvegarde locale. Une méthode pour cartographier qui appelle chaque endpoint et ce qu'il lit, puis générer des valeurs par défaut sûres. |
 | 📦 **Repackaging et re-signature** | Recalcule les checksums du cache du moteur, reconstruit les tables de ressources, applique zipalign et signe. Inclut un algorithme de checksum de cache obtenu par rétro-ingénierie et des patchs de chargeur pour LayaAir native. |
 | ✅ **Recette sur appareil** | « L'écran s'affiche » ≠ « ça marche ». L'état doit réellement changer et survivre à un redémarrage à froid. Tests guidés par le tutoriel : suivez les étapes du guide du jeu lui-même, avec de vrais appuis sur l'écran. |
-| 🎞️ **Sauvetage de données depuis des captures et des enregistrements** *(nouveau)* | Les chiffres côté serveur (prix de la boutique, taux de gacha, récompenses, stats des cartes) disparaissent avec le serveur. `scripts/harvest.py` transforme **des dizaines de Go de captures d'écran et d'enregistrements de joueurs** en quelques centaines de Ko de texte classé : images clés → suppression des quasi-doublons → OCR local → regroupement par écran, **entièrement hors ligne, zéro token**, prêt à être structuré par n'importe quel LLM texte bon marché. |
+| 🎞️ **Sauvetage de données depuis des captures et des enregistrements** *(nouveau)* | Les chiffres côté serveur (prix de la boutique, taux de gacha, récompenses, stats des cartes) disparaissent avec le serveur. `scripts/harvest.py` transforme **des dizaines de Go de captures d'écran et d'enregistrements de joueurs** en quelques centaines de Ko de texte classé : images clés → suppression des quasi-doublons → OCR local → regroupement par écran, **entièrement hors ligne, zéro token** — puis `scripts/llm_structure.py` le fait traiter par lots par DeepSeek / OpenAI / Qwen / Kimi / Ollama en local, et fusionne le tout en JSON + CSV. |
+| ⏩ **Tests de voyage dans le temps** *(nouveau)* | `scripts/timewarp` exécute votre faux serveur dans un bac à sable à horloge virtuelle : avancez de plusieurs jours, redémarrez l'app et **auditez chaque récompense** — si une réponse annonce « +50 gemmes » mais que la sauvegarde n'a pas bougé, le test échoue. Simulez 30 jours de jeu en une seconde et voyez à quel jour chaque palier devient accessible. Zéro dépendance. |
+| 🤝 **N'importe quel agent, n'importe quel modèle** *(nouveau)* | Fonctionne avec Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… via `SKILL.md` + `AGENTS.md`. Fournit des rôles de sous-agents (scout / worker / verifier) pour qu'un modèle coûteux prenne les décisions pendant que les modèles bon marché font le gros du travail. Pas d'agent du tout ? Collez `prompts/chat-playbook.md` dans DeepSeek / ChatGPT et exécutez les commandes qu'il vous donne. |
 | 📚 **Registre des échecs** | 80 Ko de pièges bien réels : symptôme → cause racine → correctif. Plantages dus à des courses au démarrage, interface qui sort de l'écran sans prévenir, objets XHR du pool « empoisonnés » par de fausses réponses, sauvegardes qui n'atteignent jamais le disque… |
 
 ## 🏆 Éprouvé sur de vrais jeux
@@ -51,12 +53,17 @@ Les deux études de cas (anonymisées) sont incluses dans [`references/`](../ski
 /plugin install offline-game-revival@offline-game-revival
 ```
 
-**Tout agent qui lit `SKILL.md`** : copiez le dossier dans le répertoire de skills de votre agent, par exemple pour Claude Code :
+**Tout agent compatible avec Agent Skills** (Claude Code, OpenAI Codex, Cursor, GitHub Copilot, OpenCode, Goose…) : copiez le dossier dans le répertoire de skills de cet agent :
 
 ```bash
 git clone https://github.com/Cynthia-wlan9509/offline-game-revival
-cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/
+cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/   # Claude Code
+cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Codex
 ```
+
+Les autres agents lisent [`AGENTS.md`](../AGENTS.md), qui les oriente vers le skill. Les rôles de sous-agents se trouvent dans [`agents/`](../agents).
+
+**Chat uniquement (DeepSeek / ChatGPT / Kimi web)** : collez [`prompts/chat-playbook.md`](../prompts/chat-playbook.md) comme premier message. Le modèle devient votre ingénieur en chef ; vous exécutez les commandes qu'il vous donne et lui recollez la sortie.
 
 Il ne reste qu'à demander : *« Les serveurs de ce jeu ont fermé — rends-le jouable hors ligne »* ou *« Extrais les prix de la boutique et les taux de gacha de ces 15 Go d'enregistrements d'écran. »*
 
@@ -68,12 +75,24 @@ L'extracteur fonctionne sans aucun agent :
 pip install -r skills/offline-game-revival/scripts/requirements.txt
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out --limit 50   # trial run
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out              # full run, resumable
+export DEEPSEEK_API_KEY=sk-...                                                               # ou OPENAI_API_KEY, DASHSCOPE_API_KEY… (PowerShell : $env:DEEPSEEK_API_KEY="sk-...")
+python skills/offline-game-revival/scripts/llm_structure.py ./out --limit 2                  # structure 2 fragments pour vérifier la qualité
+python skills/offline-game-revival/scripts/llm_structure.py ./out                            # tout → out/structured/merged.json
 ```
 
 - **Des images clés qui comptent** : une image n'est conservée que si l'écran a *changé puis s'est stabilisé* ; les animations de transition et le flou de mouvement sont ignorés, et les longues listes défilantes restent échantillonnées.
 - **Dédoublonnage entre sources** : un même écran issu d'une capture et d'un enregistrement est fusionné (barre d'état ignorée).
 - **OCR local** (RapidOCR / ONNX, CPU uniquement, CJK + latin) avec boîtes englobantes et ordre de lecture.
-- **Sortie** : des fragments `for_llm/*.txt`, plus un prompt prêt à l'emploi et un schéma JSON dans [`media-harvest.md`](../skills/offline-game-revival/references/media-harvest.md).
+- **Sortie** : des fragments `for_llm/*.txt`, plus un prompt prêt à l'emploi et un schéma JSON dans [`media-harvest.md`](../skills/offline-game-revival/references/media-harvest.md) ; `llm_structure.py` fusionne toutes les réponses et signale les valeurs contradictoires.
+
+## ⏩ Tests de voyage dans le temps (autonome)
+
+```bash
+node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js            # 51 réussis
+BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js    # détecte 3 bugs plantés
+```
+
+Pointez `timewarp.create({ files, entry, inventory, granted })` vers votre propre faux serveur. La liste des bugs temporels qui valent la peine d'être testés (heure de réinitialisation, boucles de connexion quotidienne, plafonds de régénération, minuteurs, persistance après redémarrage) est dans [`timewarp.md`](../skills/offline-game-revival/references/timewarp.md).
 
 ## 🧭 Philosophie
 
@@ -100,4 +119,4 @@ Si cela a sauvé un jeu que vous aimiez, une ⭐ aide d'autres joueurs à le tro
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · jeu fermé · fermeture des serveurs · jouer hors ligne · préservation du jeu vidéo · jeu mobile sans serveur · fin de service</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · tests de voyage dans le temps · multi-agents · agents IA multiples · jeu fermé · fermeture des serveurs · jouer hors ligne · préservation du jeu vidéo · jeu mobile sans serveur · fin de service</sub>

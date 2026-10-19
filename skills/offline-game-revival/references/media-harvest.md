@@ -36,12 +36,24 @@ python scripts/harvest.py <玩家资料目录> <输出目录>                   
 
 注意：
 - 玩家截图里常有聊天记录、手机号、实名信息。OCR 全程本地；发给外部模型前先翻一遍 `for_llm/`，必要时删掉无关分类（如 `other`）。
-- HEIC（iPhone 原图）OpenCV 读不了，先批量转 JPG。个别录屏编码 OpenCV 打不开，日志会提示，用 ffmpeg 转成 H.264 MP4 再跑。
+- HEIC（iPhone 原图）OpenCV 读不了，先批量转 JPG。iPhone 录屏是 HEVC 编码的 .mov，多数 OpenCV 版本能直接读；个别打不开时日志会提示，用 ffmpeg 转成 H.264 MP4 再跑。
 - 分类只是粗分，错分没关系：下一步模型按内容重新判断。
 
-## 2. 文本模型结构化（提示词模板）
+## 2. 文本模型结构化
 
-把 `for_llm/<分类>_NN.txt` 逐块发给模型，提示词：
+**有 API key：用脚本批量跑**（`scripts/llm_structure.py`，只用标准库，可中断续跑，已完成的块不重复花钱）：
+
+```bash
+# PowerShell: $env:DEEPSEEK_API_KEY="sk-..."    bash: export DEEPSEEK_API_KEY=sk-...
+python scripts/llm_structure.py <harvest输出目录> --dry-run                    # 看要发哪些块、约多少 token
+python scripts/llm_structure.py <harvest输出目录> --only shop,gacha --limit 2   # 先试 2 块，人工看质量
+python scripts/llm_structure.py <harvest输出目录>                               # 全量（默认跳过 other 分类）
+```
+
+`--provider deepseek|openai|qwen|kimi|ollama`（或 `--base-url --model --key-env` 自定任何 OpenAI 兼容接口；`ollama` 完全本地，不出网）。
+输出 `structured/merged.json`（同一条目数值冲突时两条都留，标 `conflict`）和每类一张 `structured/<类>.csv`。
+
+**没有 API、只有聊天网页**：把 `for_llm/<分类>_NN.txt` 逐块贴进去，先贴下面的提示词。提示词（脚本内置的也是这一份）：
 
 ```text
 你在帮忙还原一款已停服手游的服务端数值。下面是玩家截图经 OCR 得到的文字，每段以 "### IMAGE: 文件名" 开头，

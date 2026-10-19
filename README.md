@@ -30,7 +30,9 @@ Every year, hundreds of mobile games shut down. The APK still sits on players' p
 | 🖥️ **Local fake server** | Intercept the HTTP/JSON layer and answer hundreds of endpoints from a local save. A methodology for mapping every endpoint's caller and what it reads, then generating safe defaults. |
 | 📦 **Repack & re-sign** | Recompute engine cache checksums, rebuild resource tables, zipalign, sign. Includes a reverse-engineered cache-checksum algorithm and loader patches for LayaAir native. |
 | ✅ **On-device acceptance** | "The screen opens" ≠ "it works". State must actually change and survive a cold restart. Tutorial-driven testing: follow the game's own guide steps with real taps. |
-| 🎞️ **Data rescue from screenshots & recordings** *(new)* | Server-side numbers (shop prices, gacha rates, rewards, card stats) die with the server. `scripts/harvest.py` turns **tens of GB of player screenshots and screen recordings** into a few hundred KB of categorized text — keyframes → near-duplicate removal → local OCR → per-screen grouping — **fully offline, zero tokens**, ready for any cheap text LLM to structure. |
+| 🎞️ **Data rescue from screenshots & recordings** *(new)* | Server-side numbers (shop prices, gacha rates, rewards, card stats) die with the server. `scripts/harvest.py` turns **tens of GB of player screenshots and screen recordings** into a few hundred KB of categorized text — keyframes → near-duplicate removal → local OCR → per-screen grouping — **fully offline, zero tokens**, then `scripts/llm_structure.py` batches it through DeepSeek / OpenAI / Qwen / Kimi / local Ollama into merged JSON + CSV. |
+| ⏩ **Time-travel tests** *(new)* | `scripts/timewarp` runs your fake server in a sandbox with a virtual clock: fast-forward days, restart the app, and **audit every reward** — if a response says "+50 gems" but the save didn't change, it fails. Simulate 30 days of play in a second and see on which day each gate becomes reachable. Zero dependencies. |
+| 🤝 **Any agent, any model** *(new)* | Works with Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… via `SKILL.md` + `AGENTS.md`. Ships scout / worker / verifier sub-agent roles so an expensive model makes the calls and cheap ones do the legwork. No agent at all? Paste `prompts/chat-playbook.md` into DeepSeek / ChatGPT and run the commands it gives you. |
 | 📚 **Failure ledger** | 80 KB of real pitfalls: symptom → root cause → fix. Crashes from start-up races, UI that silently moved off-screen, pooled XHR objects "poisoned" by fake responses, saves that never hit disk… |
 
 ## 🏆 Proven on real games
@@ -51,12 +53,17 @@ Both case studies are included (anonymized) in [`references/`](skills/offline-ga
 /plugin install offline-game-revival@offline-game-revival
 ```
 
-**Any agent that reads `SKILL.md`** — copy the folder into your agent's skills directory, e.g. for Claude Code:
+**Any agent that supports Agent Skills** (Claude Code, OpenAI Codex, Cursor, GitHub Copilot, OpenCode, Goose…) — copy the folder into that agent's skills directory:
 
 ```bash
 git clone https://github.com/Cynthia-wlan9509/offline-game-revival
-cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/
+cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/   # Claude Code
+cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Codex
 ```
+
+Other agents read [`AGENTS.md`](AGENTS.md), which points them to the skill. Sub-agent roles are in [`agents/`](agents).
+
+**Chat only (DeepSeek / ChatGPT / Kimi web)** — paste [`prompts/chat-playbook.md`](prompts/chat-playbook.md) as your first message. The model becomes your lead engineer; you run the commands it gives you and paste back the output.
 
 Then just ask: *"This game's servers shut down — make it playable offline"* or *"Extract the shop prices and gacha rates from these 15 GB of screen recordings."*
 
@@ -68,12 +75,24 @@ The harvester works without any agent:
 pip install -r skills/offline-game-revival/scripts/requirements.txt
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out --limit 50   # trial run
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out              # full run, resumable
+export DEEPSEEK_API_KEY=sk-...                                                                   # or OPENAI_API_KEY, DASHSCOPE_API_KEY…
+python skills/offline-game-revival/scripts/llm_structure.py ./out --limit 2                       # structure 2 chunks, check quality
+python skills/offline-game-revival/scripts/llm_structure.py ./out                                 # everything → out/structured/merged.json
 ```
 
 - **Keyframes that matter**: keeps a frame only when the screen *changed and settled* — skips transition animations and motion blur; long scrolling lists still get sampled.
 - **Cross-source dedupe**: the same screen from a screenshot and from a recording is merged (status bar ignored).
 - **Local OCR** (RapidOCR / ONNX, CPU-only, CJK + Latin) with boxes and reading order.
-- **Output**: `for_llm/*.txt` chunks + a ready-made prompt and JSON schema in [`media-harvest.md`](skills/offline-game-revival/references/media-harvest.md).
+- **Output**: `for_llm/*.txt` chunks + a ready-made prompt and JSON schema in [`media-harvest.md`](skills/offline-game-revival/references/media-harvest.md); `llm_structure.py` merges all answers and flags conflicting numbers.
+
+## ⏩ Time-travel tests (standalone)
+
+```bash
+node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js            # 51 passed
+BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js    # catches 3 planted bugs
+```
+
+Point `timewarp.create({ files, entry, inventory, granted })` at your own fake server. Checklist of the time bugs worth testing (reset hour, sign-in loops, regen caps, timers, restart persistence): [`timewarp.md`](skills/offline-game-revival/references/timewarp.md).
 
 ## 🧭 Philosophy
 
@@ -100,4 +119,4 @@ If this saved a game you loved, a ⭐ helps other players find it.
 
 [MIT](LICENSE)
 
-<sub>Keywords: game preservation · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 停服游戏 · 单机化 · 离线版 · 游戏保存 · 録画OCR · サービス終了 · 서비스 종료</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 停服游戏 · 单机化 · 离线版 · 游戏保存 · 録画OCR · サービス終了 · 서비스 종료</sub>

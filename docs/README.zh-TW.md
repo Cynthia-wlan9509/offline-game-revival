@@ -30,7 +30,9 @@
 | 🖥️ **本機假伺服器** | 攔截 HTTP/JSON 層，以本機存檔回應數以百計的 API 端點。內含一套方法：逐一釐清每個端點由誰呼叫、讀了什麼，再產生安全的預設回應。 |
 | 📦 **重新封裝與簽章** | 重新計算引擎快取的校驗碼、重建資源表、zipalign、簽章。內含逆向還原出的快取校驗碼演算法，以及針對 LayaAir native 的載入器修補。 |
 | ✅ **真機驗收** | 「畫面開得起來」不等於「真的能玩」。狀態必須真的改變，而且冷啟動後依然保留。以教學引導驅動測試：照著遊戲自己的新手引導步驟，用真實點擊一步步走完。 |
-| 🎞️ **從截圖與錄影搶救資料** *(新)* | 伺服器端的數值（商店價格、抽卡機率、獎勵、卡牌數據）會隨伺服器一起消失。`scripts/harvest.py` 能把**數十 GB 的玩家截圖與螢幕錄影**，濃縮成幾百 KB 分好類的文字——關鍵影格 → 去除近似重複 → 本機 OCR → 依畫面分組——**全程離線、零 token**，直接交給任何便宜的文字 LLM 做結構化。 |
+| 🎞️ **從截圖與錄影搶救資料** *(新)* | 伺服器端的數值（商店價格、抽卡機率、獎勵、卡牌數據）會隨伺服器一起消失。`scripts/harvest.py` 能把**數十 GB 的玩家截圖與螢幕錄影**，濃縮成幾百 KB 分好類的文字——關鍵影格 → 去除近似重複 → 本機 OCR → 依畫面分組——**全程離線、零 token**，再用 `scripts/llm_structure.py` 批次交給 DeepSeek / OpenAI / 通義 / Kimi / 本機 Ollama，合併成 JSON + CSV。 |
+| ⏩ **時間快轉測試** *(新)* | `scripts/timewarp` 把你的假伺服器放進虛擬時鐘沙盒：快轉好幾天、模擬重啟 App，並**逐筆稽核每一項獎勵**——回應寫著「獲得 50 鑽石」但存檔沒變，就判定失敗。一秒鐘模擬 30 天的遊玩，看每道關卡門檻在第幾天才解得開。零相依套件。 |
+| 🤝 **任何 Agent、任何模型** *(新)* | 透過 `SKILL.md` + `AGENTS.md`，支援 Claude Code、Codex、Cursor、Copilot、OpenCode、Gemini CLI 等。內附 scout / worker / verifier 三種子 Agent 角色，讓昂貴的模型負責決策、便宜的模型負責跑腿。完全沒有 Agent？把 `prompts/chat-playbook.md` 貼進 DeepSeek / ChatGPT，照它給的指令執行就行。 |
 | 📚 **失敗紀錄簿** | 80 KB 的真實踩坑紀錄：症狀 → 根本原因 → 解法。包括啟動競態造成的崩潰、UI 悄悄跑到畫面外、被假回應「毒化」的池化 XHR 物件、永遠寫不進磁碟的存檔…… |
 
 ## 🏆 經過真實遊戲驗證
@@ -51,12 +53,17 @@
 /plugin install offline-game-revival@offline-game-revival
 ```
 
-**任何會讀取 `SKILL.md` 的 Agent**——把資料夾複製到 Agent 的 skills 目錄即可，以 Claude Code 為例：
+**任何支援 Agent Skills 的 Agent**（Claude Code、OpenAI Codex、Cursor、GitHub Copilot、OpenCode、Goose……）——把資料夾複製到該 Agent 的 skills 目錄即可：
 
 ```bash
 git clone https://github.com/Cynthia-wlan9509/offline-game-revival
-cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/
+cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/   # Claude Code
+cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Codex
 ```
+
+其他 Agent 會讀取 [`AGENTS.md`](../AGENTS.md)，由它指向這個技能。子 Agent 角色放在 [`agents/`](../agents)。
+
+**只有聊天網頁（DeepSeek / ChatGPT / Kimi）**——第一則訊息貼上 [`prompts/chat-playbook.md`](../prompts/chat-playbook.md)，模型就會成為你的主工程師；你照它給的指令執行，再把輸出貼回去。
 
 接著直接開口：*「這款遊戲的伺服器關了——幫我做成可以離線玩的版本」*，或是 *「從這 15 GB 的螢幕錄影裡，把商店價格和抽卡機率整理出來。」*
 
@@ -68,12 +75,24 @@ cp -r offline-game-revival/skills/offline-game-revival ~/.claude/skills/
 pip install -r skills/offline-game-revival/scripts/requirements.txt
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out --limit 50   # trial run
 python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out              # full run, resumable
+export DEEPSEEK_API_KEY=sk-...                                                               # 或 OPENAI_API_KEY、DASHSCOPE_API_KEY…（PowerShell：$env:DEEPSEEK_API_KEY="sk-..."）
+python skills/offline-game-revival/scripts/llm_structure.py ./out --limit 2                  # 先結構化 2 塊，檢查品質
+python skills/offline-game-revival/scripts/llm_structure.py ./out                            # 全量 → out/structured/merged.json
 ```
 
 - **只留下有意義的關鍵影格**：只有當畫面*發生變化並且穩定下來*時才保留影格——跳過轉場動畫與動態模糊；很長的捲動清單仍會被取樣。
 - **跨來源去重**：同一個畫面無論來自截圖或錄影，都會合併（忽略狀態列）。
 - **本機 OCR**（RapidOCR / ONNX，僅需 CPU，支援中日韓與拉丁字母），並附帶文字框位置與閱讀順序。
-- **輸出內容**：`for_llm/*.txt` 分塊文字，外加一份現成的提示詞與 JSON schema，見 [`media-harvest.md`](../skills/offline-game-revival/references/media-harvest.md)。
+- **輸出內容**：`for_llm/*.txt` 分塊文字，外加一份現成的提示詞與 JSON schema，見 [`media-harvest.md`](../skills/offline-game-revival/references/media-harvest.md)；`llm_structure.py` 會合併所有回答，並標出互相矛盾的數值。
+
+## ⏩ 時間快轉測試（獨立使用）
+
+```bash
+node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js            # 51 項通過
+BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js    # 抓出 3 個預先埋好的 bug
+```
+
+把 `timewarp.create({ files, entry, inventory, granted })` 指向你自己的假伺服器即可。值得測試的時間類 bug 清單（重置時刻、簽到迴圈、恢復上限、計時器、重啟後的持久化）見 [`timewarp.md`](../skills/offline-game-revival/references/timewarp.md)。
 
 ## 🧭 設計理念
 
@@ -100,4 +119,4 @@ python skills/offline-game-revival/scripts/harvest.py ./player_recordings ./out 
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 停服遊戲 · 遊戲停運 · 單機化 · 離線版 · 遊戲保存 · 螢幕錄影 OCR</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 時間快轉測試 · 多 Agent 協作 · 多模型協作 · 停服遊戲 · 遊戲停運 · 單機化 · 離線版 · 遊戲保存 · 螢幕錄影 OCR</sub>
