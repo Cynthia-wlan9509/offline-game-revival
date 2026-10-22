@@ -881,3 +881,13 @@ Method that cracked it: re-pack the identical CAB with your own minimal UnityFS 
 - Symptom: added 112 TextAssets one by one, each time reading the AssetBundle object, appending to `m_Container`, saving. The rebuilt bundle had 8533 objects but only 8421 container entries.
 - Cause: `read_typetree()` always parses the object's original bytes; the previous `save_typetree()` result (held in `obj.data`) is not read back, so every add started from the original list.
 - Fix: read the AssetBundle tree once, keep it, append to it, and write it back once in `save()`. Reload the saved bundle and assert the counts.
+
+**A method name that exists in both directions broke the RPC name check** (2026-10-23)
+- Symptom: the build-time check said `Player.checkNetWork is not client->server`, but the client does send it.
+- Cause: the RPC table has `checkNetWork` both as a client→server request and a server→client callback; the checker's dict keyed by (class, name) kept only one.
+- Fix: map (class, name) to the *set* of directions.
+
+**`pm clear` wipes the pushed resources too** (2026-10-23)
+- Symptom: after `pm clear` for a fresh-save test, `Android/data/<pkg>/files/` was gone, 3.7 GB with it.
+- Cause: on Android 9+ clearing app data also clears the app's external files dir.
+- Fix: for a fresh save while keeping resources, delete only the save file; use `pm clear` only when you mean to test first-run resource import.

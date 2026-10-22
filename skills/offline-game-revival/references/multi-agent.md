@@ -54,3 +54,8 @@
 - **用 DeepSeek 驱动整套 agent**：任何支持自定义 OpenAI 兼容接口的 agent 工具都能接 DeepSeek
   （OpenCode、Cline、Roo Code 等）；DeepSeek 也提供 Anthropic 兼容接口，Claude Code 可通过设置 `ANTHROPIC_BASE_URL` 接入，具体以 DeepSeek 官方文档为准。
   这时建议 R1 类推理模型当主 agent、V3 类当 worker。
+
+## 实例：按系统并行写本地服务器（案例 C 2026-10-23）
+
+scout 出请求↔回调对照表 → 主会话写模块约定 + 几秒钟的自检脚本 → 三个 worker 各写一个系统文件、各自自检 → 主会话连线（任务进度事件）、合并构建、真机验收。
+详见 `case-c-micro-client.md`「本地服务器：并行写模块」。只读的 scout 没有写文件权限时会把报告放在消息里，主会话要自己落盘。
