@@ -268,3 +268,16 @@ none
 - **正式包上验背景音乐**：没有调试通道时，看媒体解码进程（`media.extractor`）打开的缓存文件名：`su -c 'ls -l /proc/<pid>/fd'`，
   文件名带原资源名（`…_<活动>.mp3` / `…_main.mp3`）。
 - **正式包验收走真实升级路径**：先装上一版正式包 + 还原正式存档，再 `install -r` 新包，确认存档 md5 不变后再点；验完把正式存档原样写回并核 md5。
+
+## 换机迁移、获取途径、红点（v0.8.6）
+
+- **conch 自带任意路径文件读写**：apploader.js 里有全局 `readFileSync(path,'utf8')` / `writeStrFileSync(path,str)`（localStorage 本身就是用它写的 `LayaCache/localstorage/<host>.txt`，一个 JSON）。
+  有了系统存储权限就能直接读写「下载」，不用为文件 IO 加 Java 代码；smali 桥只补权限检查 / 申请、列目录（conch 没有）和杀进程。
+  `Storage` 类有 `length` / `key(i)`，能枚举全部键做导出。`PlatformClass.createClass(...).call(name, a, b)` 传两个字符串参数实测可用。
+- **BlueStacks 装包时自动授予运行时权限**，看不到授权弹窗；测"没权限"路径用 `pm revoke <包> android.permission.WRITE_EXTERNAL_STORAGE`（会杀进程）再冷启动。
+- Git Bash 里 `adb push x /data/local/tmp/...`、`/sdcard/...` 会被改写成 Windows 路径：命令前加 `MSYS_NO_PATHCONV=1`。推到已存在的目录名时要写完整目标文件名。
+- **文案表缺货币名**：`capital_<type>` 缺键时客户端原样显示键名（"5capital_21"）。在 `StringUtil.UtilText` 找不到键的出口（已有的别名钩子）补一张小映射表，借同类物品名（经验物品的名字）。
+- **"获取途径"弹窗**原版数据在服务端已丢，但离线版自己的委托掉落表 / 兑换页 / 爬塔商店都知道每种材料从哪来：
+  按表算出"最早已开放的那一关 + 卖它的兑换页 + 爬塔"，客户端自带文案 `delegate_skip_desc_<类>_<委托>_<难度>` 就能显示并跳转。客户端只在材料数为 0 时弹它，验收时用调试通道把某材料清零。
+- **盘点"只有兜底回包的接口"会有误报**：某个"突破"接口看着没实现，其实查询接口把所有卡固定为"已突破"，按钮根本不出现。子代理的盘点结论要回源码核对一遍覆盖关系再排期。
+
