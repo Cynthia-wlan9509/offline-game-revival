@@ -288,3 +288,5 @@ none
   运行时靠 `AtlasInfoManager.enable("fileconfig.json")` 把帧反查到图集再自动加载。写脚本把 bundle 里写死的 skin / loadList / loadImage 全部按这条规则核对镜像，
   **对打完补丁的 bundle 跑**（否则自己已经换掉的缺图会反复冒出来）。原始结果噪声很大：清理调用（`clearTextureRes` 清没加载过的图集）、IDE 默认控件占位 `comp/*`、
   不会被读的 `styleSkin`、运行时会被代码覆盖的模板默认 skin、没有任何剧本触发的动作分支、没有调用方的枚举分支——逐条回源码核对可达性再决定修不修。
+- **剧情配音的路径用的是"播放时的剧本号"**（`chapte_voice/<drama_config 的键>/<voiceId>.wav`），不是剧本文件里的分段键（`drama` / `result1`）；
+  按分段键拼会把上千条全判成缺失。音乐 / 音效则走 `sound.json` 映射。配置里登记了但 CDN 清单里从来没有的剧本（未上线段落）先排除，再看缺什么。
