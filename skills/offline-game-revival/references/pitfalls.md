@@ -86,7 +86,15 @@
   只能 `pm clear` 从零再来，而"从零再来"复现不了当时的中间状态。
 - 修法：每次开始"从低等级往上验证"之前先把 `shared_prefs` 拷出来存进项目 `logs\<轮次>-...\`，
   并在快照里写清"这个包/这个档对应什么状态、备份在哪、怎么还原"。
-- 判据：报告里说"已验证 1-6 通关、停在 1-7"时，必须同时能回答"怎么回到那一刻"。
+- 判据：报告里说“已验证 1-6 通关、停在 1-7”时，必须同时能回答“怎么回到那一刻”。
+
+**收一次菜卡好几秒：真正慢的是「每次变更都读好几个大存档串」，不是 Save（案例 A 2026-10-20，真机）**
+- 现象：离线版每改一次存档就 `PlayerPrefs.Save()`。收一次菜（6 个道具）整帧卡 ~6 秒，祈愿每抽一样卡，登录和回主界面也顿。**模拟器上完全看不出来**。
+- 先踩的坑：想当然把元凶定成「Save 把整档（~100 KB）同步写盘」，去做「攒着批量 Save」。结果更糟——变成每个道具 1.8~2 秒。**批错了对象。**
+- 真因（上真机实测才看清）：`Save` ≈ 0.000 秒、写 8 KB 值 0.02 秒、**读 8 KB 值 0.07~0.16 秒**（JNI 往返 + 解码）。改一个道具要 `GetString` 好几个大 blob，卡的是读不是写。模拟器上读也只有 ~10 ms，所以照模拟器判断必然误诊。
+- 修法：离线自己的键（统一 `OFFLINE_` 前缀，原版代码从不碰）在 Lua 里留一份内存副本——读过一次就不再问 `PlayerPrefs`；写只改内存 + 记 pending，落盘时一次性 `SetString` + `Save`。落盘时机：玩家停手 6 秒 / 改动攒够 90 秒 / 切后台·失焦·退出（补丁接 `LuaApplication.OnApplicationPause`·`OnApplicationFocus`·`OnApplicationQuit`）。效果：改道具降到 0.006 秒，十连跑满 60 fps，登录与回主界面的卡顿消失。
+- 边界：整份存档被换掉的操作（导入、模式还原）在**直接读** `PlayerPrefs` 前先 `OfflinePrefsApplyPending`、**直接写完**后 `OfflinePrefsCacheClear`；授权码这种一次性写当场 `Save`，不进缓存。带动态后缀、或别处用 `GetInt` 直接读的键，不要塞进这个「字符串」缓存。
+- 通用教训：**卡顿一律上真机量，别信模拟器**（模拟器的 I/O 快一两个数量级，会把瓶颈藏掉）；做批处理之前先确认「批的是真瓶颈」。实现见 `tools/offline_prefs_flush.lua`（拼进最早加载的 `LuaApplication.lua`，并带锚点断言）。
 
 ## 本地回包 / 伪造服务器数据
 
@@ -299,6 +307,22 @@
   让遮罩按钮永不激活（`SetActive(false)`）。这样引导能照常提示，导航永远不会被吞。
 - 判断是否修好：点一个底部导航按钮，日志里应出现**真实按钮事件**
   （`Button On Click:<按钮名> instanceID:...`）而不是 `Button On Click empty`。
+
+## 复活下线活动的皮肤（美术分层藏，别急着说丢了）
+
+**说"这个活动只剩最后一版皮 / 美术丢了"之前，先把同名资源在各层包里比一遍**
+- 背景：下线活动在终版客户端里往往只显示最后一期的皮肤，容易让人以为"其它期的美术随服务器一起没了"。其实换皮常常分层藏着，不是真丢。
+- 要比的三处：① 热更包里的普通面板；② **同一热更包里的 `rep/*`（复刻）预制**——它和普通面板常带一批同名贴图，但 **path ID 不同**，是另一套皮；③ **原始安装包里的同名 bundle**——它可能在打包时被热更整包覆盖，里面还藏着一版。三处各导出同名贴图（`xxx_bg_01` / `xxx_title_01` 这类）逐一比对。
+- 判据：同名贴图在不同包 / 不同 path ID 下存在不止一个版本 = 还有别的皮，没丢。
+- 实例（案例 A）：一个抽取类活动一度被我判成"只有一版皮"，用户坚持"每个角色都有自己的样子、当年全解包过"，结果是对的——最后找齐三套：金色皮在热更普通面板、蓝色皮（复刻）在同包 `rep/*`、粉色皮在被热更盖掉的原始 APK bundle 里。
+- 教训：**用户说"以前见过 / 解包过"时，先去各层包里找，再下结论。** 这类"美术还在、只是终版没登记或被覆盖"的被埋没内容，和"拿配置清单对镜像做差集"（见 `SKILL.md` 第 8 步）是同一类抢救。
+
+**要发被热更 / 构建覆盖掉的那版皮：另存一份包 + 运行时按节点路径把真图拷上去，别用染色凑**
+- 发法：把原始 APK 里被覆盖的那个 bundle 复制出来、**改掉 CAB 名**放到单独路径（案例 A：`assets/AssetBundles/Android/v3skin/<皮肤包>`，由 `tools/skin_bundles.py` 在构建期生成），运行时 `AssetBundle.LoadFromFile(...)` 加载，按**节点路径**把 Image / RawImage 的 sprite、贴图、尺寸、文字颜色拷到活着的预制上；切到别的皮时把拷过的东西复原。
+- 选皮入口：hook 活动模型里决定"显示哪个面板"的方法（案例 A 是 `<活动>Model:IsShowFirstPanel` / `IsRestartCard`；原版靠 `ComActivityModel.RestartCardList` / `UseFirstAgain` 里的 `ShowPanelIndex` 定皮）。
+- 坑一：**不要对"游戏自己稍后还要加载的那个 bundle"调 `LoadFromFile`**——会让游戏自己的加载报 "panel prefab missing"。要发的那版必须是改了 CAB 名的独立副本。
+- 坑二：**染色不是换皮。** 按主题色正片叠底效果发闷（用户原话"太阴间"）；`Unlit/Gray` 不认颜色、`Graphics.Blit` 配 UI shader 渲染成黑、`GL.Color` / `DrawTexture` 不可用。真皮的美术在，就用真皮，别拿颜色凑。
+- 坑三：注入一大段 Lua（约 18 KB）会把模拟器 Unity 线程冻住；调这种皮肤补丁要**打一个 dev APK** 装着测，别靠注入。
 
 ## 游戏内 UI / 弹窗
 
@@ -706,6 +730,51 @@ Method that cracked it: re-pack the identical CAB with your own minimal UnityFS 
 - Symptom: players who already claimed the perk mail never get a voucher added afterwards (店铺升满券).
 - Fix: store the item IDs already claimed through the mail; attachments = all minus claimed. When new ones appear after a claim, flip the same mail back to unread with a "补发" (top-up) title. Old saves without the record get the first-version list written for them.
 
+**A visual feature passes on the dev package but not on the release package (2026-10-19)**
+- Symptom: dynamic card faces animated on the emulator's dev build; on the player's phone (release build) they stayed static, although the save had the right flag.
+- Cause: the release build strips asset bundles by folder rules; the dev build strips nothing. The faces' Spine and background bundles lived in chapter folders that were stripped whole (only `/cg` was kept).
+- Fix: whitelist the exact bundles (derive the list from the config tables, keep it in a JSON next to the strip rules). Rule: anything that loads assets must be checked once on the release build, with a save crafted offline (release builds cannot take injected Lua).
+
+**A patch hard-codes an ID copied from a different script version (2026-10-19)**
+- Symptom: every gacha tap played the same character voice line instead of the whoosh sound.
+- Cause: the replacement text for the tap handler was copied from the APK's Lua, which calls `PlayOneShot(7775)`. The game runs the hot-update Lua, where the sound-enum list has 15 extra entries, so 7775 is now a voice event and the whoosh is 7790. The anchor (old text) matched the hot version, so the patch applied without complaint.
+- Fix: when a patch rewrites a line, copy every number in it from the same version the anchor came from. Enum indices (sounds, panels, messages) shift between versions. Grep patch replacement strings for bare numbers and check each one against the running version's table.
+
+**A stripped background makes a page see-through and taps fall through (2026-10-19)**
+- Symptom: after picking an outing scene for a character, re-entering that character's page showed the city map and main-screen buttons through it; taps went to the map, the game switched characters while the old story panel stayed on top, and a later unlock froze on a nil error.
+- Cause: 5 scene backgrounds (reptXxx → reptResNameInfo → reptAssetBundlePath) were in chapter folders the release build strips.
+- Fix: whitelist them like the dynamic card faces (`scene_bundles.json`). Also make the offline reply robust: before delivering an unlock reply, add any missing per-character dictionary the client will read, built from the save.
+
+**A late event flips a page's state while a sub-view is open; back then closes the page half-way (2026-10-19)**
+- Symptom: after changing a character's outing scene and pressing back, entering any character page showed nothing (map visible, pink petals, every tap "Button On Click empty").
+- Cause: tapping the character fires an interaction event a moment later that sets the page state to "in dialog" even while the outing view is open. Back in that state takes the "close the whole page" branch, which SetActive(false)s the panel and leaves the sub-view open; the panel manager later "shows" it without re-activating the GameObject.
+- Fix: on back, if the sub-view is open, treat it as the sub-view state. On every open, re-activate the panel, close leftover sub-views and reset the state. Reproduce such timing bugs by forcing the state with injected Lua instead of chasing taps.
+
+**An escaped newline in a patch string becomes a real newline and kills a whole host file (2026-10-19)**
+- Symptom: after a build, a dozen unrelated offline features vanished at once; the log showed `module 'LoginPanel' not found ... unfinished string`.
+- Cause: a Lua string literal containing `\n` was written through a shell heredoc into a Python one-liner, which turned the escape into a real line break. The build's syntax check (luaparser) accepts that; the real Lua VM refuses the whole chunk, and every module parasitic on that host file disappears.
+- Fix: write text edits from a script file and build the backslash with `chr(92)`. After any build, run a cold start and grep for `not found:` / `unfinished string` before testing features.
+
+**A "seed" step wipes counts that live in a second model (2026-10-19)**
+- Symptom: pet fragments earned in game reached the warehouse but the pet house showed 0 and compose was refused.
+- Cause: the login seed refilled the pet model with 0 for every fragment; the save-restore step only restored pets (type 33), not fragments (type 9).
+- Fix: after any seed that rebuilds a model, restore every item type that model shows from the save, and rerun the restore whenever the seed runs again.
+
+**A story effect parented to a UI panel loads but never shows (2026-10-19)**
+- Symptom: rain popped onto the main screen through the game's own EffectManager; logs said loaded and active, the screen showed nothing.
+- Cause: story effects sit on the Default layer with sorting order 0. The main UI is drawn by a ScreenSpace-Camera canvas whose camera only renders the UI layer, and order 0 is under the canvas order.
+- Fix: give the effect a sorting order above the panel's canvas (the story itself used 15) and, once it has loaded, set the layer of every child to the panel's layer. Inspect with injected Lua: layer, parent, lossyScale, renderer sortingOrder, canvas renderMode/camera.
+
+**A daily "wish" flag preset to "done" hides the whole riddle UI (2026-10-19)**
+- Symptom: gift riddles never appeared and the wished gift was drawn from every character's pool.
+- Cause: the login seed set the "liked gift sent" flag to 1 for everyone, and the wish picker ignored the gift table's per-character category column.
+- Fix: read the category column (here `iGiftType` equals the character ID), keep the per-day "solved" state in the save, and resync it whenever the base info is rebuilt.
+
+**`git worktree remove --force` followed a junction and emptied the main checkout (2026-10-19)**
+- Symptom: after a cleanup script removed two merged worktrees, the main checkout's untracked `src\`, `private\` (keystore, license ledger) and `analysis\` were empty; nothing was in git or in a disk snapshot.
+- Cause: the worktrees had NTFS junctions pointing to those folders in the main checkout. Git for Windows deletes through a junction instead of unlinking it.
+- Fix: before any recursive delete, list reparse points under the target (`Get-ChildItem -Recurse -Attributes ReparsePoint`) and remove the links first (`cmd /c rmdir <link>` removes only the link). Keep keys and ledgers backed up off the work drive, and record where every untracked build input came from so it can be rebuilt.
+
 **A server-side relaxation never takes effect because the client checks the same rule locally first (2026-10-19, 案例 B)**
 - Symptom: the offline server lowered "auto explore" from 10 cans to 1 and the unit tests passed, but on the device the button did nothing. The client checks `num < 10` itself, shows a toast, and never sends the request.
 - Fix: before relaxing a number on the server, grep the client handler for a local check of the same rule (button handlers, `if (... < N) { showTip; return; }`). If it is hard-coded, either keep the original value or patch the client too. Then tap the button on the device; a server test cannot catch this.
@@ -717,3 +786,98 @@ Method that cracked it: re-pack the identical CAB with your own minimal UnityFS 
 **List cells pick icons by a type whitelist, so a valid item shows blank (2026-10-19, 案例 B)**
 - Symptom: a shop cell shows the right name but no icon. The cell only looks up the item image for one type and uses `capital_icon_60_<type>` for everything else; the item's type has no such image.
 - Fix: check the cell renderer's branches. Report a display-only type that the renderer handles, and grant by the real type on purchase. Also make the "持有数量" (held count) query read the ledger that the real type is stored in.
+
+## 案例 C 侦察（2026-10-21）
+
+**A 1.2 GB APK was only a quarter of the game (micro client)**
+- Symptom: everything decompiled fine and the plan looked straightforward, until the bundle manifest was diffed against the package: 42,700 bundles listed, 12,120 present; about 91% of the clothing models missing.
+- Cause: a big publisher's micro client (`_ClientType: 2`). The rest was downloaded on demand through the SDK's Puffer downloader and died with the servers.
+- Fix: diff the resource manifest against the package on day one and put "where do the missing resources come from" to the user before writing patches.
+
+**A rejected Lua header is not encryption**
+- Symptom: unluac refused every script with "non-standard lua format: 1".
+- Cause: byte 5 (format) of the Lua 5.1 header was changed from 0 to 1; nothing else was touched.
+- Fix: compare the header byte by byte with the standard one, reset the changed byte, decompile.
+
+**The original game stops at the publisher's privacy agreement (`MSDKPolicyActivity`)**
+- Symptom: a test run on the emulator never reached Unity; logcat only showed the MSDK policy activity.
+- Cause: the launcher activity is MSDK's user-agreement and privacy-policy dialog.
+- Fix: clicking "同意" accepts a real agreement on the user's behalf; ask first. For the offline build its HTML and title string were replaced with the memorial disclaimer (see `case-c-micro-client.md`, "开屏和协议页").
+
+**Shell quirks that wrote files to the wrong place (Git Bash on Windows)**
+- `/tmp_xxx` in Git Bash is the Git install directory (`<Git install dir>\tmp_xxx`), not a temp folder; the safety check then refuses to `rm` it. Use the session scratchpad or a project path.
+- The heredoc backslash pitfall recorded above (Bash tool folds `\\` to `\`) bit twice more here, once while appending this very entry. Write scripts and docs with the file-writing tool, not heredocs.
+- Git Bash also rewrites device paths in arguments: `adb pull /data/local/tmp/x` became `<Git install dir>/data/local/tmp/x`. Prefix the command with `MSYS_NO_PATHCONV=1`, or avoid device paths on the host side altogether (next entry).
+
+**A re-signed build exits about 2 s after launch with code 4 (the publisher's TP shell)**
+- Symptom: the patched, re-signed APK showed the MSDK agreement page, then `Process … exited cleanly (4)`; no Java exception. The original APK did not do this.
+- Cause: `TPShellApplication` loads `libtprt.so`, which checks the APK (FileChecker/CRC, package name) and kills the process. The same shell decrypts the first 0x1000 bytes of the managed assemblies (`mono_patch`).
+- Fix: switch the shell off through the `TPConfig` string constants in the dex (value `true` → `TRUE`, same length, refresh SHA-1/adler32), and ship plain assemblies dumped from the original game's memory. Details and script: `case-c-micro-client.md`.
+
+**Root-owned files cannot be pulled; stream instead**
+- Symptom: `su -c "dd … of=/data/local/tmp/x"` worked, then `adb pull` failed with "remote open failed: Permission denied".
+- Fix: skip the temp file: `adb exec-out su -c "dd if=/proc/<pid>/mem bs=4096 skip=<page> count=<n> 2>/dev/null" > local.bin`.
+
+**Appended code in a game UI module crashed the whole UI init (`table` is nil)** (2026-10-21)
+- Symptom: after appending a module to `ui/uiprivateagreement.lua`, loading stuck at 75%; the log said `attempt to index global 'table' (a nil value)` in the module's main chunk.
+- Cause: the module uses `module(..., package.seeall)` but then `declareSingleton`/`declareObject` replaces the module metatable with one whose `__index` is the base class, so globals (`table`, `pcall`, `UnityEngine`) are nil inside. The game's own files reach them through a `local Gox = _G` at the top.
+- Fix: go through the file's `Gox`; the patch script now lints appended modules for bare globals and asserts the host file has `local Gox = _G`.
+
+**Zero-filling every struct property made the game fine the player** (2026-10-21)
+- Symptom: after sending every struct-typed player property as an all-zero struct, login showed "您的账号将被处以罚金并进入处罚状态".
+- Cause: the client treats `punish.endTime ~= nil` as "punished"; `0` is not nil. The real server sends only non-default properties and lets the client fill defaults (`{}`, fields nil).
+- Fix: send only what the save holds; give the properties the client really needs (`home.homeSkinId`, `home.<npc>Id`, `homeTree.treeLv`...) explicit values one by one, found from the errors.
+
+**Chinese text broke lines early at ASCII spaces (Unity `Text`)** (2026-10-21)
+- Symptom: "这是一个由 XX 无偿制作……" wrapped right after "由", leaving half a line empty; "1. 本版本……" wrapped after "1.".
+- Fix: no ASCII spaces inside Chinese body text in Unity UI.
+- Hit again 2026-10-22 in new mail text, item descriptions and dialogs written the next day ("补到 9999" broke after "补到"; "· 资源" left the bullet alone on a line). Check every new user-facing string before building, not after the screenshot: strip spaces next to non-ASCII characters inside string literals on the lines you added.
+
+**The second copy of a splash logo was inside the story CG** (2026-10-21)
+- Symptom: engine splash and logo video removed, yet the developer's logo showed up again when a new player tapped "start".
+- Cause: the opening CG `start.mp4` begins with five seconds of the same logo.
+- Fix: sample frames from every video in the package before calling the splash work done; trim the head with a stream copy at the CG's first keyframe.
+
+**BlueStacks changes orientation between launches; taps from an old screenshot miss**
+- Symptom: the "同意" tap that worked in one run did nothing in the next; the dialog had switched from landscape (1600x900) to portrait (900x1600).
+- Fix: take a fresh screenshot and read its size right before every coordinate tap, or find the control in the UI dump.
+
+**Unity static events cannot be subscribed from this Lua binding** (2026-10-22, 案例 A)
+- Symptom: wanted `Application.logMessageReceived` to capture C#-side errors for an in-game "export log" button; `Application.add_logMessageReceived(CSLNewfunc(...))` exists as a function but throws "C++ exception" when called.
+- Fix: capture only what Lua sees, by wrapping the game's Lua log table (`LuaDebug.info/warn/error`) into a ring buffer; tell the user C#-level exceptions are not in the exported log.
+
+**Item description box in the stock backpack panel shows only two lines** (2026-10-22, 案例 A)
+- Symptom: a long `sDec` for new voucher items was cut off mid-sentence in 物品信息.
+- Fix: keep `sDec` to about 34 CJK characters; put the full explanation in the confirm dialog that opens on 使用.
+
+
+**A queued prompt that cannot show blocks every later dialog** (2026-10-22, 案例 A)
+- Symptom: tapping a character many times played the mouth animation with no dialog box; all the dialogs and voices came out together after returning to the city map.
+- Cause: the stock prompt queue (`GamePromptMgr`) sorts by type number, and the touch dialog (180) sits behind rewards, unlock and clap-face prompts. Such a prompt cannot display on the character page, or `DelayShow` returns without `ClearCurPrompt`, so `m_curPrompt` stays set and every new dialog only queues. A panel closing on the main screen finally drains the queue.
+- Fix: before a talk dialog, if the current prompt is not a dialog and none of the panels it waits for (`curShowPanelList`) is open, move it to the back of the queue, then show the dialog directly with `DelayShow`. Reproduce by planting a fake `m_curPrompt` of type 50.
+
+**A confirm box with no nested canvas stays under an 8000 overlay page** (2026-10-22, 案例 A)
+- Symptom: tapping 「可解锁」 in a character's secrets list showed nothing. A later tap could unlock and spend items, because the invisible box still caught clicks. The box appeared on the main screen after leaving.
+- Fix: while the overlay page is open, switch the `PopList` root canvas itself to overlay mode and set it between the page and the box's own lifted canvases (8900 here). If it is above them, the blur mask swallows the button clicks. Restore its mode and order when the page closes.
+
+## 案例 C：玩家备份接入（2026-10-22）
+
+**Backed up the test save, then uninstalled in the same line; the backup had failed** (2026-10-22)
+- Symptom: `adb pull /sdcard/…/save.mp …; adb uninstall <pkg>` — the pull printed "failed to stat remote object '<Git install dir>/sdcard/…'", the uninstall went ahead, the test save was gone.
+- Cause: Git Bash rewrote the device path again (entry above), and `;` does not stop on failure.
+- Fix: `export MSYS_NO_PATHCONV=1` at the top of every Bash call that passes device paths, and chain "back up → destroy" with `&&`, never `;`. Check the backup file exists before any uninstall or `pm clear`.
+
+**Same versionName and versionCode, different APK** (2026-10-22)
+- Symptom: the APK inside the player's phone backup had the version we had been patching (same versionName and versionCode), yet 1518 entries differed, including the managed assemblies and the Lua bundle.
+- Cause: the publisher re-packed the same version later (resource refresh); version numbers were never bumped.
+- Fix: compare APKs entry by entry (CRC + size), and compare the resource manifests' own version fields. When the backup's APK is newer, rebase the build on it and re-dump anything that came from the old one (here: the decrypted assemblies).
+
+**A micro client deletes your pushed resources on the first start after install** (2026-10-22)
+- Symptom: 31,153 bundles pushed to `Android/data/<pkg>/files/assets/`; after the first start 31,125 were left.
+- Cause: on a "new program" start the launcher compares external bundles with the *package* manifest: it deletes the external copy of every bundle the package also has, deletes bundles whose MD5 does not match, and deletes the external manifest and the Lua hot-update folder. The 28 missing ones were hot-updated versions of bundles that also exist (old) in the APK.
+- Fix: ship the final manifest as the package manifest, replace hot-updated in-package bundles with the final files in the APK, and fold the Lua hot-update folder into the Lua bundle. Read the launcher's "install new program" path before deciding where resources live.
+
+**UnityPy `read_typetree()` ignores what `save_typetree()` stored** (2026-10-22)
+- Symptom: added 112 TextAssets one by one, each time reading the AssetBundle object, appending to `m_Container`, saving. The rebuilt bundle had 8533 objects but only 8421 container entries.
+- Cause: `read_typetree()` always parses the object's original bytes; the previous `save_typetree()` result (held in `obj.data`) is not read back, so every add started from the original list.
+- Fix: read the AssetBundle tree once, keep it, append to it, and write it back once in `save()`. Reload the saved bundle and assert the counts.

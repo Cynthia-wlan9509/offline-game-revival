@@ -33,7 +33,7 @@
 | 🎞️ **從截圖與錄影搶救資料** *(新)* | 伺服器端的數值（商店價格、抽卡機率、獎勵、卡牌數據）會隨伺服器一起消失。`scripts/harvest.py` 能把**數十 GB 的玩家截圖與螢幕錄影**，濃縮成幾百 KB 分好類的文字——關鍵影格 → 去除近似重複 → 本機 OCR → 依畫面分組——**全程離線、零 token**，再用 `scripts/llm_structure.py` 批次交給 DeepSeek / OpenAI / 通義 / Kimi / 本機 Ollama，合併成 JSON + CSV。 |
 | ⏩ **時間快轉測試** *(新)* | `scripts/timewarp` 把你的假伺服器放進虛擬時鐘沙盒：快轉好幾天、模擬重啟 App，並**逐筆稽核每一項獎勵**——回應寫著「獲得 50 鑽石」但存檔沒變，就判定失敗。一秒鐘模擬 30 天的遊玩，看每道關卡門檻在第幾天才解得開。零相依套件。 |
 | 🤝 **任何 Agent、任何模型** *(新)* | 透過 `SKILL.md` + `AGENTS.md`，支援 Claude Code、Codex、Cursor、Copilot、OpenCode、Gemini CLI 等。內附 scout / worker / verifier 三種子 Agent 角色，讓昂貴的模型負責決策、便宜的模型負責跑腿。完全沒有 Agent？把 `prompts/chat-playbook.md` 貼進 DeepSeek / ChatGPT，照它給的指令執行就行。 |
-| 📚 **失敗紀錄簿** | 80 KB 的真實踩坑紀錄：症狀 → 根本原因 → 解法。包括啟動競態造成的崩潰、UI 悄悄跑到畫面外、被假回應「毒化」的池化 XHR 物件、永遠寫不進磁碟的存檔…… |
+| 📚 **失敗紀錄簿** | 100 KB 的真實踩坑紀錄：症狀 → 根本原因 → 解法。包括啟動競態造成的崩潰、UI 悄悄跑到畫面外、被假回應「毒化」的池化 XHR 物件、永遠寫不進磁碟的存檔…… |
 
 ## 🏆 經過真實遊戲驗證
 

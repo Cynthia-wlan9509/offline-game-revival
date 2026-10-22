@@ -17,6 +17,21 @@ adb shell am force-stop <package>
 adb shell monkey -p <package> 1
 ```
 
+## 几个项目共用一台测试设备
+
+用户的 BlueStacks（实例 `Pie64`，Android 9，1600x900，自带 root）和手机由案例 A、B、C 等多个项目共用。规矩：
+
+1. **用前登记、用完销账**：唯一一份登记表是 `<项目根>\docs\<分档目录>\设备占用.md`。开始前把自己写进"谁在用"，
+   结束时改回"空"并写清装了/卸了什么包、存档是否还原、应用是否 force-stop。
+2. **各走各的 adb 服务端口**：BlueStacks 用 `<项目根>\work\platform-tools\adb.exe -P 5038 -s 127.0.0.1:5555`
+   （起服务时带 `ADB_USB=0`，不碰手机）；手机走 5037；另一个项目的环境走 5039。启动模拟器：
+   `"C:\Program Files\BlueStacks_nxt\HD-Player.exe" --instance Pie64`，再轮询 `getprop sys.boot_completed`。
+3. **只动自己的包**。别的项目的包要卸载/覆盖，先把存档（`/data/data/<pkg>/shared_prefs/*.xml`，BlueStacks 上用 `su -c` 读）
+   备份到那个项目的 `logs\`，确认安装包本身在硬盘上还有一份，再动手。
+4. **演示包用完就收**：给用户演示的定制包装上后往往一直留在设备上（曾清掉过一个几天前装上的定制样例包）。
+   交付时在登记表写清"装着哪些包、各是干什么的"，确认不再需要就卸掉。
+5. BlueStacks 上 `run-as` 不可用，读写存档用 `su -c`；`adb install` 拒绝非 `.apk` 后缀（`xxx.apk.1` 这种原包先建一个 `.apk` 硬链接）。
+
 ## 日志里必须确认"没有"的东西
 
 - `LuaException`

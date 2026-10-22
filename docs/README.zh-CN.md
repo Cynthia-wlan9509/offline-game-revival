@@ -33,7 +33,7 @@
 | 🎞️ **从截图录屏里抢救数据**（新） | 商店价格、卡池概率、奖励、卡牌数值这些服务端配置会随停服消失。`scripts/harvest.py` 把玩家**几十 GB 的截图和录屏**在本地压成几百 KB 的分类文字——关键帧 → 近似去重 → 本地 OCR → 按界面分组——**全程离线、0 token**，再用 `scripts/llm_structure.py` 批量交给 DeepSeek / OpenAI / 通义 / Kimi / 本地 Ollama，合并成 JSON + CSV。 |
 | ⏩ **时间快进测试**（新） | `scripts/timewarp` 把假服务器放进虚拟时钟沙箱：快进几天、模拟杀进程重开、**每次调用自动对账**——回包写着"获得 50 钻石"但存档没变就报错。一秒跑完 30 天游玩，看每道门槛第几天能过。零依赖。 |
 | 🤝 **任何 Agent、任何模型**（新） | 通过 `SKILL.md` + `AGENTS.md` 支持 Claude Code、Codex、Cursor、Copilot、OpenCode、Gemini CLI 等；自带 scout / worker / verifier 三种子 agent 角色，贵模型做判断、便宜模型干体力活。没有 Agent？把 `prompts/chat-playbook.md` 贴进 DeepSeek / ChatGPT，照它给的命令跑就行。 |
-| 📚 **失败账本** | 80 KB 真实踩坑记录：现象 → 根因 → 修法。启动竞态崩溃、被悄悄挪到屏幕外的 UI、被假回包"毒化"的复用 XHR、从没落盘的存档…… |
+| 📚 **失败账本** | 100 KB 真实踩坑记录：现象 → 根因 → 修法。启动竞态崩溃、被悄悄挪到屏幕外的 UI、被假回包"毒化"的复用 XHR、从没落盘的存档…… |
 
 ## 🏆 在真实游戏上验证过
 

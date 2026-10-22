@@ -6,7 +6,7 @@ Instructions for any coding agent (Codex, Cursor, Copilot, Gemini CLI, OpenCode,
 
 An Agent Skill for **game preservation**: turning a mobile game whose official servers are permanently shut down into an offline memorial build, and recovering lost server-side data from players' screenshots and screen recordings.
 
-- Entry point: [`skills/offline-game-revival/SKILL.md`](skills/offline-game-revival/SKILL.md). Read it first; it tells you which file under `references/` to load for each phase. Don't load all references up front (`pitfalls.md` alone is 80 KB).
+- Entry point: [`skills/offline-game-revival/SKILL.md`](skills/offline-game-revival/SKILL.md). Read it first; it tells you which file under `references/` to load for each phase. Don't load all references up front (`pitfalls.md` alone is over 100 KB).
 - Scripts (all run locally, no network unless stated):
   - `scripts/harvest.py`: screenshots/recordings → keyframes → dedupe → OCR → per-screen text chunks (Python, OpenCV + RapidOCR)
   - `scripts/llm_structure.py`: chunks → any OpenAI-compatible model (DeepSeek, OpenAI, Qwen, Kimi, Ollama) → merged JSON/CSV. Network: the model API you choose. Key from env var.
