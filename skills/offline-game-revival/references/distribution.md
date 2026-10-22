@@ -63,3 +63,12 @@ Unity 游戏的存档一般在 `/data/data/<包名>/shared_prefs/<包名>.v2.pla
 - The issuing tool appends every code to a ledger CSV outside git, and can look up history by device.
 - Lua 5.3: `tostring(99901.0)` gives `"99901.0"`. Normalize numeric IDs with `string.format('%d', n)` before any set lookup.
 - Pacing: the user chose original pacing for every tier, with "max out" as the paid shortcut. Don't propose global speed-ups; check that max-out clears every level gate.
+
+## 已经发出去的"大功能位"事后拆细（两个案例都做过）
+
+先发了一个"全部活动"位，后来想按单个活动签（加一期活动、单独升档）。做法：
+- **只加新位，旧位改成"超集"**：新位各管一期（例如周年 / 生日 / 春节）；判定函数里"问某一期"时，有旧的总位也算真；"问总位"改成"开了任一期"，给几期共用的基础模块用。已发的码不用换。
+- **入口按期分开、模块按期关**：主界面入口各认各的位；一期活动的入口若长在另一期的界面里（本例春节横幅在周年地图上），只开它时那个宿主界面照样能进，宿主自己的子入口点了**给分档提示**（"当前授权没有开放……可以找群主升级"），别用"不支持"糊弄。
+  拦截函数返回字符串 = 提示文字、返回 true = 通用提示，客户端补丁原样弹出来，提示文字留在离线模块里改。
+- 测试和模拟器里所有"假授权"替身要按同样的超集语义改，否则一改开关一片红；用真授权模块签几张组合码跑一组端到端（各组合的判定、摘要文字、拦截提示）。
+- 显示名跟着改（总位从某期活动名改成"全部活动"），三处常量（签发 CLI、游戏模块、签发 GUI）一起改。**新位只有新包认识**：旧包会当没开，手册里写清楚。
