@@ -891,3 +891,8 @@ Method that cracked it: re-pack the identical CAB with your own minimal UnityFS 
 - Symptom: after `pm clear` for a fresh-save test, `Android/data/<pkg>/files/` was gone, 3.7 GB with it.
 - Cause: on Android 9+ clearing app data also clears the app's external files dir.
 - Fix: for a fresh save while keeping resources, delete only the save file; use `pm clear` only when you mean to test first-run resource import.
+
+**Sized a revived feature from code alone; the page art said otherwise** (2026-10-23)
+- Symptom: a revived "level a card to unlock its message" page was filled with ~50 rows made by pairing every related message onto a card range; on screen, the background art named one specific festival event and its dates.
+- Cause: the server-side list was lost, and the row count was inferred only from the client's per-group rule ("exactly 2 per card").
+- Fix: open the page before deciding how much data to serve. Filtering the content by the printed dates gave exactly 2 per character and 4 cards (one screen of columns) — three independent checks agreeing — so only that event ships.
