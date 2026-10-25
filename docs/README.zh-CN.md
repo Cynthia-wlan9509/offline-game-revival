@@ -111,6 +111,14 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 把 `timewarp.create({ files, entry, inventory, granted })` 指向你自己的假服务器即可。值得测的时间类 bug 清单（重置时刻、签到循环、回复上限、计时、重启持久化）见 [`timewarp.md`](../skills/offline-game-revival/references/timewarp.md)。
 
+## 🌙 夜间值班（第二个 skill）
+
+[`skills/night-shift`](../skills/night-shift/SKILL.md) 让 agent 在你睡觉或离开几个小时的时候，自己把一份待办清单往前推。把填空模板 [`NIGHT-RUN.md`](../skills/night-shift/templates/NIGHT-RUN.md) 复制进项目，过一遍两分钟的开跑前检查，然后不给间隔地启动 `/loop`。之后 agent 自己定醒来节奏，一次只做一项，体力活交给子代理；每个「完成」都要有证据、单独提交。要问你的事先用最保守的默认值，最后交一份五段式报告。和游戏无关的项目也能用。
+
+在 case C 上，第一晚 4 个多小时，模拟器上验证了 11 项，每项都有截图或日志和提交，派了 5 个 worker，用了一个 5 小时额度窗口的一半左右；另一晚让它在模拟器上乱点 3000 次，0 闪退。
+
+它依赖 Claude Code 桌面版的能力（`/loop`、`ScheduleWakeup`、`request_keep_awake`、`get_usage`、`start_session`）；缺了哪个怎么退化，skill 里写了（纯命令行里没有并行会话，就改用子代理）。插件安装会一起装上；手动复制：`cp -r offline-game-revival/skills/night-shift ~/.claude/skills/`。
+
 ## 🧭 核心理念
 
 1. **在打包期改脚本，不在运行时注入。** 能跑通的 Frida 脚本也永远离不开注入；写进包里的改动装上就能用。

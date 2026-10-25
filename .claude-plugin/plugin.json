@@ -1,7 +1,7 @@
 {
   "name": "offline-game-revival",
-  "version": "1.1.0",
-  "description": "Turn server-dead mobile games into offline, playable preservation builds; time-travel test the fake server; recover lost game data from player screenshots and screen recordings. Works with any agent or model.",
+  "version": "1.2.0",
+  "description": "Turn server-dead mobile games into offline, playable preservation builds; time-travel test the fake server; recover lost game data from player screenshots and screen recordings. Includes a night-shift skill for unattended overnight runs through a to-do list. Works with any agent or model.",
   "author": {
     "name": "Cynthia-wlan9509"
   },
@@ -25,6 +25,8 @@
     "multi-agent",
     "deepseek",
     "codex",
-    "agents-md"
+    "agents-md",
+    "night-shift",
+    "autonomous-agent"
   ]
 }

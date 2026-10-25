@@ -111,6 +111,14 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 Point `timewarp.create({ files, entry, inventory, granted })` at your own fake server. Checklist of the time bugs worth testing (reset hour, sign-in loops, regen caps, timers, restart persistence): [`timewarp.md`](skills/offline-game-revival/references/timewarp.md).
 
+## 🌙 Night shift (second skill)
+
+[`skills/night-shift`](skills/night-shift/SKILL.md) lets the agent keep working through a to-do list while you sleep or are away for a few hours. Copy the fill-in [`NIGHT-RUN.md`](skills/night-shift/templates/NIGHT-RUN.md) into your project, run the two-minute checklist, then start `/loop` with no interval. The agent paces its own wake-ups and works one item at a time, handing legwork to sub-agents. Every "done" needs evidence and gets its own commit. Anything it would have to ask you about gets the most conservative default, and it finishes with a five-part report. Nothing in it is game-specific.
+
+In case C, the first night ran a little over 4 hours and verified 11 items on an emulator, each with a screenshot or log and a commit, dispatching 5 workers and using about half of one 5-hour usage window; another night it random-tapped the game 3,000 times on the emulator with zero crashes.
+
+It relies on Claude Code desktop features (`/loop`, `ScheduleWakeup`, `request_keep_awake`, `get_usage`, `start_session`); the skill says how to fall back when one is missing (in the plain CLI: sub-agents instead of parallel sessions). The plugin install includes it; to copy it by hand: `cp -r offline-game-revival/skills/night-shift ~/.claude/skills/`.
+
 ## 🧭 Philosophy
 
 1. **Patch at build time, not at runtime.** A Frida script that "works" still needs to be injected forever. Changes baked into the package install and just work.

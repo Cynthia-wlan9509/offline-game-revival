@@ -13,6 +13,7 @@ An Agent Skill for **game preservation**: turning a mobile game whose official s
   - `scripts/timewarp/`: time-travel test harness for fake servers (Node, zero deps). `node scripts/timewarp/examples/mini.test.js` must pass.
 - Sub-agent roles: [`agents/`](agents) (scout / worker / verifier) and [`references/multi-agent.md`](skills/offline-game-revival/references/multi-agent.md).
 - No-tools chat models: [`prompts/chat-playbook.md`](prompts/chat-playbook.md).
+- Second skill: [`skills/night-shift/SKILL.md`](skills/night-shift/SKILL.md), unattended overnight runs through a to-do list (self-paced `/loop`, evidence per item, five-part report). Fill-in template: `skills/night-shift/templates/NIGHT-RUN.md`. Not game-specific.
 
 ## When a user asks you to revive / make offline / preserve a game
 
