@@ -46,7 +46,7 @@ Both case studies are included (anonymized) in [`references/`](skills/offline-ga
 
 ## 💸 What it cost
 
-Everything was done with Claude Code on a subscription. To give a sense of scale, here is the token usage from the local session logs (sub-agents included), converted at Anthropic's public API prices. That is a conversion, not what was actually billed.
+Most of the work was done with Claude Code on a subscription. To give a sense of scale, here is the token usage from the local session logs (sub-agents included), converted at Anthropic's public API prices. That is a conversion, not what was actually billed.
 
 | Case | Calendar days | Tokens | At API list price |
 |---|---|---|---|
@@ -55,8 +55,10 @@ Everything was done with Claude Code on a subscription. To give a sense of scale
 | C — Unity micro client (Mono + SLua) | 5 | 2.3 B | ≈ $620 |
 | All game-revival work (A + B + C, plus one day of recon on a fourth game) | | 12.4 B | ≈ $3,500 |
 
+The table counts Claude only. With the Codex phase below added, the total is about $3,900.
+
 - 98.5% of the tokens are cache reads: every turn, the model re-reads the conversation so far, and that is billed at a small fraction of the normal input price. The text the model actually wrote is only about 35 M tokens. (Both figures are measured over all Claude usage in the same period, 14.1 B tokens, not per case.)
-- Case A had an earlier phase on another coding agent (Codex), about 2.3 B tokens, not priced here.
+- Case A started with about 10 days in Codex, backed by DeepSeek V4.1 Flash and GPT-6 Astra: about 2.25 B tokens, ≈ $420 at list price. DeepSeek took about 2.0 B tokens for only ≈ $27–54 (off-peak to peak price); GPT-6 Astra took about 0.26 B tokens for ≈ $387.
 - Counted up to 2026-10-25.
 
 ## 🚀 Install
