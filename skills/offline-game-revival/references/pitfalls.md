@@ -892,7 +892,110 @@ Method that cracked it: re-pack the identical CAB with your own minimal UnityFS 
 - Cause: on Android 9+ clearing app data also clears the app's external files dir.
 - Fix: for a fresh save while keeping resources, delete only the save file; use `pm clear` only when you mean to test first-run resource import.
 
+**The phone was attached, but `adb devices` did not show it** (2026-10-24)
+- Symptom: Windows listed the phone as a USB device, yet `adb devices` only showed an emulator.
+- Cause: several projects share the machine, and each runs its own adb server port. The USB device was claimed by the server on port 5038, not the default 5037.
+- Fix: run `adb -P <port> devices` on each port in use (find them with the process list: `adb -L tcp:<port> fork-server`) and target the phone through that server. Don't kill another project's adb server to grab the device.
+
+**Old-style storage permission still reads Download on Android 14, but can't delete there** (2026-10-24)
+- Symptom: a targetSdk 28 build found and read resource zips in `/sdcard/Download` after the storage permission prompt, but `os.remove` on them silently failed.
+- Cause: scoped storage (Android 11+) lets an app delete only files it created itself; the zips came from another app (browser, file manager, adb).
+- Fix: after importing, check whether the file is really gone and, if not, tell the player to delete it in the file manager.
+
 **Sized a revived feature from code alone; the page art said otherwise** (2026-10-23)
 - Symptom: a revived "level a card to unlock its message" page was filled with ~50 rows made by pairing every related message onto a card range; on screen, the background art named one specific festival event and its dates.
 - Cause: the server-side list was lost, and the row count was inferred only from the client's per-group rule ("exactly 2 per card").
 - Fix: open the page before deciding how much data to serve. Filtering the content by the printed dates gave exactly 2 per character and 4 cards (one screen of columns) — three independent checks agreeing — so only that event ships.
+
+**Imported resources are on disk, but the game still says "not downloaded yet"** (case C, 2026-10-24)
+- Symptom: after importing all 31,125 external bundles, level 1-4 refused to start: "story not downloaded yet, 0KB/539KB". Levels 1-1 to 1-3 had worked, so it looked like a missing file.
+- Cause: the micro client decides "downloaded" from its own table of missing bundles (`MicroAssetMgr.allBundles_`), not from the files. On first install it marks every external bundle missing and saves the table (`res.dat`); the original downloader removes one entry per finished download. Importing files bypasses that, so the table never empties. 1-1 to 1-3 only worked because their bundles happen to ship inside the APK.
+- Fix: at the end of the client's resource start-up jobs, drop every table entry whose file exists and re-save the table. Here that was 31,125 file checks, spread over frames, 2.8 s on an emulator. General rule: when you replace a downloader, find the state the downloader maintained (ready flags, size counters, serialized lists), not just the files it wrote, and test content whose assets are *not* in the APK.
+
+**"Offline" build still phoned home whenever the phone had a network** (case B, 2026-10-24)
+- Symptom: none visible. Every test had run with the game's network blocked, so nobody had looked. With the network open, the build sat on the disclaimer page and tried 22 addresses within 100 s (publisher analytics and gateway, one-tap-login SDK, QQ Connect with the phone model).
+- Cause: only the privacy dialog had been skipped; the publisher SDKs still initialize in `Application.onCreate` and after the privacy callback.
+- Fix: drop `INTERNET` from the manifest and add a release check that fails if it is back. Then cold start with the network open and expect zero sockets and zero DNS queries for the app's uid.
+- Side effect to look for: without `INTERNET`, Java DNS lookups throw `SecurityException` (not `IOException`), and `NetworkInterface.getNetworkInterfaces()` returns null. The SDKs caught theirs; the engine's MAC lookup did not, and startup died on an empty device-info JSON. Keep the network-*state* permissions, because a missing one throws as soon as an SDK calls it.
+
+**The decompiled data table disagreed with the game at runtime** (case C, 2026-10-24)
+- Symptom: workshop evolution consumed 2 copies on the device, while the same server code run in lupa against the decompiled `data/partevolution.lua` consumed 3. The UI showed "14/3" (it prints `originalNum + 1`), i.e. 2 at runtime.
+- Cause: the decompiled table had a wrong value for that row (re-decompiling the final bundle gave the same 3; there was no hot-update file on the device). Large constant-only tables are where decompilers slip. The server was right because it reads the same in-memory `Data` the client uses.
+- Fix: never hard-code numbers copied from decompiled tables into the fake server; always read `Data.xxx` at runtime. When a device result disagrees with an offline test, log the runtime value (`N.log`) before "fixing" the server. Treat decompiled tables as good for structure and ids, not as ground truth for every number.
+
+**A scout "waited on its own background work" for 40 minutes** (case C, 2026-10-24)
+- Symptom: the scout reported "waiting on background work" twice and never delivered; the goal check listed a background shell that never ended.
+- Cause: its shell command started with `cat > /tmp/x` with no input, so `cat` blocked on stdin forever; the scout parked itself waiting for that command.
+- Fix: when a subagent stalls, list background tasks and read the command line; stop the stuck shell and the agent, and do the work yourself if you already have the context. In briefs, say "finish within N minutes, no background jobs".
+
+**One daily cap reset at midnight while every other daily reset at 05:00** (case B, 2026-10-24)
+- Symptom: none in play-through; found while auditing. A minigame's daily reward cap reset at 00:00 Beijing time, the rest of the dailies at 05:00, so between midnight and 05:00 the cap was already fresh while the day's other limits were not.
+- Cause: the shared day-key helper takes the reset hour as an optional argument that defaults to 0; the newer module simply left it out.
+- Fix: pass the hour. Then make the omission impossible to repeat: a static check in the time-warp suite scans every module for day / week key calls without an explicit reset hour and fails. A regression at 00:30, 04:59 and 05:00 covers the module itself.
+- Related: the time-warp suite's generic "response says X, save gained X" reconciliation only knew the reward routes that existed when it was written. When new modules add reward routes, add them to the reconciliation table too, and keep an eye on the printed coverage line (here it had silently stayed at 26/30 while ~20 new routes were outside it).
+
+**Removing INTERNET made a vendor ROM ask "allow this app to turn WLAN on or off?" on every launch** (case B, 2026-10-24, HyperOS)
+- Symptom: three seconds after each cold start a system dialog from the security center asked whether the game may toggle WLAN. The emulator never showed it.
+- Cause: the publisher SDK reads the MAC address by enumerating network interfaces; without INTERNET that returns null, so it falls back to `setWifiEnabled(true)`, reads `/sys/class/net/wlan0/address`, then restores the old state. A targetSdk < 29 app can still really toggle WLAN on Android 10+; MIUI/HyperOS intercepts it as a prompt.
+- Fix: stub the fallback (return empty, the SDK's own "no MAC" branch). Lesson: after removing a permission, cold-start on a real vendor-ROM phone, not only an emulator, and grep the SDKs for calls that change device state (`setWifiEnabled`, `requestNetwork`, `startUsingNetworkFeature`).
+
+**Measured the wrong UID on the phone** (case B, 2026-10-24)
+- Symptom: a real-phone "zero sockets" result that proved nothing.
+- Cause: the UID was taken from the owner shown on files in `/sdcard/Download` (`u0_a203`, the storage mapping), not from the game process (10360).
+- Fix: take it from `ps -o UID -p $(pidof <pkg>)`, and run the same poller once against an app that is known to be online as a control.
+
+**No way to back up a player's save on a non-rooted phone, except the game's own export** (2026-10-24)
+- `adb backup -noapk <pkg>` on HyperOS (Android 14, targetSdk 26, allowBackup=true) produced an empty tar after the on-device confirmation; release builds are not debuggable, so `run-as` is out too.
+- Build the in-game export early (here it existed from v0.8.6); when the installed build predates it, ask the user before "install first, export on the first screen, then test".
+
+**scrcpy recorded silence with `--audio-dup`** (2026-10-24)
+- `--audio-dup` (keep the phone playing while recording) uses Android's playback capture, which an app targeting < 29 does not allow by default, so the game was silent. Without it scrcpy records the output mix via shell privileges (the phone speaker is muted meanwhile) and the game audio is there.
+- Point scrcpy at the project's adb and port (`ADB=…`, `ANDROID_ADB_SERVER_PORT=…`), or its bundled adb starts a server on 5037 and fights for the device. Its matroska files carry a color-matrix tag swscale rejects; `setparams=colorspace=bt709:…` before scaling.
+- Starting scrcpy on the portrait launcher and then launching the landscape game left the mkv header with the portrait SPS; every landscape frame decoded as smear. Remuxing with `-c copy -bsf:v h264_mp4toannexb x.ts` lets the decoder pick up the in-band SPS, and the footage was fine.
+
+**Demo video: the first cut missed what the user asked for** (2026-10-24)
+- Asked for "today is <character>'s birthday, show the event", the cut ended on another character's birthday event because that was the only birthday event in the game. Say up front what the game actually has for that character (here: two birthday phone calls) and build the video around them, plus that character's own story, cards and gift screen. Do not pad it with someone else's event.
+- Asked to show the build was "made unpaid by <team>", the captions added "free to share" on top. The user had not shared it and objected. Caption only what the user asked for.
+- The game draws its in-game phone rotated 90° (players turn the device); transpose that segment upright in the edit instead of leaving it sideways.
+- Keep the raw capture until the user has seen the cut; after deleting it, every fix means recording again.
+
+## 「按钮点了没反应」先查有没有没回的等回包请求（案例 C，2026-10-24）
+
+- 现象：每日任务面板里第 1 个活跃宝箱点了不发请求，同面板别的按钮有的能用；模拟器上什么都不提示，真机上过一会儿弹「数据请求超时」。
+- 原因：面板 onInit 发了一个 RPCWaitSend("queryElect")（评选赛数据），本地服务器没接 → 客户端的等待遮罩把界面锁到超时，这段时间里的点击全被吞掉。和特效、射线检测都无关（之前在这上面白花了两轮）。
+- 做法：一出现"点了没反应"，先看 logcat 里有没有 `unhandled`；更彻底的是把客户端所有 `Event.RPCWaitSend / RPCOverTimeSend` 的请求名扫出来，和服务器已注册的对比，没接的至少回一个空包（脚本思路：正则扫 `Event\.(RPCWaitSend|RPCOverTimeSend)\s*,\s*"(\w+)"`）。
+
+## 中途改属性客户端不理：只有 setX、没有 onX（案例 C，2026-10-24）
+
+- 现象：在线时周期开启（05:00 的周六周期）、角色支线通关后下一关解锁，都要重新登录才生效。
+- 原因：客户端属性分发（refreshEntityProperty）登录时调 `set<Name>`，之后变化调 `on<Name>(old, new)`。很多模块只写了 setX，在里面把数据拷进自己的管理器（ActivityCycleMgr、TaskBranchData），中途用 batchSyncProperty 推属性，值虽写进了玩家对象，管理器里的副本不变。原版服务器中途用的是专门的推送 RPC（notifyCycleStatus、syncBranchProgressData）。
+- 做法：服务器中途推属性前，先查客户端有没有 `on<Name>`；没有就找同名的 sync/notify RPC。可以写脚本扫 `function set(\w+)\(self` 和 `function on(\w+)\(self, *old`，和服务器会中途推的属性求差。另一个连带坑：重发属性的计算函数里如果有"已通知"之类的副作用（cycle 的 notified），重发会把增量推送吞掉。
+
+## 反编译出来的文件内容可能和文件名对不上：用字节码里的 chunk 名核对（案例 C，2026-10-24）
+
+- 现象：`ui/reputationshop/*.lua` 等 112 个文件读出来全是同一个无关文件（AssetDetect.lua），分析了半天才发现。游戏里这些功能是好的。
+- 原因：自己写的 UnityPy 打包工具给新增 TextAsset 克隆模板对象、`save_typetree` 写新内容；写入没问题，但之后 `obj.read()` 仍解析模板的原始字节，读源码时拿到的全是模板。
+- 做法：Lua 5.1 字节码头部后面就是源文件名（`@UI/xxx.lua`），批量反编译后跑一遍"条目名 vs chunk 名"的比对，0 个不符再用。自己的打包工具里，新增条目的字节码要另存一份，读取时直接返回，不要信 read()。
+
+## 热更新合并后，打包脚本读到的仍是旧版脚本（案例 C，2026-10-24，接上一条）
+
+- 不只新增条目：被热更新替换的 299 个脚本，`set_raw` 写进去后 `read()` 仍返回原始字节。后果是：
+  1. 打包时对 `main.lua` 等"读出来 → 打补丁 → 写回"的文件，实际是对**旧版**打补丁、覆盖了热更新版（终版 `HIDE_CHARGE_SYS = true` 丢了）；
+  2. 读源码用的协议表、管理器全是旧版，新协议（20 个）在"源码"里根本找不到，看起来像"客户端调了不存在的协议"。
+- 做法：自己的资源包封装里，所有写操作（替换 / 新增 / 改源码）都把写进去的字节另存一份，读取优先返回它；合并热更新后跑一遍"字节码 chunk 名 = 条目名"和"读回的字节 = 热更新文件"的核对。补丁锚点换到热更新版上（这次隐私页提示号 210181 → 210182）。
+- 判断"是不是读到了旧版"的快速信号：运行时日志的调用栈里出现源码里搜不到的函数名（这次是 `ActivityMgr.syncPromotionalActivityData`）。
+
+## os.date 在游戏进程里会返回错的日期（案例 C，2026-10-25）
+- 现象：本地服务器的"游戏日"偶尔在登录时跳到明天又跳回来，按天重置的数据被清两遍。
+- 根因：Lua 5.1 的 os.date 调 C 的 localtime / gmtime，结果放在进程共用的静态缓冲区；Unity / Mono 的其他线程同时调用会把它写乱。同一秒里 "%Y%m%d" 偶尔返回明天，"!" 格式的 UTC 错 16 小时。登录时调用最密。
+- 修：在最早加载的模块里包一层全局 os.date，连调两次结果一致才返回（客户端模块只把 os 表存成局部变量，也一起受益）。查这类问题时，在可疑函数里同时打印"算出来的值"和"重新格式化一次的值"，两者不一致就是它。
+
+## 终版客户端可能只剩"告示"一种邮件界面（案例 C，2026-10-25）
+- 现象：服务器发的邮件存档里有、客户端 mailbox 里也有（探针数到了），界面显示"暂无信息"。
+- 根因：终版主界面的入口打开的是 UIBulletin，只列 mailType 5（告示）；系统信（mailType 1）的 UIMailBox 已经没有入口。
+- 做法：发信模板选 mailType 5、带 {title}/{content} 的那个；旧存档里的模板号在下发时映射。验邮件一定要在真机界面上看到，不能只看存档。
+
+## 客户端"按物品号数数量"的缓存可能在登录时被建成空表（案例 C，2026-10-25）
+- 现象：存档和客户端背包里都有某件物品，界面却按 0 件处理（收集进度 0/3、商店"已有 0"），只有本次登录里新得到的物品数得对。
+- 根因：Bag.amoutCache_ 第一次查询时按当时的背包一次建好，之后只有 onBagUpdate 会补；离线服务器把背包放在登录属性里一次下发，属性按号赋值，背包装进来之前已有界面查过数量。
+- 修：登录后第一个 tick 把这个缓存清成 nil，让下次查询按完整背包重建。查这类问题时直接探针打印背包表的条数和缓存表的条数。

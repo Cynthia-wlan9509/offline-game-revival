@@ -46,6 +46,8 @@ adb shell monkey -p <package> 1
 - **重启后仍然正确**：杀进程重启 / 冷启动 / 飞行模式冷启动
 - **退出再进不重复、不丢失**
 - **返回路径干净**：来回切页面没有残留面板、黑屏、按钮失效
+- **联网时也不外发**：平时都在断网下测，从来看不到联网行为。至少验一次"网络全开冷启动"：root 下 iptables 对游戏 uid 丢包（`-m owner --uid-owner <uid> -j DROP`，数据不出去），
+  轮询 `/proc/net/tcp*` 按 uid 读 SYN_SENT 的目标、tcpdump 记 53 端口；修完撤掉规则再测一遍，要求零套接字、零 DNS。没 root 的真机上 `adb shell` 也能读 `/proc/net/tcp*`；uid 取自 `ps -o UID -p $(pidof 包名)`，并对一个在联网的应用跑一次对照。正式包检查脚本里加一项"清单不许有 INTERNET"。案例见 `case-b-laya-native.md` 末节。
 
 ## 常见"假通过"
 
