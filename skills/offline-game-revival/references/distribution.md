@@ -55,6 +55,18 @@ Unity 游戏的存档一般在 `/data/data/<包名>/shared_prefs/<包名>.v2.pla
 - 调用方要对「依赖的函数还不存在」做兜底，各分支才能独立构建、独立验证。
 - 真机一次只给一个会话用，设备占用写在一张登记表里。
 
+## 7. 上线后：玩家 bug 反馈闭环
+
+包发出去以后，bug 会从玩家那里不断冒出来。别靠翻群聊，搭一条固定的流水线：
+
+1. **一个地方收**：论坛帖子（如 Discord 的论坛频道）比群聊好，一帖一事，能贴标签、能回头查。置顶一份发帖模板：包的版本、档位、机型、复现步骤、截图或录屏。
+2. **机器收集，AI 分诊**：定时拉新帖，跳过已经处理过的，分成"真 bug / 用法问题 / 重复 / 新需求"。真 bug 先在模拟器上复现，复现不了就回帖要录屏。
+3. **修完要验**：同时发了几个包或几个档位的，每个包都要修到、验到；回复里写清楚"哪个版本修好了"。
+4. **对外发言要人点头**：AI 起草回复和标签，用户看过、点头才发。批量发之前先给用户看完整的待发清单。
+5. **留一张处理表**：帖子 → 结论 → 修在哪个提交 → 进了哪个版本。下一轮先读这张表，跳过已处理的帖子。
+
+现成实现：[hearback](https://github.com/Cynthia-wlan9509/hearback)（开源的 Discord 机器人：收帖、归类、交给 AI 修、起草回复，人点头才发）。
+
 ## Per-chapter issuing plus free module checkboxes (LIC3, 2026-10-17)
 
 - Payload: `LIC3|group|device|expires|open-up-to-chapter|module-bits-hex|activity-list|serial`. The chapter is a number, not a bit. Parse module bits one hex digit at a time, never through a float, so new modules can take higher bits without hitting the 53-bit limit. Activity list: `*` = all, or a comma-separated list of IDs.

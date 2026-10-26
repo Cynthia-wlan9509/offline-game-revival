@@ -12,6 +12,7 @@
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
 ![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
 </div>
 
@@ -114,6 +115,12 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 用這個技能復活過一款遊戲嗎？踩到新的坑了嗎？非常歡迎透過 Issue 和 PR 提交**新引擎的案例研究**（Cocos、Unreal、Godot、IL2CPP……）以及**失敗紀錄簿的新條目**。
 
 如果它救回了一款你深愛的遊戲，點個 ⭐ 能幫助更多玩家找到它。
+
+怎麼參與（提 Issue、提 PR、成為共同維護者）：見 [CONTRIBUTING.md](../CONTRIBUTING.md)。
+
+## ⭐ 收藏數變化
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
 
 ## 📄 授權
 

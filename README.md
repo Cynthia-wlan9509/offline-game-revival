@@ -12,6 +12,7 @@
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
 ![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
 </div>
 
@@ -25,6 +26,7 @@ Every year, hundreds of mobile games shut down. The APK still sits on players' p
 
 | | |
 |---|---|
+| 🩺 **Can it be saved?** | Before any patch, answer three questions within half a day: are the game's rules on the phone, is the game itself inside the APK, and how much server-side data can be recovered. Story, idle and card games usually can be saved; games whose battles are computed on the server, or that download the game itself after first launch, usually can't. |
 | 🔍 **Recon** | Unpack the APK, find the real logic layer (Lua / JS / C# transpiled), identify encryption and resource-integrity checks. |
 | 🧩 **Anchor-asserted patching** | One build entry point. Every code replacement asserts its anchor — if the upstream package changes, the build *fails loudly* instead of shipping a silently broken patch. |
 | 🖥️ **Local fake server** | Intercept the HTTP/JSON layer and answer hundreds of endpoints from a local save. A methodology for mapping every endpoint's caller and what it reads, then generating safe defaults. |
@@ -37,12 +39,15 @@ Every year, hundreds of mobile games shut down. The APK still sits on players' p
 
 ## 🏆 Proven on real games
 
-The playbook was distilled from reviving two commercial mobile games whose servers shut down:
+The playbook was distilled from reviving three commercial mobile games whose servers shut down:
 
 - **Case A — Unity + Lua**: full single-player memorial build, verified on a physical Android 14 phone.
 - **Case B — LayaAir native + JavaScript**: 315 server endpoints reimplemented locally, 700+ regression assertions, all major systems (story chapters, battles, gacha, pets, dating, tower, events) clicked through on a device, plus offline license codes (Ed25519, no BigInt) and per-copy watermarks for private sharing.
+- **Case C — Unity micro client (Mono + SLua)**: the APK held only about a quarter of the game's resources; the rest came from a player's phone backup. Half-encrypted Mono assemblies, a packer shell, and a local server written entirely in Lua.
 
-Both case studies are included (anonymized) in [`references/`](skills/offline-game-revival/references).
+A fourth game was dropped after half a day: the game itself was downloaded after first launch, and that download died with the server.
+
+All three case studies are included (anonymized) in [`references/`](skills/offline-game-revival/references).
 
 ## 💸 What it cost
 
@@ -119,6 +124,10 @@ In case C, the first night ran a little over 4 hours and verified 11 items on an
 
 It relies on Claude Code desktop features (`/loop`, `ScheduleWakeup`, `request_keep_awake`, `get_usage`, `start_session`); the skill says how to fall back when one is missing (in the plain CLI: sub-agents instead of parallel sessions). The plugin install includes it; to copy it by hand: `cp -r offline-game-revival/skills/night-shift ~/.claude/skills/`.
 
+## 🐞 After release: player bug reports
+
+Once players have the build, bugs keep coming. The skill's [`distribution.md`](skills/offline-game-revival/references/distribution.md) (section 7) describes the loop: players post in a forum, a bot collects and sorts the posts, the agent reproduces and fixes each bug and drafts the reply, and nothing is posted until you approve it. A ready-made Discord bot for this is open source: [hearback](https://github.com/Cynthia-wlan9509/hearback).
+
 ## 🧭 Philosophy
 
 1. **Patch at build time, not at runtime.** A Frida script that "works" still needs to be injected forever. Changes baked into the package install and just work.
@@ -136,9 +145,19 @@ This project is about **game preservation**: keeping games playable **after thei
 
 ## 🤝 Contributing
 
-Revived a game with this skill? Hit a new pitfall? Issues and PRs with **new engine case studies** (Cocos, Unreal, Godot, IL2CPP…) and **new entries for the failure ledger** are very welcome.
+Revived a game with this skill? Hit a new pitfall? **New engine case studies** (Cocos, Unreal, Godot, IL2CPP…) and **new entries for the failure ledger** are very welcome.
+
+- **Report or ask**: open an [issue](https://github.com/Cynthia-wlan9509/offline-game-revival/issues).
+- **Change something**: fork the repo, edit, and open a pull request. Every PR is reviewed before it is merged.
+- **Help maintain it**: after a few merged PRs, ask in an issue and you can be invited as a collaborator with write access.
+
+What may and may not go into the repo (no game assets, no keys, no player data) is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 If this saved a game you loved, a ⭐ helps other players find it.
+
+## ⭐ Star history
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
 
 ## 📄 License
 

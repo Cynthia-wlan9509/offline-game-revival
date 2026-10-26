@@ -12,6 +12,7 @@
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
 ![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
 </div>
 
@@ -114,6 +115,12 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 이 스킬로 게임을 되살렸나요? 새로운 함정에 빠졌나요? **새로운 엔진 사례 연구**(Cocos, Unreal, Godot, IL2CPP 등)와 **실패 대장의 새 항목**을 담은 Issue와 PR을 언제든 환영합니다.
 
 아끼던 게임을 이 프로젝트로 지켜냈다면 ⭐ 하나가 다른 플레이어들이 이곳을 찾는 데 큰 도움이 됩니다.
+
+참여 방법(이슈, 풀 리퀘스트, 공동 관리자 되기)은 [CONTRIBUTING.md](../CONTRIBUTING.md)를 참고하세요.
+
+## ⭐ 스타 추이
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
 
 ## 📄 라이선스
 

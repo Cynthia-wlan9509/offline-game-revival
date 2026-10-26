@@ -12,6 +12,7 @@
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
 ![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
 </div>
 
@@ -114,6 +115,12 @@ Proyek ini bertujuan untuk **pelestarian game**: menjaga game tetap bisa dimaink
 Sudah menghidupkan kembali sebuah game dengan skill ini? Menemukan jebakan baru? Issue dan PR berisi **studi kasus engine baru** (Cocos, Unreal, Godot, IL2CPP…) dan **entri baru untuk catatan kegagalan** sangat kami sambut.
 
 Kalau proyek ini berhasil menyelamatkan game yang Anda cintai, sebuah ⭐ akan membantu pemain lain menemukannya.
+
+Cara ikut berkontribusi (issue, pull request, menjadi maintainer): lihat [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## ⭐ Riwayat bintang
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
 
 ## 📄 Lisensi
 

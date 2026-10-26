@@ -12,6 +12,7 @@
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
 ![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
 </div>
 
@@ -114,6 +115,12 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 このスキルでゲームを復活させましたか？新しい落とし穴にハマりましたか？**新しいエンジンのケーススタディ**（Cocos、Unreal、Godot、IL2CPP など）や**失敗台帳への新しい項目**を添えた Issue や PR を、心よりお待ちしています。
 
 大好きなゲームを救えたなら、⭐ をひとつ。ほかのプレイヤーがこのプロジェクトを見つける助けになります。
+
+参加方法（Issue、プルリクエスト、共同メンテナーになるには）は [CONTRIBUTING.md](../CONTRIBUTING.md) を参照してください。
+
+## ⭐ スター数の推移
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
 
 ## 📄 ライセンス
 

@@ -12,6 +12,7 @@
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
 ![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
 </div>
 
@@ -114,6 +115,12 @@ Este projeto trata de **preservação de jogos**: manter os jogos jogáveis **de
 Reviveu um jogo com esta skill? Caiu em uma armadilha nova? Issues e PRs com **novos estudos de caso de engines** (Cocos, Unreal, Godot, IL2CPP…) e **novas entradas para o registro de falhas** são muito bem-vindos.
 
 Se isto salvou um jogo que você amava, uma ⭐ ajuda outros jogadores a encontrá-lo.
+
+Como participar (issues, pull requests, tornar-se mantenedor): veja [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## ⭐ Histórico de estrelas
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
 
 ## 📄 Licença
 

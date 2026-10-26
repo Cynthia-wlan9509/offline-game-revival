@@ -12,6 +12,7 @@
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
 ![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
 </div>
 
@@ -25,6 +26,7 @@
 
 | | |
 |---|---|
+| 🩺 **先判断能不能救** | 写补丁之前，半天内回答三个问题：游戏规则在不在手机里、游戏本体在不在安装包里、服务器上的数据还能找回多少。剧情、养成、卡牌类大多能救；战斗结果靠服务器算的，或者进游戏后才下载本体的，大多很难。 |
 | 🔍 **解包侦察** | 拆开 APK，找到真正的逻辑层（Lua / JS / C# 转译产物），摸清加密方式和资源完整性校验。 |
 | 🧩 **锚点断言补丁** | 唯一构建入口，每一处代码替换都断言锚点存在——上游包一变，构建**大声失败**，绝不把静默失效的补丁发出去。 |
 | 🖥️ **本地假服务器** | 拦截 HTTP/JSON 网络层，用本地存档回应几百个接口；附一套"先摸清每个接口的调用方读了哪些字段，再生成安全默认值"的方法。 |
@@ -37,12 +39,15 @@
 
 ## 🏆 在真实游戏上验证过
 
-这套方法提炼自两款已停服商业手游的完整复活：
+这套方法提炼自三款已停服商业手游的完整复活：
 
 - **案例 A —— Unity + Lua**：完整单机纪念版，在 Android 14 真机上验收。
 - **案例 B —— LayaAir 原生 + JavaScript**：本地重写 315 个服务端接口，700+ 条回归断言，主线、战斗、抽卡、宠物、约会、爬塔、活动等主要系统逐项真机点通；另有离线授权码（Ed25519，无需 BigInt）和按份水印，方便小范围私下分享。
+- **案例 C —— Unity 微端（Mono + SLua）**：安装包里只有约四分之一的资源，其余从一位玩家的手机备份里找回；Mono 程序集半加密、带加固壳，本地服务器整个写在 Lua 里。
 
-两个案例都已脱敏收录在 [`references/`](../skills/offline-game-revival/references)。
+还有第四款半天就停了：游戏本体是进游戏后才下载的，服务器一关就没了。
+
+三个案例都已脱敏收录在 [`references/`](../skills/offline-game-revival/references)。
 
 ## 💸 花了多少
 
@@ -119,6 +124,10 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 它依赖 Claude Code 桌面版的能力（`/loop`、`ScheduleWakeup`、`request_keep_awake`、`get_usage`、`start_session`）；缺了哪个怎么退化，skill 里写了（纯命令行里没有并行会话，就改用子代理）。插件安装会一起装上；手动复制：`cp -r offline-game-revival/skills/night-shift ~/.claude/skills/`。
 
+## 🐞 上线以后：收玩家的 bug
+
+包发给玩家以后，bug 会不断冒出来。skill 的 [`distribution.md`](../skills/offline-game-revival/references/distribution.md) 第 7 节写了这条流水线：玩家在论坛发帖，机器人收集、归类，agent 复现、修复、起草回复，你点头之后才发出去。现成的 Discord 机器人也开源了：[hearback](https://github.com/Cynthia-wlan9509/hearback)。
+
 ## 🧭 核心理念
 
 1. **在打包期改脚本，不在运行时注入。** 能跑通的 Frida 脚本也永远离不开注入；写进包里的改动装上就能用。
@@ -136,9 +145,19 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 ## 🤝 参与贡献
 
-用这个 skill 复活了一款游戏？踩到了新坑？非常欢迎提交**新引擎案例**（Cocos、Unreal、Godot、IL2CPP……）和**失败账本新条目**的 Issue / PR。
+用这个 skill 复活了一款游戏？踩到了新坑？非常欢迎**新引擎案例**（Cocos、Unreal、Godot、IL2CPP……）和**失败账本新条目**。
+
+- **反馈或提问**：开一个 [Issue](https://github.com/Cynthia-wlan9509/offline-game-revival/issues)。
+- **想改内容**：Fork 仓库，改完提 Pull Request（PR）。每个 PR 都会先审再合并。
+- **想一起维护**：合并过几个 PR 后，在 Issue 里说一声，可以邀请你成为协作者，直接有修改权限。
+
+什么能放进仓库、什么不能（不放游戏资源、密钥、玩家数据），见 [CONTRIBUTING.md](../CONTRIBUTING.md)。
 
 如果它帮你救回了一款心爱的游戏，点个 ⭐ 能让更多玩家找到它。
+
+## ⭐ 收藏数变化
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
 
 ## 📄 许可证
 

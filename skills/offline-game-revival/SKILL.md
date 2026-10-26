@@ -1,6 +1,6 @@
 ---
 name: offline-game-revival
-description: "Turn shut-down / server-dead mobile games into fully offline, playable preservation builds: unpack & recon, locate the script logic layer (Lua / JS / IL2CPP), anchor-asserted patches, local fake server, repack & re-sign, on-device acceptance, and recovering lost game data from players' screenshots and screen recordings. 把停服或断网的手游改造成可离线运行的纪念版：解包侦察、定位脚本逻辑层（Lua / JS / IL2CPP）、锚点补丁、本地回包、重打包签名、真机验收，以及从玩家截图和录屏中找回丢失的游戏数据。当用户要求离线化、单机化、复活一个已停服的游戏，继续维护/重建一个已离线化的 APK，或要从截图、录屏里还原停服游戏的数值和资料时使用。"
+description: "Turn shut-down / server-dead mobile games into fully offline, playable preservation builds: unpack & recon, locate the script logic layer (Lua / JS / IL2CPP), anchor-asserted patches, local fake server, repack & re-sign, on-device acceptance, and recovering lost game data from players' screenshots and screen recordings. 把停服或断网的手游改造成可离线运行的纪念版：解包侦察、定位脚本逻辑层（Lua / JS / IL2CPP）、锚点补丁、本地回包、重打包签名、真机验收，以及从玩家截图和录屏中找回丢失的游戏数据。当用户要求离线化、单机化、复活一个已停服的游戏，判断一款停服游戏还能不能救，继续维护/重建一个已离线化的 APK，或要从截图、录屏里还原停服游戏的数值和资料时使用。"
 metadata:
   short-description: 停服手游离线化改造
 ---
@@ -15,6 +15,21 @@ metadata:
 
 运行时方案（Frida / hook / 内存补丁）无论调得多通，都留下"必须运行中注入"的外部依赖，用户拿到手就废了。脚本层（Lua / JS / C# 转译产物）的改动写在包里，安装即用。这条决定了整个技术路线：先把逻辑层从包里挖出来，再在打包期改写它。
 
+## 第 0 步：先判断能不能救（半天内给结论）
+
+不是所有游戏都救得回来。写任何补丁之前先回答三个问题，写成半页结论交给用户拍板：
+
+1. **规则在不在手机里？** 剧情、养成、卡牌这类，规则大多写在客户端脚本里，服务器只管存档和发奖，希望很大。
+   战斗、抽卡结果由服务器算、客户端只负责播放的，离线版就得自己重写这部分规则。判断办法：在脚本里找战斗结算的回包处理，
+   看客户端是"自己算完再上报"，还是"等回包里的结果（整场伤害序列、胜负、掉落）再播放"。
+2. **本体在不在包里？** 拿游戏自己的资源清单和 APK 做差集（`references/recon.md` 第 1 节）。进游戏后才下载本体的微端，
+   服务器一关本体就没了，只能找老玩家手机里的备份或缓存。
+3. **服务器上的数据还能找回多少？** 商店价格、抽卡概率、活动配置常常只存在服务器上。先看玩家录屏、截图、攻略站能还原多少（第 8 步）；
+   实在找不到可以自己编一套，但要在文档和游戏里标明"自造"，那就不算原汁原味了。
+
+结论分三档：能原样复活 / 能玩，但部分规则是自造的 / 缺本体或缺核心规则，先停下征集材料。第三档别硬耗：
+实例里一款 2023 年停服的游戏，拆包发现本体是进游戏后才下载的，半天就停了，转去向老玩家征集手机备份。
+
 ## 工作顺序
 
 1. **侦察** — 解包，定位逻辑层（脚本 / 数据 / 资源），确认加密与校验方式。**第一天就拿资源清单对一遍包里的文件**：微端/分包游戏的 APK 可能只带一小部分资源，缺的那部分随服务器一起没了，资源从哪来要先问用户，再动代码。→ `references/recon.md`
@@ -28,12 +43,22 @@ metadata:
    语音通话、聊天短信这类剧情配置另有一套：音轨对齐认通话、声纹定归属、本地 ASR 补字幕、截图逐图人工校对；每项标 `[实测]/[推断]/[语音识别]/[自造]`。→ `references/media-harvest.md`
    同时拿配置清单对镜像做差集，找"文件还在、终版没登记"的被埋没内容（案例见 `references/case-b-laya-native.md`）。
 9. **固化** — 把"已实现"和"已验证"分开写，记录失败账本。
+10. **上线后收 bug** — 玩家在论坛发帖，机器人定时收集、归类，AI 复现、修复、起草回复，用户点头才发出去。→ `references/distribution.md` 第 7 节
 
 ## 分工
 
 量大的阶段（接口清单、按模块实现假服务器、读长日志、OCR 结构化）适合拆给子 agent 并行：主 agent 做判断和收货，
 worker 按规格实现，scout 只读搜索。交接格式、各阶段怎么拆、在不同工具（含只有聊天网页的 DeepSeek / ChatGPT）里怎么落地：
 `references/multi-agent.md`。子 agent 交回的结论要自己复核后再告诉用户。
+
+钱主要花在模型重读旧对话上（实测 98.5% 的 token 是这部分）。每轮结束写一份几 KB 的快照，下一轮开新会话读快照接着做；
+单次工具输出控制在 8 KB 左右。做法见 `references/multi-agent.md`「省 token」。
+
+## 和用户怎么配合
+
+用户多半不写代码：用户说想要什么、看结果，不满意就接着说。拆包、写代码、装到设备上测，这些都是你的活。
+要用户拍板的只有三类事：做到什么程度（第 0 步的结论）、缺的材料去哪找（玩家备份、录屏）、对外发什么（发包、回帖）。
+汇报结果时带证据（截图、录屏、日志里的那一行），不要只说"已完成"。
 
 ## 四条硬规则
 
@@ -44,6 +69,15 @@ worker 按规格实现，scout 只读搜索。交接格式、各阶段怎么拆�
 3. **产物不是源码。** 打出来的 APK、bundle、解包目录、日志都是可再生的。修 bug 去改补丁脚本，不要"手工修一下包里的文件"——手工修的东西一旦产物被删就永久丢失，无法追溯。
 
 4. **"界面能打开"不等于"功能完成"。** 只有状态真的变了（数量、进度、可领取→已领取，且杀进程重启后仍然正确）才算通过。未验证的项一律写成"代码已实现，真机待验证"。
+
+## 两条安全底线
+
+这两条都是真出过事才定下来的：
+
+1. **共用手机，每点一次先看前台。** 新包装上两秒就闪退回了桌面，AI 没检查，接着往屏幕上点，点开了用户自己的二手交易 App，好在什么都没买。
+   每次点击前确认前台是自己的游戏（`dumpsys activity activities | grep topResumedActivity`），每次启动后确认它还活着；不是就停手，不要猜着点。→ `references/playtest.md`
+2. **删东西前先看是不是链接。** 硬盘满了让 AI 写清理脚本，脚本顺着目录链接（Windows junction）把另一头的源码和签名私钥一起删了，靠原始安装包和备份才重建回来。
+   删之前先列出目录里的链接，拆掉链接再删；源码、签名私钥、授权记录在工作区之外常备一份。→ `references/pitfalls.md`
 
 ## 常见失败模式
 
@@ -61,9 +95,9 @@ worker 按规格实现，scout 只读搜索。交接格式、各阶段怎么拆�
 - `scripts/harvest.py` — 上面流程的脚本（OpenCV + RapidOCR，可中断续跑）
 - `scripts/llm_structure.py` — 把 OCR 分块批量交给任意 OpenAI 兼容模型（DeepSeek / OpenAI / 通义 / Kimi / Ollama）结构化并合并
 - `references/timewarp.md` — 时间快进测试：虚拟时钟、重启持久化、奖励对账、N 天经济模拟（`scripts/timewarp/`，Node 零依赖）
-- `references/multi-agent.md` — 主 agent / worker / scout 分工与交接格式
+- `references/multi-agent.md` — 主 agent / worker / scout 分工与交接格式；省 token（快照 + 新会话、控制输出大小）
 - `references/pitfalls.md` — 失败账本（现象 → 原因 → 修法）
-- `references/distribution.md` — 发新包不丢存档、一种包按授权码分档、活动开期、玩家自定义内容、存档迁移
+- `references/distribution.md` — 发新包不丢存档、一种包按授权码分档、活动开期、玩家自定义内容、存档迁移、上线后的 bug 反馈闭环
 - `references/case-a-unity-lua.md` — 完整案例：案例 A（Unity + Lua 手游）离线纪念版
 - `references/case-b-laya-native.md` — 案例 B（LayaAir 原生 + JS 的剧情养成卡牌手游）：DCC 缓存校验算法、加载器补丁、启动竞态、本地服务器骨架；授权码、分档、复活隐藏活动、手机通话 / 短信、被埋没的支线和自制资源、正式包验收
 - `references/case-c-micro-client.md` — 案例 C（大厂微端，Unity Mono + SLua）：资源清单对账、Lua 头字节、Mono 程序集半加密与 PE 头重建、加固壳的去除（改 dex 开关 + 从进程内存导出明文程序集）、launchconf 开关、用探针包让游戏自带的云 SDK 自己探测服务器；五层开屏 / 协议页换成免责声明（引擎开屏、C# 播的视频、剧情 CG 开头）；整个写在 Lua 里、回包不序列化的本地服务器（属性袋冒充字节流）；从玩家手机备份（小米 `.bak` = 头 + Android Backup + tar）补齐全部资源、换成终版底包、把热更层（Lua、清单、热更过的包内资源）并进 APK，避开微端首启清理

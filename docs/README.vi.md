@@ -12,6 +12,7 @@
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
 ![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
 </div>
 
@@ -114,6 +115,12 @@ Dự án này nhằm **bảo tồn game**: giúp game vẫn chơi được **sau
 Bạn đã hồi sinh một game bằng skill này? Gặp phải một cái bẫy mới? Rất hoan nghênh các issue và PR với **case study cho engine mới** (Cocos, Unreal, Godot, IL2CPP…) và **mục mới cho sổ ghi lỗi**.
 
 Nếu dự án này đã cứu một tựa game bạn yêu thích, một ⭐ sẽ giúp những người chơi khác tìm thấy nó.
+
+Cách tham gia (issue, pull request, trở thành người cùng duy trì): xem [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## ⭐ Lịch sử sao
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
 
 ## 📄 Giấy phép
 
