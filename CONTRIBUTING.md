@@ -24,8 +24,9 @@ Thanks for helping keep dead games playable.
 - Decryption keys, signing keys, keystore passwords, API keys, tokens.
 - Player data: saves, account IDs, device serials, license codes, names or messages from player communities.
 - Download links to modified builds.
+- Anything about distributing, selling or sharing modified builds, cheats or private servers.
 
-Describe the method instead: "the key is a constant returned by a method named like `ScriptKey()`" is fine; the key itself is not.
+Pull requests that break these rules are closed without merging. Describe the method instead: "the key is a constant returned by a method named like `ScriptKey()`" is fine; the key itself is not.
 
 ### Scope
 
@@ -55,8 +56,9 @@ Only games whose official service has permanently ended. Nothing for live games,
 - 解密密钥、签名私钥、keystore 密码、API key、token。
 - 玩家数据：存档、账号 ID、设备序列号、授权码、玩家群里的昵称和聊天内容。
 - 改版安装包的下载链接。
+- 任何关于传播、出售、分享改版安装包，或者外挂、私服的内容。
 
-写方法，不写原物：「密钥是某个叫 `ScriptKey()` 之类的方法返回的常量」可以写，密钥本身不行。
+违反这几条的 PR 会直接关闭，不合并。写方法，不写原物：「密钥是某个叫 `ScriptKey()` 之类的方法返回的常量」可以写，密钥本身不行。
 
 ### 范围
 

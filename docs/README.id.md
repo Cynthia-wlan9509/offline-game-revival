@@ -41,7 +41,7 @@ Setiap tahun, ratusan game mobile ditutup. APK-nya masih ada di ponsel para pema
 Panduan ini disarikan dari proses menghidupkan kembali dua game mobile komersial yang servernya ditutup:
 
 - **Kasus A — Unity + Lua**: build kenangan single-player yang lengkap, diverifikasi di ponsel Android 14 fisik.
-- **Kasus B — LayaAir native + JavaScript**: 315 endpoint server diimplementasikan ulang secara lokal, 700+ assertion regresi, dan semua sistem utama (bab cerita, pertarungan, gacha, pet, dating, tower, event) dicoba satu per satu langsung di perangkat, plus kode lisensi offline (Ed25519, tanpa BigInt) dan watermark per salinan untuk berbagi secara privat.
+- **Kasus B — LayaAir native + JavaScript**: 315 endpoint server diimplementasikan ulang secara lokal, 700+ assertion regresi, dan semua sistem utama (bab cerita, pertarungan, gacha, pet, dating, tower, event) dicoba satu per satu langsung di perangkat.
 
 Kedua studi kasus (sudah dianonimkan) ada di [`references/`](../skills/offline-game-revival/references).
 
@@ -102,13 +102,19 @@ Arahkan `timewarp.create({ files, entry, inventory, granted })` ke server palsu 
 3. **Artefak bukan source code.** Perbaiki skrip patch-nya, jangan pernah mengedit output secara manual.
 4. **"Bisa dibuka" bukan berarti "berfungsi".** Verifikasi perubahan state, pastikan bertahan setelah restart, dan catat mana yang sudah diverifikasi dan mana yang baru sekadar diimplementasikan.
 
-## ⚖️ Penggunaan yang bertanggung jawab
+## ⚖️ Penggunaan yang bertanggung jawab dan penafian
 
-Proyek ini bertujuan untuk **pelestarian game**: menjaga game tetap bisa dimainkan **setelah layanan resminya berakhir**.
+Repositori ini dibuat untuk **mempelajari cara kerja game** dan melestarikan game yang layanan resminya sudah berakhir. Isinya hanya metode dan alat buatan penulis sendiri.
 
-- Gunakan hanya pada game yang server resminya **ditutup secara permanen**. Jangan pernah pada game yang masih berjalan, jangan untuk curang, melewati anti-cheat, atau memengaruhi pemain lain.
-- Repositori ini **tidak berisi aset game, kode game, maupun kunci** — hanya metode dan perkakas buatan penulisnya sendiri.
-- Hormati hak cipta: simpan build kenangan secara privat dan nonkomersial, serta patuhi hukum di wilayah Anda. Jika pemegang hak merilis ulang game tersebut, dukunglah versi resminya.
+- **Tanpa paket instalasi, aset, atau kunci.** Repositori ini tidak berisi aset game, kode game, kunci dekripsi atau kunci tanda tangan, maupun paket instalasi yang dimodifikasi. Penulis tidak menyediakan, menjual, atau membagikan versi modifikasi apa pun. Mohon jangan memintanya.
+- **Jangan sebarkan versi modifikasi.** Apa pun yang kamu buat dengan metode ini hanya untuk penggunaan pribadi dan non-komersial, pada salinan yang kamu peroleh secara sah. Jangan mengunggah, membagikan, menjual, atau menyewakan paket instalasi yang dimodifikasi, aset game, atau kunci, dan jangan menjalankan server pribadi untuk orang lain.
+- **Hanya untuk game yang layanan resminya sudah berakhir secara permanen.** Jangan pernah gunakan untuk game yang masih berjalan, untuk curang, untuk mengakali anti-cheat, atau dengan cara apa pun yang merugikan pemain lain atau bisnis pemegang hak.
+- **Patuhi hukum di tempatmu; kamu bertanggung jawab atas penggunaanmu sendiri.** Di Indonesia, Undang-Undang Hak Cipta (UU No. 28 Tahun 2014) melindungi program komputer; menyebarkan versi modifikasi, menjalankan server pribadi, atau menjual cheat dapat dikenai sanksi perdata maupun pidana. Aturan di negara lain bisa berbeda. Tidak ada isi di sini yang merupakan nasihat hukum atau menyatakan bahwa suatu penggunaan tertentu sah. Jika ragu, konsultasikan dengan pengacara sebelum mulai.
+- **Tidak berafiliasi.** Nama game dan merek dagang adalah milik pemiliknya masing-masing. Proyek ini tidak berafiliasi dengan dan tidak didukung oleh perusahaan game mana pun.
+- **Tanpa jaminan, tanpa tanggung jawab.** Semua disediakan "sebagaimana adanya" di bawah lisensi MIT. Sejauh diizinkan oleh hukum, penulis tidak bertanggung jawab atas kerusakan, kehilangan data, sanksi akun, atau akibat hukum apa pun yang timbul dari penggunaannya.
+- **Untuk pemegang hak:** jika kamu merasa ada isi di sini yang melanggar hakmu, buka issue; isi tersebut akan segera diperiksa dan dihapus. Jika sebuah game kembali secara resmi, dukunglah versi resminya.
+
+Dengan menggunakan isi repositori ini, kamu menyetujui hal-hal di atas.
 
 ## 🤝 Berkontribusi
 
@@ -126,4 +132,4 @@ Cara ikut berkontribusi (issue, pull request, menjadi maintainer): lihat [CONTRI
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · uji perjalanan waktu · multi-agen · banyak agen AI · game server ditutup · game offline · game mobile mati · pelestarian game · main game tanpa server · game tutup server</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · uji perjalanan waktu · multi-agen · banyak agen AI · game server ditutup · game offline · game mobile mati · pelestarian game · main game tanpa server · game tutup server</sub>

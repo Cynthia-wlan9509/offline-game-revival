@@ -41,7 +41,7 @@ Mỗi năm có hàng trăm game mobile đóng cửa. File APK vẫn nằm trong 
 Cẩm nang này được đúc kết từ việc hồi sinh hai game mobile thương mại đã bị tắt máy chủ:
 
 - **Trường hợp A — Unity + Lua**: bản tưởng niệm chơi đơn đầy đủ, đã kiểm chứng trên một điện thoại Android 14 thật.
-- **Trường hợp B — LayaAir native + JavaScript**: 315 endpoint của máy chủ được cài đặt lại cục bộ, hơn 700 assertion hồi quy, và tất cả hệ thống chính (chương cốt truyện, chiến đấu, gacha, thú cưng, hẹn hò, tháp, sự kiện) đều được bấm thử trực tiếp trên thiết bị — cùng với mã giấy phép offline (Ed25519, không dùng BigInt) và watermark riêng cho từng bản sao để chia sẻ riêng tư.
+- **Trường hợp B — LayaAir native + JavaScript**: 315 endpoint của máy chủ được cài đặt lại cục bộ, hơn 700 assertion hồi quy, và tất cả hệ thống chính (chương cốt truyện, chiến đấu, gacha, thú cưng, hẹn hò, tháp, sự kiện) đều được bấm thử trực tiếp trên thiết bị.
 
 Cả hai case study (đã ẩn danh) đều có trong [`references/`](../skills/offline-game-revival/references).
 
@@ -102,13 +102,19 @@ Trỏ `timewarp.create({ files, entry, inventory, granted })` vào server giả 
 3. **Sản phẩm đầu ra không phải mã nguồn.** Hãy sửa script vá, đừng bao giờ chỉnh tay bản đầu ra.
 4. **"Mở được" không có nghĩa là "chạy được".** Hãy xác minh trạng thái thay đổi, còn nguyên sau khi khởi động lại, và ghi rõ cái gì đã kiểm chứng, cái gì mới chỉ được cài đặt.
 
-## ⚖️ Sử dụng có trách nhiệm
+## ⚖️ Sử dụng có trách nhiệm và miễn trừ trách nhiệm
 
-Dự án này nhằm **bảo tồn game**: giúp game vẫn chơi được **sau khi dịch vụ chính thức đã kết thúc**.
+Kho mã này dùng để **tìm hiểu cách trò chơi hoạt động** và bảo tồn những trò chơi đã chấm dứt dịch vụ chính thức. Nó chỉ chứa phương pháp và công cụ do tác giả tự viết.
 
-- Chỉ dùng cho những game mà máy chủ chính thức đã **đóng vĩnh viễn**. Tuyệt đối không dùng cho game đang vận hành, không dùng để gian lận, vượt qua hệ thống chống gian lận, hay ảnh hưởng đến người chơi khác.
-- Kho mã này **không chứa tài nguyên game, mã nguồn game hay khóa nào** — chỉ có phương pháp và công cụ do chính tác giả viết.
-- Tôn trọng bản quyền: hãy giữ các bản tưởng niệm ở mức riêng tư, phi thương mại và tuân thủ luật pháp nơi bạn sinh sống. Nếu chủ sở hữu bản quyền phát hành lại game, hãy ủng hộ phiên bản chính thức.
+- **Không có gói cài đặt, tài nguyên hay khóa.** Kho mã này không chứa tài nguyên trò chơi, mã nguồn trò chơi, khóa giải mã hay khóa ký, cũng không chứa gói cài đặt đã chỉnh sửa. Tác giả không cung cấp, bán hay chia sẻ bất kỳ bản chỉnh sửa nào. Vui lòng đừng xin.
+- **Không phát tán bản chỉnh sửa.** Mọi thứ bạn làm bằng các phương pháp này chỉ dành cho mục đích cá nhân, phi thương mại, trên bản sao bạn có được một cách hợp pháp. Không tải lên, chia sẻ, bán hay cho thuê gói cài đặt đã chỉnh sửa, tài nguyên trò chơi hay khóa, và không vận hành máy chủ riêng cho người khác.
+- **Chỉ dùng cho trò chơi đã chấm dứt dịch vụ chính thức vĩnh viễn.** Không bao giờ dùng cho trò chơi đang vận hành, để gian lận, để vượt qua hệ thống chống gian lận, hay theo bất kỳ cách nào ảnh hưởng đến người chơi khác hoặc hoạt động kinh doanh của chủ sở hữu quyền.
+- **Tuân thủ pháp luật nơi bạn sống; bạn tự chịu trách nhiệm về việc sử dụng.** Tại Việt Nam, Luật Sở hữu trí tuệ bảo hộ chương trình máy tính; việc phát tán bản chỉnh sửa, vận hành máy chủ lậu hoặc bán phần mềm gian lận có thể bị xử phạt hành chính hoặc truy cứu trách nhiệm hình sự. Quy định ở các quốc gia khác có thể khác. Nội dung ở đây không phải là tư vấn pháp lý và không khẳng định bất kỳ cách sử dụng cụ thể nào là hợp pháp. Nếu không chắc chắn, hãy hỏi luật sư trước khi bắt đầu.
+- **Không liên kết.** Tên trò chơi và nhãn hiệu thuộc về chủ sở hữu của chúng. Dự án này không liên kết với và không được bất kỳ công ty trò chơi nào chứng thực.
+- **Không bảo đảm, không chịu trách nhiệm.** Mọi thứ được cung cấp "nguyên trạng" theo giấy phép MIT. Trong phạm vi tối đa pháp luật cho phép, tác giả không chịu trách nhiệm về bất kỳ thiệt hại, mất dữ liệu, xử phạt tài khoản hay hậu quả pháp lý nào phát sinh từ việc sử dụng.
+- **Gửi chủ sở hữu quyền:** nếu bạn cho rằng nội dung nào ở đây xâm phạm quyền của bạn, hãy mở một issue; nội dung sẽ được xem xét và gỡ bỏ nhanh chóng. Nếu trò chơi quay lại chính thức, hãy ủng hộ phiên bản chính thức.
+
+Khi sử dụng nội dung của kho mã này, bạn đồng ý với các điều trên.
 
 ## 🤝 Đóng góp
 
@@ -126,4 +132,4 @@ Cách tham gia (issue, pull request, trở thành người cùng duy trì): xem 
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · kiểm thử du hành thời gian · đa agent · nhiều AI agent · game ngừng hoạt động · đóng máy chủ · chơi offline · bảo tồn game · game mobile không cần server · hồi sinh game</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · kiểm thử du hành thời gian · đa agent · nhiều AI agent · game ngừng hoạt động · đóng máy chủ · chơi offline · bảo tồn game · game mobile không cần server · hồi sinh game</sub>

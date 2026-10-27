@@ -41,7 +41,7 @@
 這套實戰手冊，提煉自兩款已停服的商業手遊的復活過程：
 
 - **案例 A——Unity + Lua**：完整的單機紀念版，已在實體 Android 14 手機上驗證。
-- **案例 B——LayaAir native + JavaScript**：在本機重新實作 315 個伺服器端點、700 多條回歸斷言，所有主要系統（劇情章節、戰鬥、抽卡、寵物、約會、爬塔、活動）都在實機上逐一點過；另附離線授權碼（Ed25519，不依賴 BigInt）與每份副本專屬的浮水印，方便私下分享。
+- **案例 B——LayaAir native + JavaScript**：在本機重新實作 315 個伺服器端點、700 多條回歸斷言，所有主要系統（劇情章節、戰鬥、抽卡、寵物、約會、爬塔、活動）都在實機上逐一點過。
 
 兩份案例研究（已匿名處理）都收錄在 [`references/`](../skills/offline-game-revival/references)。
 
@@ -102,13 +102,19 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 3. **產物不是原始碼。** 要修就修修補腳本，絕不手動改輸出檔。
 4. **「打得開」不等於「能運作」。** 要驗證狀態確實改變、重啟後依然存在，並寫清楚哪些已驗證、哪些只是寫完了。
 
-## ⚖️ 負責任的使用
+## ⚖️ 使用須知與免責聲明
 
-本專案的宗旨是**遊戲保存**：讓遊戲在**官方服務結束之後**依然能玩。
+本倉庫僅供**學習與研究遊戲軟體的設計思想與原理**，以及保存官方服務已經結束的遊戲。這裡只有方法和作者自己寫的工具。
 
-- 只能用在官方伺服器已**永久關閉**的遊戲。絕不用於仍在營運的遊戲，絕不用來作弊、繞過反作弊機制，或影響其他玩家。
-- 本儲存庫**不含任何遊戲資源、遊戲程式碼或金鑰**——只有方法，以及作者自己的工具。
-- 尊重著作權：紀念版請僅供私人、非商業用途，並遵守你所在地區的法律。若版權方重新推出遊戲，請支持官方版本。
+- **不提供安裝包、資源與金鑰。** 本倉庫不含任何遊戲資源、遊戲程式碼、解密或簽章金鑰，也不含任何修改過的安裝包。作者不提供、不販售、不分享任何改版安裝包，請勿索取。
+- **不得散布改版安裝包。** 用這些方法做出來的任何東西，只能用於你自己合法取得的副本，僅限個人、非商業使用。不得上傳、分享、販售、出租改版安裝包、遊戲資源或金鑰，也不得架設私服供他人使用。
+- **只用於官方服務已永久結束的遊戲。** 不得用於仍在營運的遊戲，不得用於作弊、規避反作弊，或以任何方式影響其他玩家與權利人的營運。
+- **遵守你所在地的法律，後果自負。** 在台灣，《著作權法》保護電腦程式著作，並禁止破解、破壞或規避防盜拷措施；未經授權散布改版遊戲、架設私服、製作或販售外掛，可能涉及民事與刑事責任。其他國家與地區的規定各不相同。本倉庫內容不構成法律意見，也不代表任何特定用法是合法的；如有疑問，請先諮詢律師。
+- **與任何遊戲公司無關。** 遊戲名稱與商標歸各自權利人所有。本專案與任何遊戲公司無關，也未獲其認可。
+- **不提供任何擔保。** 本倉庫內容依 MIT 授權「按現狀」提供。在法律允許的最大範圍內，因使用本倉庫內容造成的任何損失、資料遺失、帳號處分或法律後果，作者概不負責。
+- **權利人請與我們聯繫。** 如果你認為這裡的任何內容侵害了你的權利，請提交 Issue，我們會盡快查核並移除。遊戲若官方回歸，請支持正版。
+
+使用本倉庫的內容，即表示你已閱讀並同意以上條款。
 
 ## 🤝 參與貢獻
 
@@ -126,4 +132,4 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 時間快轉測試 · 多 Agent 協作 · 多模型協作 · 停服遊戲 · 遊戲停運 · 單機化 · 離線版 · 遊戲保存 · 螢幕錄影 OCR</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 時間快轉測試 · 多 Agent 協作 · 多模型協作 · 停服遊戲 · 遊戲停運 · 單機化 · 離線版 · 遊戲保存 · 螢幕錄影 OCR</sub>

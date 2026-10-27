@@ -41,7 +41,7 @@ Todo ano, centenas de jogos mobile são desativados. O APK continua no celular d
 O manual foi destilado da ressurreição de dois jogos mobile comerciais cujos servidores foram desligados:
 
 - **Caso A — Unity + Lua**: build memorial single-player completo, verificado em um celular Android 14 físico.
-- **Caso B — LayaAir native + JavaScript**: 315 endpoints de servidor reimplementados localmente, mais de 700 asserções de regressão e todos os sistemas principais (capítulos da história, batalhas, gacha, pets, namoro, torre, eventos) testados na mão em um aparelho, além de códigos de licença offline (Ed25519, sem BigInt) e marcas d'água por cópia para compartilhamento privado.
+- **Caso B — LayaAir native + JavaScript**: 315 endpoints de servidor reimplementados localmente, mais de 700 asserções de regressão e todos os sistemas principais (capítulos da história, batalhas, gacha, pets, namoro, torre, eventos) testados na mão em um aparelho.
 
 Os dois estudos de caso (anonimizados) estão incluídos em [`references/`](../skills/offline-game-revival/references).
 
@@ -102,13 +102,19 @@ Aponte `timewarp.create({ files, entry, inventory, granted })` para o seu própr
 3. **Artefatos não são código-fonte.** Corrija o script de patch; nunca edite a saída na mão.
 4. **"Abre" não é "funciona".** Verifique as mudanças de estado, que elas sobrevivam a reinicializações, e registre o que foi verificado e o que foi apenas implementado.
 
-## ⚖️ Uso responsável
+## ⚖️ Uso responsável e isenção de responsabilidade
 
-Este projeto trata de **preservação de jogos**: manter os jogos jogáveis **depois que o serviço oficial acabou**.
+Este repositório existe para **estudar como os jogos funcionam** e para preservar jogos cujo serviço oficial terminou. Ele contém apenas métodos e ferramentas do próprio autor.
 
-- Use apenas em jogos cujos servidores oficiais foram **desligados de forma permanente**. Nunca em jogos ativos, nunca para trapacear, burlar anti-cheat ou afetar outros jogadores.
-- O repositório **não contém assets do jogo, código do jogo nem chaves** — apenas métodos e as ferramentas do próprio autor.
-- Respeite os direitos autorais: mantenha as edições memoriais privadas e sem fins comerciais, e siga as leis da sua jurisdição. Se a detentora dos direitos relançar o jogo, apoie a versão oficial.
+- **Sem pacotes, sem recursos, sem chaves.** Este repositório não contém recursos de jogos, código de jogos, chaves de descriptografia ou de assinatura, nem pacotes de instalação modificados. O autor não fornece, vende nem compartilha versões modificadas. Por favor, não peça.
+- **Não espalhe versões modificadas.** O que você fizer com estes métodos é apenas para seu uso pessoal e não comercial, em uma cópia obtida legalmente. Não envie, compartilhe, venda nem alugue pacotes de instalação modificados, recursos de jogos ou chaves, e não rode servidores privados para outras pessoas.
+- **Somente para jogos cujo serviço oficial foi encerrado de forma definitiva.** Nunca use em jogos ativos, para trapacear, para contornar sistemas antitrapaça ou de qualquer forma que afete outros jogadores ou o negócio do titular dos direitos.
+- **Siga a lei do seu país; você é responsável pelo seu próprio uso.** No Brasil, a Lei de Software (Lei 9.609/1998) e a Lei de Direitos Autorais (Lei 9.610/1998) protegem programas de computador; distribuir versões modificadas, operar servidores piratas ou vender trapaças pode gerar responsabilidade civil e criminal. Em outros países as regras variam. Nada aqui é aconselhamento jurídico nem afirma que algum uso específico seja legal. Na dúvida, consulte um advogado antes de começar.
+- **Sem afiliação.** Nomes de jogos e marcas pertencem aos seus titulares. Este projeto não é afiliado a nenhuma empresa de jogos nem endossado por ela.
+- **Sem garantia nem responsabilidade.** Tudo é fornecido "no estado em que se encontra", sob a licença MIT. Na máxima extensão permitida por lei, o autor não se responsabiliza por nenhum dano, perda de dados, punição de conta ou consequência legal decorrente do uso.
+- **Titulares de direitos:** se você acredita que algo aqui viola seus direitos, abra uma issue; o conteúdo será analisado e removido rapidamente. Se um jogo voltar oficialmente, apoie a versão oficial.
+
+Ao usar o conteúdo deste repositório, você concorda com o que está acima.
 
 ## 🤝 Contribuindo
 
@@ -126,4 +132,4 @@ Como participar (issues, pull requests, tornar-se mantenedor): veja [CONTRIBUTIN
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · testes de viagem no tempo · multiagente · múltiplos agentes de IA · jogo desativado · servidor encerrado · jogar offline · preservação de jogos · jogo mobile sem servidor · fim dos servidores</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · testes de viagem no tempo · multiagente · múltiplos agentes de IA · jogo desativado · servidor encerrado · jogar offline · preservação de jogos · jogo mobile sem servidor · fim dos servidores</sub>

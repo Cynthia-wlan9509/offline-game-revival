@@ -42,7 +42,7 @@ Every year, hundreds of mobile games shut down. The APK still sits on players' p
 The playbook was distilled from reviving three commercial mobile games whose servers shut down:
 
 - **Case A — Unity + Lua**: full single-player memorial build, verified on a physical Android 14 phone.
-- **Case B — LayaAir native + JavaScript**: 315 server endpoints reimplemented locally, 700+ regression assertions, all major systems (story chapters, battles, gacha, pets, dating, tower, events) clicked through on a device, plus offline license codes (Ed25519, no BigInt) and per-copy watermarks for private sharing.
+- **Case B — LayaAir native + JavaScript**: 315 server endpoints reimplemented locally, 700+ regression assertions, all major systems (story chapters, battles, gacha, pets, dating, tower, events) clicked through on a device.
 - **Case C — Unity micro client (Mono + SLua)**: the APK held only about a quarter of the game's resources; the rest came from a player's phone backup. Half-encrypted Mono assemblies, a packer shell, and a local server written entirely in Lua.
 
 A fourth game was dropped after half a day: the game itself was downloaded after first launch, and that download died with the server.
@@ -124,10 +124,6 @@ In case C, the first night ran a little over 4 hours and verified 11 items on an
 
 It relies on Claude Code desktop features (`/loop`, `ScheduleWakeup`, `request_keep_awake`, `get_usage`, `start_session`); the skill says how to fall back when one is missing (in the plain CLI: sub-agents instead of parallel sessions). The plugin install includes it; to copy it by hand: `cp -r offline-game-revival/skills/night-shift ~/.claude/skills/`.
 
-## 🐞 After release: player bug reports
-
-Once players have the build, bugs keep coming. The skill's [`distribution.md`](skills/offline-game-revival/references/distribution.md) (section 7) describes the loop: players post in a forum, a bot collects and sorts the posts, the agent reproduces and fixes each bug and drafts the reply, and nothing is posted until you approve it. A ready-made Discord bot for this is open source: [hearback](https://github.com/Cynthia-wlan9509/hearback).
-
 ## 🧭 Philosophy
 
 1. **Patch at build time, not at runtime.** A Frida script that "works" still needs to be injected forever. Changes baked into the package install and just work.
@@ -135,13 +131,19 @@ Once players have the build, bugs keep coming. The skill's [`distribution.md`](s
 3. **Artifacts are not source.** Fix the patch script, never hand-edit the output.
 4. **"It opens" is not "it works."** Verify state changes, survive restarts, write down what's verified vs. merely implemented.
 
-## ⚖️ Responsible use
+## ⚖️ Responsible use & disclaimer
 
-This project is about **game preservation**: keeping games playable **after their official service has ended**.
+This repository exists to **study how games work** and to preserve games whose official service has ended. It contains only methods and the author's own tools.
 
-- Only use it on games whose official servers are **permanently shut down**. Never on live games, never to cheat, bypass anti-cheat, or affect other players.
-- The repository contains **no game assets, no game code, no keys** — only methods and the author's own tooling.
-- Respect copyright: keep memorial builds private / non-commercial, and follow the laws of your jurisdiction. If a rights holder relaunches the game, support the official version.
+- **No builds, no assets, no keys.** This repository contains no game assets, no game code, no decryption or signing keys and no modified installation packages. The author does not provide, sell or share modified builds. Please don't ask for them.
+- **Do not spread modified builds.** Anything you make with these methods is for your own personal, non-commercial use, on a copy you obtained lawfully. Do not upload, share, sell or rent modified installation packages, game assets or keys, and do not run a private server for others.
+- **Only for games whose official service has permanently ended.** Never use it on a live game, to cheat, to get around anti-cheat, or in any way that affects other players or the rights holder's business.
+- **Follow the law where you live; you are responsible for your own use.** Copyright and anti-circumvention laws differ by country. In the United States, for example, the DMCA (17 U.S.C. §1201) prohibits circumventing technical protection measures except under narrow exemptions, and in the EU decompiling software is allowed only in limited cases. Nothing here is legal advice, and nothing here says that any particular use is legal. If in doubt, ask a lawyer before you start.
+- **No affiliation.** Game names and trademarks belong to their owners. This project is not affiliated with or endorsed by any game company.
+- **No warranty, no liability.** Everything here is provided "as is" under the MIT License. To the maximum extent permitted by law, the author is not liable for any damage, data loss, account action or legal consequence that comes from using it.
+- **Rights holders:** if you believe anything here infringes your rights, please open an issue; it will be reviewed and removed promptly. If a game comes back officially, please support the official version.
+
+By using the contents of this repository you agree to the above.
 
 ## 🤝 Contributing
 
@@ -163,4 +165,4 @@ If this saved a game you loved, a ⭐ helps other players find it.
 
 [MIT](LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · private server alternative · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 停服游戏 · 单机化 · 离线版 · 游戏保存 · 録画OCR · サービス終了 · 서비스 종료</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 停服游戏 · 单机化 · 离线版 · 游戏保存 · 録画OCR · サービス終了 · 서비스 종료</sub>
