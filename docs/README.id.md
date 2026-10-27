@@ -106,13 +106,13 @@ Arahkan `timewarp.create({ files, entry, inventory, granted })` ke server palsu 
 
 Repositori ini dibuat untuk **mempelajari cara kerja game** dan melestarikan game yang layanan resminya sudah berakhir. Isinya hanya metode dan alat buatan penulis sendiri.
 
-- **Tanpa paket instalasi, aset, atau kunci.** Repositori ini tidak berisi aset game, kode game, kunci dekripsi atau kunci tanda tangan, maupun paket instalasi yang dimodifikasi. Penulis tidak menyediakan, menjual, atau membagikan versi modifikasi apa pun. Mohon jangan memintanya.
-- **Jangan sebarkan versi modifikasi.** Apa pun yang kamu buat dengan metode ini hanya untuk penggunaan pribadi dan non-komersial, pada salinan yang kamu peroleh secara sah. Jangan mengunggah, membagikan, menjual, atau menyewakan paket instalasi yang dimodifikasi, aset game, atau kunci, dan jangan menjalankan server pribadi untuk orang lain.
-- **Hanya untuk game yang layanan resminya sudah berakhir secara permanen.** Jangan pernah gunakan untuk game yang masih berjalan, untuk curang, untuk mengakali anti-cheat, atau dengan cara apa pun yang merugikan pemain lain atau bisnis pemegang hak.
+- **Tidak ada unduhan di sini.** Repositori ini tidak berisi aset game, kode game, kunci dekripsi atau kunci tanda tangan, maupun paket instalasi apa pun, dan tidak menyediakan unduhan. Mohon jangan memintanya di sini.
+- **Jangan biarkan paket instalasi tersebar.** Gunakan apa yang kamu buat hanya untuk keperluan pribadi dan non-komersial, pada salinan yang kamu peroleh secara sah. Mohon jangan memublikasikan atau menjual kembali paket instalasi yang dimodifikasi, aset game, atau kunci, dan jangan menjalankan server pribadi untuk mencari untung.
+- **Hanya untuk game yang layanan resminya sudah berakhir.** Mohon jangan gunakan untuk game yang masih berjalan, untuk curang, untuk mengakali anti-cheat, atau dengan cara yang merugikan pemain lain atau pemegang hak.
 - **Patuhi hukum di tempatmu; kamu bertanggung jawab atas penggunaanmu sendiri.** Di Indonesia, Undang-Undang Hak Cipta (UU No. 28 Tahun 2014) melindungi program komputer; menyebarkan versi modifikasi, menjalankan server pribadi, atau menjual cheat dapat dikenai sanksi perdata maupun pidana. Aturan di negara lain bisa berbeda. Tidak ada isi di sini yang merupakan nasihat hukum atau menyatakan bahwa suatu penggunaan tertentu sah. Jika ragu, konsultasikan dengan pengacara sebelum mulai.
 - **Tidak berafiliasi.** Nama game dan merek dagang adalah milik pemiliknya masing-masing. Proyek ini tidak berafiliasi dengan dan tidak didukung oleh perusahaan game mana pun.
 - **Tanpa jaminan, tanpa tanggung jawab.** Semua disediakan "sebagaimana adanya" di bawah lisensi MIT. Sejauh diizinkan oleh hukum, penulis tidak bertanggung jawab atas kerusakan, kehilangan data, sanksi akun, atau akibat hukum apa pun yang timbul dari penggunaannya.
-- **Untuk pemegang hak:** jika kamu merasa ada isi di sini yang melanggar hakmu, buka issue; isi tersebut akan segera diperiksa dan dihapus. Jika sebuah game kembali secara resmi, dukunglah versi resminya.
+- **Untuk pemegang hak:** jika kamu merasa ada isi di sini yang melanggar hakmu, buka issue; kami akan segera memeriksanya dan menghapusnya bila perlu. Jika sebuah game kembali secara resmi, dukunglah versi resminya.
 
 Dengan menggunakan isi repositori ini, kamu menyetujui hal-hal di atas.
 

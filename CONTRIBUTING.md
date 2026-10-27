@@ -18,19 +18,19 @@ Thanks for helping keep dead games playable.
 - **New engine case studies** (Cocos, Unreal, Godot, IL2CPP…) as a new `references/case-*.md`: where the logic layer is, how the scripts are packed or encrypted, which entry points you patched, how you verified on a device.
 - Fixes to the scripts in `skills/offline-game-revival/scripts/`, with a short note on how you tested them.
 
-### What must never go into the repo
+### Please keep out of the repo
 
 - Game assets, decompiled or decrypted game code, or anything extracted from an APK.
 - Decryption keys, signing keys, keystore passwords, API keys, tokens.
 - Player data: saves, account IDs, device serials, license codes, names or messages from player communities.
 - Download links to modified builds.
-- Anything about distributing, selling or sharing modified builds, cheats or private servers.
+- Guides to publishing or reselling modified builds, making cheats, or running private servers for profit.
 
-Pull requests that break these rules are closed without merging. Describe the method instead: "the key is a constant returned by a method named like `ScriptKey()`" is fine; the key itself is not.
+Pull requests that include these may not be merged. Describe the method instead: "the key is a constant returned by a method named like `ScriptKey()`" is fine; the key itself is not.
 
 ### Scope
 
-Only games whose official service has permanently ended. Nothing for live games, cheating, bypassing anti-cheat, or affecting other players. If a rights holder relaunches a game, support the official version.
+This project is about games whose official service has ended. Please keep live games, cheating, bypassing anti-cheat and anything that affects other players out of it. If a rights holder relaunches a game, please support the official version.
 
 ---
 
@@ -50,16 +50,16 @@ Only games whose official service has permanently ended. Nothing for live games,
 - **新引擎案例**（Cocos、Unreal、Godot、IL2CPP……），新建 `references/case-*.md`：逻辑层在哪、脚本怎么打包或加密、补了哪些入口、真机上怎么验收。
 - 修 `skills/offline-game-revival/scripts/` 里的脚本，附一句怎么测的。
 
-### 绝对不能放进仓库的
+### 请不要放进仓库的
 
 - 游戏资源、反编译或解密出来的游戏代码，以及任何从 APK 里拆出来的东西。
 - 解密密钥、签名私钥、keystore 密码、API key、token。
 - 玩家数据：存档、账号 ID、设备序列号、授权码、玩家群里的昵称和聊天内容。
 - 改版安装包的下载链接。
-- 任何关于传播、出售、分享改版安装包，或者外挂、私服的内容。
+- 教人公开发布或倒卖改版安装包、制作外挂、运营私服牟利的内容。
 
-违反这几条的 PR 会直接关闭，不合并。写方法，不写原物：「密钥是某个叫 `ScriptKey()` 之类的方法返回的常量」可以写，密钥本身不行。
+包含这些内容的 PR 可能不会被合并。写方法，不写原物：「密钥是某个叫 `ScriptKey()` 之类的方法返回的常量」可以写，密钥本身不行。
 
 ### 范围
 
-只用于官方服务已经永久结束的游戏。不碰仍在运营的游戏，不作弊、不绕反作弊、不影响其他玩家。版权方重新上线的，请支持官方版本。
+这个项目只关心官方服务已经结束的游戏。请不要涉及仍在运营的游戏、作弊、绕过反作弊或影响其他玩家的内容。版权方重新上线的，请支持官方版本。

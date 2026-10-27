@@ -106,13 +106,13 @@ Aponte `timewarp.create({ files, entry, inventory, granted })` para o seu própr
 
 Este repositório existe para **estudar como os jogos funcionam** e para preservar jogos cujo serviço oficial terminou. Ele contém apenas métodos e ferramentas do próprio autor.
 
-- **Sem pacotes, sem recursos, sem chaves.** Este repositório não contém recursos de jogos, código de jogos, chaves de descriptografia ou de assinatura, nem pacotes de instalação modificados. O autor não fornece, vende nem compartilha versões modificadas. Por favor, não peça.
-- **Não espalhe versões modificadas.** O que você fizer com estes métodos é apenas para seu uso pessoal e não comercial, em uma cópia obtida legalmente. Não envie, compartilhe, venda nem alugue pacotes de instalação modificados, recursos de jogos ou chaves, e não rode servidores privados para outras pessoas.
-- **Somente para jogos cujo serviço oficial foi encerrado de forma definitiva.** Nunca use em jogos ativos, para trapacear, para contornar sistemas antitrapaça ou de qualquer forma que afete outros jogadores ou o negócio do titular dos direitos.
+- **Aqui não há downloads.** Este repositório não contém recursos de jogos, código de jogos, chaves de descriptografia ou de assinatura nem pacotes de instalação, e não oferece downloads. Por favor, não peça aqui.
+- **Não deixe os pacotes se espalharem.** Use o que você fizer apenas de forma pessoal e não comercial, em uma cópia obtida legalmente. Por favor, não publique nem revenda pacotes de instalação modificados, recursos de jogos ou chaves, e não rode servidores privados com fins lucrativos.
+- **Somente para jogos cujo serviço oficial terminou.** Por favor, não use em jogos ativos, para trapacear, para contornar sistemas antitrapaça ou de forma que prejudique outros jogadores ou o titular dos direitos.
 - **Siga a lei do seu país; você é responsável pelo seu próprio uso.** No Brasil, a Lei de Software (Lei 9.609/1998) e a Lei de Direitos Autorais (Lei 9.610/1998) protegem programas de computador; distribuir versões modificadas, operar servidores piratas ou vender trapaças pode gerar responsabilidade civil e criminal. Em outros países as regras variam. Nada aqui é aconselhamento jurídico nem afirma que algum uso específico seja legal. Na dúvida, consulte um advogado antes de começar.
 - **Sem afiliação.** Nomes de jogos e marcas pertencem aos seus titulares. Este projeto não é afiliado a nenhuma empresa de jogos nem endossado por ela.
 - **Sem garantia nem responsabilidade.** Tudo é fornecido "no estado em que se encontra", sob a licença MIT. Na máxima extensão permitida por lei, o autor não se responsabiliza por nenhum dano, perda de dados, punição de conta ou consequência legal decorrente do uso.
-- **Titulares de direitos:** se você acredita que algo aqui viola seus direitos, abra uma issue; o conteúdo será analisado e removido rapidamente. Se um jogo voltar oficialmente, apoie a versão oficial.
+- **Titulares de direitos:** se você acredita que algo aqui viola seus direitos, abra uma issue; vamos analisar rapidamente e remover se necessário. Se um jogo voltar oficialmente, apoie a versão oficial.
 
 Ao usar o conteúdo deste repositório, você concorda com o que está acima.
 

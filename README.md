@@ -135,13 +135,13 @@ It relies on Claude Code desktop features (`/loop`, `ScheduleWakeup`, `request_k
 
 This repository exists to **study how games work** and to preserve games whose official service has ended. It contains only methods and the author's own tools.
 
-- **No builds, no assets, no keys.** This repository contains no game assets, no game code, no decryption or signing keys and no modified installation packages. The author does not provide, sell or share modified builds. Please don't ask for them.
-- **Do not spread modified builds.** Anything you make with these methods is for your own personal, non-commercial use, on a copy you obtained lawfully. Do not upload, share, sell or rent modified installation packages, game assets or keys, and do not run a private server for others.
-- **Only for games whose official service has permanently ended.** Never use it on a live game, to cheat, to get around anti-cheat, or in any way that affects other players or the rights holder's business.
+- **No downloads here.** This repository contains no game assets, no game code, no decryption or signing keys and no installation packages, and it offers nothing for download. Please don't ask for them here.
+- **Don't let builds spread.** Keep what you make for personal, non-commercial use, on a copy you obtained lawfully. Please don't publish or resell modified installation packages, game assets or keys, and don't run private servers for profit.
+- **Only for games whose official service has ended.** Please don't use it on live games, for cheating, to get around anti-cheat, or in ways that harm other players or the rights holder.
 - **Follow the law where you live; you are responsible for your own use.** Copyright and anti-circumvention laws differ by country. In the United States, for example, the DMCA (17 U.S.C. §1201) prohibits circumventing technical protection measures except under narrow exemptions, and in the EU decompiling software is allowed only in limited cases. Nothing here is legal advice, and nothing here says that any particular use is legal. If in doubt, ask a lawyer before you start.
 - **No affiliation.** Game names and trademarks belong to their owners. This project is not affiliated with or endorsed by any game company.
 - **No warranty, no liability.** Everything here is provided "as is" under the MIT License. To the maximum extent permitted by law, the author is not liable for any damage, data loss, account action or legal consequence that comes from using it.
-- **Rights holders:** if you believe anything here infringes your rights, please open an issue; it will be reviewed and removed promptly. If a game comes back officially, please support the official version.
+- **Rights holders:** if you believe anything here infringes your rights, please open an issue; we will look into it promptly and remove it if needed. If a game comes back officially, please support the official version.
 
 By using the contents of this repository you agree to the above.
 

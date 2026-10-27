@@ -106,13 +106,13 @@ Richte `timewarp.create({ files, entry, inventory, granted })` auf deinen eigene
 
 Dieses Repository dient dazu, **zu verstehen, wie Spiele funktionieren**, und Spiele zu bewahren, deren offizieller Dienst eingestellt wurde. Es enthält nur Methoden und eigene Werkzeuge des Autors.
 
-- **Keine Pakete, keine Assets, keine Schlüssel.** Dieses Repository enthält keine Spiel-Assets, keinen Spielcode, keine Entschlüsselungs- oder Signaturschlüssel und keine veränderten Installationspakete. Der Autor stellt keine veränderten Versionen bereit und verkauft oder teilt sie nicht. Bitte frag nicht danach.
-- **Verbreite keine veränderten Versionen.** Was du mit diesen Methoden erstellst, ist nur für deinen eigenen, privaten und nicht kommerziellen Gebrauch mit einer rechtmäßig erworbenen Kopie bestimmt. Lade keine veränderten Installationspakete, Spiel-Assets oder Schlüssel hoch, teile, verkaufe oder vermiete sie nicht und betreibe keine privaten Server für andere.
-- **Nur für Spiele, deren offizieller Dienst endgültig eingestellt wurde.** Niemals für laufende Spiele, zum Cheaten, zum Umgehen von Anti-Cheat-Systemen oder auf eine Weise, die andere Spieler oder das Geschäft des Rechteinhabers beeinträchtigt.
+- **Hier gibt es keine Downloads.** Dieses Repository enthält keine Spiel-Assets, keinen Spielcode, keine Entschlüsselungs- oder Signaturschlüssel und keine Installationspakete und bietet nichts zum Herunterladen an. Bitte frag hier nicht danach.
+- **Pakete bitte nicht weiterverbreiten.** Nutze, was du erstellst, nur privat und nicht kommerziell mit einer rechtmäßig erworbenen Kopie. Bitte veröffentliche oder verkaufe keine veränderten Installationspakete, Spiel-Assets oder Schlüssel und betreibe keine privaten Server mit Gewinnabsicht.
+- **Nur für Spiele, deren offizieller Dienst eingestellt wurde.** Bitte nicht für laufende Spiele, zum Cheaten, zum Umgehen von Anti-Cheat-Systemen oder auf eine Weise, die anderen Spielern oder dem Rechteinhaber schadet.
 - **Halte dich an die Gesetze deines Landes; du bist für deine Nutzung selbst verantwortlich.** In Deutschland erlaubt das Urheberrechtsgesetz Eingriffe in Computerprogramme, etwa das Dekompilieren, nur in engen Grenzen, und auch das Umgehen technischer Schutzmaßnahmen kann verboten sein; in anderen Ländern gelten andere Regeln. Nichts hier ist Rechtsberatung, und nichts hier behauptet, dass eine bestimmte Nutzung legal ist. Im Zweifel frag vorher einen Anwalt.
 - **Keine Verbindung zu Spielefirmen.** Spielnamen und Marken gehören ihren jeweiligen Inhabern. Dieses Projekt steht mit keinem Spieleunternehmen in Verbindung und wird von keinem unterstützt.
 - **Keine Gewährleistung, keine Haftung.** Alles wird unter der MIT-Lizenz „wie besehen“ bereitgestellt. Soweit gesetzlich zulässig, haftet der Autor nicht für Schäden, Datenverlust, Kontosperren oder rechtliche Folgen, die aus der Nutzung entstehen.
-- **Rechteinhaber:** Wenn du der Meinung bist, dass etwas hier deine Rechte verletzt, eröffne bitte ein Issue; es wird umgehend geprüft und entfernt. Wenn ein Spiel offiziell zurückkehrt, unterstütze bitte die offizielle Version.
+- **Rechteinhaber:** Wenn du der Meinung bist, dass etwas hier deine Rechte verletzt, eröffne bitte ein Issue; wir prüfen es umgehend und entfernen den Inhalt bei Bedarf. Wenn ein Spiel offiziell zurückkehrt, unterstütze bitte die offizielle Version.
 
 Mit der Nutzung der Inhalte dieses Repositorys erklärst du dich mit dem Obigen einverstanden.
 
