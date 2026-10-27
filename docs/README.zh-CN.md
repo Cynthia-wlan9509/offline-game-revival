@@ -124,6 +124,10 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 它依赖 Claude Code 桌面版的能力（`/loop`、`ScheduleWakeup`、`request_keep_awake`、`get_usage`、`start_session`）；缺了哪个怎么退化，skill 里写了（纯命令行里没有并行会话，就改用子代理）。插件安装会一起装上；手动复制：`cp -r offline-game-revival/skills/night-shift ~/.claude/skills/`。
 
+## 🐞 收集 bug 反馈
+
+发布你自己做的游戏，或者在授权下分发的版本、二创、同人作品之后，bug 会不断冒出来。skill 的 [`distribution.md`](../skills/offline-game-revival/references/distribution.md) 第 7 节写了这条流水线：玩家在论坛发帖，机器人收集、归类，agent 复现、修复、起草回复，你点头之后才发出去。现成的 Discord 机器人也开源了：[hearback](https://github.com/Cynthia-wlan9509/hearback)。
+
 ## 🧭 核心理念
 
 1. **在打包期改脚本，不在运行时注入。** 能跑通的 Frida 脚本也永远离不开注入；写进包里的改动装上就能用。

@@ -124,6 +124,10 @@ In case C, the first night ran a little over 4 hours and verified 11 items on an
 
 It relies on Claude Code desktop features (`/loop`, `ScheduleWakeup`, `request_keep_awake`, `get_usage`, `start_session`); the skill says how to fall back when one is missing (in the plain CLI: sub-agents instead of parallel sessions). The plugin install includes it; to copy it by hand: `cp -r offline-game-revival/skills/night-shift ~/.claude/skills/`.
 
+## 🐞 Collecting bug reports
+
+When you ship a game you made yourself, or a build, fan work or doujin project you have permission to distribute, bug reports keep coming. The skill's [`distribution.md`](skills/offline-game-revival/references/distribution.md) (section 7) describes the loop: players post in a forum, a bot collects and sorts the posts, the agent reproduces and fixes each bug and drafts the reply, and nothing is posted until you approve it. A ready-made Discord bot for this is open source: [hearback](https://github.com/Cynthia-wlan9509/hearback).
+
 ## 🧭 Philosophy
 
 1. **Patch at build time, not at runtime.** A Frida script that "works" still needs to be injected forever. Changes baked into the package install and just work.

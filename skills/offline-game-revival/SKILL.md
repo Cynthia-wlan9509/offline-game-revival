@@ -43,7 +43,7 @@ metadata:
    语音通话、聊天短信这类剧情配置另有一套：音轨对齐认通话、声纹定归属、本地 ASR 补字幕、截图逐图人工校对；每项标 `[实测]/[推断]/[语音识别]/[自造]`。→ `references/media-harvest.md`
    同时拿配置清单对镜像做差集，找"文件还在、终版没登记"的被埋没内容（案例见 `references/case-b-laya-native.md`）。
 9. **固化** — 把"已实现"和"已验证"分开写，记录失败账本。
-10. **上线后收 bug** — 玩家在论坛发帖，机器人定时收集、归类，AI 复现、修复、起草回复，用户点头才发出去。→ `references/distribution.md` 第 7 节
+10. **上线后收 bug**（自己做的游戏，或在授权下分发的版本、二创、同人）— 玩家在论坛发帖，机器人定时收集、归类，AI 复现、修复、起草回复，用户点头才发出去。→ `references/distribution.md` 第 7 节
 
 ## 分工
 
@@ -97,7 +97,7 @@ worker 按规格实现，scout 只读搜索。交接格式、各阶段怎么拆�
 - `references/timewarp.md` — 时间快进测试：虚拟时钟、重启持久化、奖励对账、N 天经济模拟（`scripts/timewarp/`，Node 零依赖）
 - `references/multi-agent.md` — 主 agent / worker / scout 分工与交接格式；省 token（快照 + 新会话、控制输出大小）
 - `references/pitfalls.md` — 失败账本（现象 → 原因 → 修法）
-- `references/distribution.md` — 发新包不丢存档、一种包按授权码分档、活动开期、玩家自定义内容、存档迁移、上线后的 bug 反馈闭环
+- `references/distribution.md` — （适用于自己做的游戏、有授权的分发和二创/同人）发新包不丢存档、一种包按授权码分档、活动开期、玩家自定义内容、存档迁移、上线后的 bug 反馈闭环
 - `references/case-a-unity-lua.md` — 完整案例：案例 A（Unity + Lua 手游）离线纪念版
 - `references/case-b-laya-native.md` — 案例 B（LayaAir 原生 + JS 的剧情养成卡牌手游）：DCC 缓存校验算法、加载器补丁、启动竞态、本地服务器骨架；授权码、分档、复活隐藏活动、手机通话 / 短信、被埋没的支线和自制资源、正式包验收
 - `references/case-c-micro-client.md` — 案例 C（大厂微端，Unity Mono + SLua）：资源清单对账、Lua 头字节、Mono 程序集半加密与 PE 头重建、加固壳的去除（改 dex 开关 + 从进程内存导出明文程序集）、launchconf 开关、用探针包让游戏自带的云 SDK 自己探测服务器；五层开屏 / 协议页换成免责声明（引擎开屏、C# 播的视频、剧情 CG 开头）；整个写在 Lua 里、回包不序列化的本地服务器（属性袋冒充字节流）；从玩家手机备份（小米 `.bak` = 头 + Android Backup + tar）补齐全部资源、换成终版底包、把热更层（Lua、清单、热更过的包内资源）并进 APK，避开微端首启清理

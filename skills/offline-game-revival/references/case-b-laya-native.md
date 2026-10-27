@@ -82,6 +82,8 @@ Git Bash 下给 adb 传设备路径要 `MSYS_NO_PATHCONV=1`，本地文件要写
 
 ## 授权码 + 水印（JS 引擎版，2026-10-18，已在正式包上验收）
 
+> 用途：限制安装包被恶意传播。自己做的游戏、在授权下分发的版本、二创和同人作品都能用同样的做法，见 `distribution.md` 开头。
+
 - 选 **Ed25519** 而不是 RSA-2048：码长 130 字符（RSA 签名 344 字符太长，玩家粘贴易出错）。
 - **conch 的 V8 没有 BigInt**（真机 `ReferenceError`）：验签用 tweetnacl 式 16×16 位域运算 + 32 位高低两半的 SHA-512
   （`tools/offline/07_license.js`）。曲线常数运行时由小整数现算；SHA-512 的 80 个常数用 node 按定义生成后写入，
