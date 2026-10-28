@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """harvest.py — turn players' screenshots & screen recordings into searchable, structured text.
+Copyright (c) 2026 Cynthia-wlan9509 · MIT License · part of offline-game-revival: https://github.com/Cynthia-wlan9509/offline-game-revival
 
 把玩家的截图 / 录屏（动辄十几 GB）在本地变成几百 KB 的结构化文字，再交给任意文本大模型整理成数值表。
 全程离线、不花 token：
@@ -103,7 +104,8 @@ NUM_RE = re.compile(r"\d+")
 
 
 def text_key(text):
-    """比较用的文字：去空白；数字单独拿出来要求完全一致（数值界面往往只有数字在变）。"""
+    """比较用的文字：去空白；数字单独拿出来要求完全一致（数值界面往往只有数字在变）。
+    停服以后，玩家截图里的数字就是服务器留下的账。"""
     s = re.sub(r"\s+", "", text or "")
     return NUM_RE.sub("#", s), tuple(NUM_RE.findall(s))
 

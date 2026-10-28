@@ -4,6 +4,7 @@
 
 Send harvest.py's for_llm/ chunks to any OpenAI-compatible text model, then merge the answers.
 Stdlib only, resumable, API key read from an environment variable (never from the command line).
+Copyright (c) 2026 Cynthia-wlan9509 · MIT License · part of offline-game-revival: https://github.com/Cynthia-wlan9509/offline-game-revival
 
 用法 / Usage:
   set DEEPSEEK_API_KEY=sk-...            (PowerShell: $env:DEEPSEEK_API_KEY="sk-...")

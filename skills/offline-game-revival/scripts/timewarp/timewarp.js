@@ -1,4 +1,5 @@
 // timewarp.js — time-travel test harness for offline fake servers (Node >= 16, zero dependencies).
+// Copyright (c) 2026 Cynthia-wlan9509 · MIT License · part of offline-game-revival: https://github.com/Cynthia-wlan9509/offline-game-revival
 //
 // Loads your fake-server script files into a browser-like sandbox where the clock is virtual, then lets a test
 // call endpoints, fast-forward days, restart the "app" (same save, same clock) and audit every response:
@@ -76,6 +77,7 @@ function create(o) {
     let timers = [], timerSeq = 0;
     let api = null, g = null;
     const log = [];                                       // every call: { t, path, params, ok, delta, claimed, audit }
+    // A reward the response promises but the save never receives is a bug the player finds on day three.
     const problems = [];                                  // audit failures + failed expectations
     let pass = 0;
 

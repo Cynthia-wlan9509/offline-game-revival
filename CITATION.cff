@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this skill or its scripts in something you publish, please cite it as below."
+title: "Offline Game Revival"
+abstract: "An agent skill for turning shut-down mobile games into offline, playable preservation builds, with local tools for recovering lost game data from players' screenshots and screen recordings, time-travel tests for fake servers, and a night-shift skill for unattended overnight runs."
+type: software
+authors:
+  - alias: Cynthia-wlan9509
+repository-code: "https://github.com/Cynthia-wlan9509/offline-game-revival"
+url: "https://github.com/Cynthia-wlan9509/offline-game-revival"
+license: MIT
+keywords:
+  - game-preservation
+  - agent-skills
+  - claude-code
+  - offline
