@@ -109,3 +109,4 @@ worker 按规格实现，scout 只读搜索。交接格式、各阶段怎么拆�
 - `references/case-a-unity-lua.md` — 完整案例：案例 A（Unity + Lua 手游）离线纪念版
 - `references/case-b-laya-native.md` — 案例 B（LayaAir 原生 + JS 的剧情养成卡牌手游）：DCC 缓存校验算法、加载器补丁、启动竞态、本地服务器骨架；授权码、分档、复活隐藏活动、手机通话 / 短信、被埋没的支线和自制资源、正式包验收
 - `references/case-c-micro-client.md` — 案例 C（大厂微端，Unity Mono + SLua）：资源清单对账、Lua 头字节、Mono 程序集半加密与 PE 头重建、加固壳的去除（改 dex 开关 + 从进程内存导出明文程序集）、launchconf 开关、用探针包让游戏自带的云 SDK 自己探测服务器；五层开屏 / 协议页换成免责声明（引擎开屏、C# 播的视频、剧情 CG 开头）；整个写在 Lua 里、回包不序列化的本地服务器（属性袋冒充字节流）；从玩家手机备份（小米 `.bak` = 头 + Android Backup + tar）补齐全部资源、换成终版底包、把热更层（Lua、清单、热更过的包内资源）并进 APK，避开微端首启清理
+- `references/case-d-native-ai-chat.md` — 案例 D（原生 Kotlin + Live2D，核心玩法是服务器大模型聊天）：带 PairIP 的版本直接放弃；smali 只删调用不整段重写；接用户自己的 OpenAI 兼容接口（含局域网 / 手机本机模型）；用包内原台词做人设卡和语气样本防 OOC、出戏重试与兜底；装扮部件；minSdk 29 的包在安卓 9 模拟器上跑；拆分包合成单个 APK；假接口 + adb reverse 验聊天
