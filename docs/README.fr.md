@@ -38,12 +38,16 @@ Chaque année, des centaines de jeux mobiles ferment leurs portes. L'APK reste s
 
 ## 🏆 Éprouvé sur de vrais jeux
 
-Ce guide est né de la résurrection de deux jeux mobiles commerciaux dont les serveurs ont fermé :
+Ce guide est né de la résurrection de quatre jeux mobiles commerciaux dont les serveurs ont fermé :
 
 - **Cas A — Unity + Lua** : édition commémorative solo complète, vérifiée sur un téléphone Android 14 physique.
 - **Cas B — LayaAir native + JavaScript** : 315 endpoints serveur réimplémentés en local, plus de 700 assertions de non-régression, et tous les grands systèmes (chapitres d'histoire, combats, gacha, familiers, rendez-vous, tour, événements) parcourus à la main sur un appareil.
+- **Cas C — micro-client Unity (Mono + SLua)** : l'APK ne contenait qu'environ un quart des ressources du jeu ; le reste a été récupéré dans la sauvegarde du téléphone d'un joueur. Assemblies Mono à moitié chiffrées, un packer, et un serveur local écrit entièrement en Lua.
+- **Cas D — Kotlin natif + Live2D, chat avec des personnages IA** : la fonction centrale, discuter avec les personnages, reposait sur un LLM côté serveur de l'éditeur. Le chat passe désormais par l'API compatible OpenAI du joueur ou par un modèle local ; des fiches de personnage et des répliques d'exemple tirées du script original gardent chaque personnage dans son rôle. Sans modèle, les personnages répondent avec leurs répliques doublées d'origine.
 
-Les deux études de cas (anonymisées) sont incluses dans [`references/`](../skills/offline-game-revival/references).
+Un cinquième jeu a été abandonné au bout d'une demi-journée : le jeu lui-même se téléchargeait après le premier lancement, et ce téléchargement a disparu avec le serveur.
+
+Les quatre études de cas (anonymisées) sont incluses dans [`references/`](../skills/offline-game-revival/references).
 
 ## 🚀 Installation
 

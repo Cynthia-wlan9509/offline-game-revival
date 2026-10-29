@@ -38,12 +38,16 @@ Mỗi năm có hàng trăm game mobile đóng cửa. File APK vẫn nằm trong 
 
 ## 🏆 Đã kiểm chứng trên game thật
 
-Cẩm nang này được đúc kết từ việc hồi sinh hai game mobile thương mại đã bị tắt máy chủ:
+Cẩm nang này được đúc kết từ việc hồi sinh bốn game mobile thương mại đã bị tắt máy chủ:
 
 - **Trường hợp A — Unity + Lua**: bản tưởng niệm chơi đơn đầy đủ, đã kiểm chứng trên một điện thoại Android 14 thật.
 - **Trường hợp B — LayaAir native + JavaScript**: 315 endpoint của máy chủ được cài đặt lại cục bộ, hơn 700 assertion hồi quy, và tất cả hệ thống chính (chương cốt truyện, chiến đấu, gacha, thú cưng, hẹn hò, tháp, sự kiện) đều được bấm thử trực tiếp trên thiết bị.
+- **Trường hợp C — micro client Unity (Mono + SLua)**: APK chỉ chứa khoảng một phần tư tài nguyên của game; phần còn lại lấy từ bản sao lưu điện thoại của một người chơi. Assembly Mono mã hóa một nửa, một lớp packer, và một máy chủ cục bộ viết hoàn toàn bằng Lua.
+- **Trường hợp D — Kotlin native + Live2D, trò chuyện với nhân vật AI**: tính năng cốt lõi, trò chuyện với nhân vật, chạy trên LLM ở máy chủ của nhà phát hành. Giờ phần trò chuyện được nối tới API tương thích OpenAI của chính người chơi hoặc một mô hình cục bộ; thẻ nhân vật và câu thoại mẫu lấy từ kịch bản gốc giữ cho nhân vật không lệch vai. Khi không có mô hình, nhân vật trả lời bằng các câu thoại gốc có lồng tiếng.
 
-Cả hai case study (đã ẩn danh) đều có trong [`references/`](../skills/offline-game-revival/references).
+Game thứ năm bị bỏ sau nửa ngày: bản thân game được tải về sau lần mở đầu tiên, và bản tải đó biến mất cùng máy chủ.
+
+Cả bốn case study (đã ẩn danh) đều có trong [`references/`](../skills/offline-game-revival/references).
 
 ## 🚀 Cài đặt
 

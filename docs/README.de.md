@@ -38,12 +38,16 @@ Jedes Jahr werden Hunderte Mobile Games eingestellt. Die APK liegt weiter auf de
 
 ## 🏆 An echten Spielen bewährt
 
-Das Playbook entstand aus der Wiederbelebung zweier kommerzieller Mobile Games, deren Server abgeschaltet wurden:
+Das Playbook entstand aus der Wiederbelebung von vier kommerziellen Mobile Games, deren Server abgeschaltet wurden:
 
 - **Fall A – Unity + Lua**: vollständige Singleplayer-Gedenkversion, verifiziert auf einem physischen Android-14-Smartphone.
 - **Fall B – LayaAir native + JavaScript**: 315 Server-Endpunkte lokal nachgebaut, über 700 Regressions-Assertions, alle wichtigen Systeme (Story-Kapitel, Kämpfe, Gacha, Haustiere, Dating, Turm, Events) auf einem Gerät durchgeklickt.
+- **Fall C – Unity-Microclient (Mono + SLua)**: Die APK enthielt nur etwa ein Viertel der Ressourcen des Spiels; der Rest kam aus dem Handy-Backup eines Spielers. Halb verschlüsselte Mono-Assemblies, ein Packer und ein lokaler Server, komplett in Lua geschrieben.
+- **Fall D – natives Kotlin + Live2D, KI-Charakterchat**: Die Kernfunktion, der Chat mit den Figuren, lief über ein LLM auf dem Server des Publishers. Jetzt geht der Chat an die eigene OpenAI-kompatible API des Spielers oder an ein lokales Modell; Charakterkarten und Beispielsätze aus dem Originalskript halten die Figuren in ihrer Rolle. Ohne Modell antworten sie mit ihren originalen vertonten Zeilen.
 
-Beide Fallstudien (anonymisiert) liegen in [`references/`](../skills/offline-game-revival/references).
+Ein fünftes Spiel wurde nach einem halben Tag aufgegeben: Das eigentliche Spiel wurde erst nach dem ersten Start heruntergeladen, und dieser Download verschwand mit dem Server.
+
+Alle vier Fallstudien (anonymisiert) liegen in [`references/`](../skills/offline-game-revival/references).
 
 ## 🚀 Installation
 

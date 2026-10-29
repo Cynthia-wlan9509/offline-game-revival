@@ -38,12 +38,16 @@ Todo ano, centenas de jogos mobile são desativados. O APK continua no celular d
 
 ## 🏆 Provado em jogos reais
 
-O manual foi destilado da ressurreição de dois jogos mobile comerciais cujos servidores foram desligados:
+O manual foi destilado da ressurreição de quatro jogos mobile comerciais cujos servidores foram desligados:
 
 - **Caso A — Unity + Lua**: build memorial single-player completo, verificado em um celular Android 14 físico.
 - **Caso B — LayaAir native + JavaScript**: 315 endpoints de servidor reimplementados localmente, mais de 700 asserções de regressão e todos os sistemas principais (capítulos da história, batalhas, gacha, pets, namoro, torre, eventos) testados na mão em um aparelho.
+- **Caso C — micro client Unity (Mono + SLua)**: o APK trazia só cerca de um quarto dos recursos do jogo; o resto veio do backup do celular de um jogador. Assemblies Mono meio criptografados, um packer e um servidor local escrito inteiramente em Lua.
+- **Caso D — Kotlin nativo + Live2D, chat com personagens de IA**: o recurso principal, conversar com os personagens, rodava num LLM no servidor da publicadora. Agora o chat vai para a API compatível com OpenAI do próprio jogador ou para um modelo local, e fichas de personagem e falas de exemplo tiradas do roteiro original mantêm cada personagem no papel. Sem modelo, os personagens respondem com as falas originais dubladas.
 
-Os dois estudos de caso (anonimizados) estão incluídos em [`references/`](../skills/offline-game-revival/references).
+Um quinto jogo foi abandonado depois de meio dia: o jogo em si era baixado após a primeira abertura, e esse download morreu junto com o servidor.
+
+Os quatro estudos de caso (anonimizados) estão incluídos em [`references/`](../skills/offline-game-revival/references).
 
 ## 🚀 Instalação
 

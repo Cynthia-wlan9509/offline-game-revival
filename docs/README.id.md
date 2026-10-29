@@ -38,12 +38,16 @@ Setiap tahun, ratusan game mobile ditutup. APK-nya masih ada di ponsel para pema
 
 ## 🏆 Terbukti pada game sungguhan
 
-Panduan ini disarikan dari proses menghidupkan kembali dua game mobile komersial yang servernya ditutup:
+Panduan ini disarikan dari proses menghidupkan kembali empat game mobile komersial yang servernya ditutup:
 
 - **Kasus A — Unity + Lua**: build kenangan single-player yang lengkap, diverifikasi di ponsel Android 14 fisik.
 - **Kasus B — LayaAir native + JavaScript**: 315 endpoint server diimplementasikan ulang secara lokal, 700+ assertion regresi, dan semua sistem utama (bab cerita, pertarungan, gacha, pet, dating, tower, event) dicoba satu per satu langsung di perangkat.
+- **Kasus C — micro client Unity (Mono + SLua)**: APK-nya hanya berisi sekitar seperempat resource game; sisanya didapat dari backup ponsel seorang pemain. Assembly Mono yang setengah terenkripsi, packer, dan server lokal yang seluruhnya ditulis dalam Lua.
+- **Kasus D — Kotlin native + Live2D, chat karakter AI**: fitur utamanya, mengobrol dengan karakter, berjalan di LLM pada server penerbit. Sekarang chat diarahkan ke API kompatibel OpenAI milik pemain sendiri atau ke model lokal; kartu karakter dan contoh dialog dari naskah asli game menjaga karakter tetap sesuai perannya. Tanpa model, karakter membalas dengan dialog asli bersuara.
 
-Kedua studi kasus (sudah dianonimkan) ada di [`references/`](../skills/offline-game-revival/references).
+Game kelima dihentikan setelah setengah hari: game intinya baru diunduh setelah pertama kali dibuka, dan unduhan itu ikut hilang bersama servernya.
+
+Keempat studi kasus (sudah dianonimkan) ada di [`references/`](../skills/offline-game-revival/references).
 
 ## 🚀 Instalasi
 

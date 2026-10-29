@@ -39,15 +39,16 @@ Every year, hundreds of mobile games shut down. The APK still sits on players' p
 
 ## 🏆 Proven on real games
 
-The playbook was distilled from reviving three commercial mobile games whose servers shut down:
+The playbook was distilled from reviving four commercial mobile games whose servers shut down:
 
 - **Case A — Unity + Lua**: full single-player memorial build, verified on a physical Android 14 phone.
 - **Case B — LayaAir native + JavaScript**: 315 server endpoints reimplemented locally, 700+ regression assertions, all major systems (story chapters, battles, gacha, pets, dating, tower, events) clicked through on a device.
 - **Case C — Unity micro client (Mono + SLua)**: the APK held only about a quarter of the game's resources; the rest came from a player's phone backup. Half-encrypted Mono assemblies, a packer shell, and a local server written entirely in Lua.
+- **Case D — native Kotlin + Live2D, AI character chat**: the core feature, chatting with the characters, ran on the publisher's server-side LLM. Chat now goes to the player's own OpenAI-compatible API or a local model, kept in character by cards and sample lines taken from the game's own script; with no model set up, characters reply with their original voiced lines.
 
-A fourth game was dropped after half a day: the game itself was downloaded after first launch, and that download died with the server.
+A fifth game was dropped after half a day: the game itself was downloaded after first launch, and that download died with the server.
 
-All three case studies are included (anonymized) in [`references/`](skills/offline-game-revival/references).
+All four case studies are included (anonymized) in [`references/`](skills/offline-game-revival/references).
 
 ## 💸 What it cost
 
@@ -58,7 +59,7 @@ Most of the work was done with Claude Code on a subscription. To give a sense of
 | A — Unity + Lua | 18 | 7.4 B | ≈ $2,140 |
 | B — LayaAir native + JS | 9 | 2.6 B | ≈ $720 |
 | C — Unity micro client (Mono + SLua) | 5 | 2.3 B | ≈ $620 |
-| All game-revival work (A + B + C, plus one day of recon on a fourth game) | | 12.4 B | ≈ $3,500 |
+| All game-revival work (A + B + C, plus one day of recon on the game that was dropped) | | 12.4 B | ≈ $3,500 |
 
 The table counts Claude only. With the Codex phase below added, the total is about $3,900.
 
