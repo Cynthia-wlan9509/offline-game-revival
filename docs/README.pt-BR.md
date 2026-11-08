@@ -27,14 +27,16 @@ Todo ano, centenas de jogos mobile são desativados. O APK continua no celular d
 | | |
 |---|---|
 | 🔍 **Reconhecimento** | Desempacota o APK, encontra a camada de lógica de verdade (Lua / JS / C# transpilado) e identifica criptografia e verificações de integridade de recursos. |
+| ⚡ **Triagem mais rápida e reconhecimento mais robusto** *(novo)* | Responda rápido à pergunta "dá para salvar?": instale o APK original em um emulador com root, corte a rede e faça uma inicialização a frio. Se a tela de login aparecer completa, o jogo e seus recursos estão ali e só a camada de login atrapalha. Para asset bundles em que só um trecho é criptografado, delimite a janela criptografada exata bloco a bloco. Minijogos cujas regras ficam inteiramente no cliente rodam sem interface em um PC, e assim todas as fases podem ser verificadas de uma vez. Veja [`recon.md`](../skills/offline-game-revival/references/recon.md) e [`playtest.md`](../skills/offline-game-revival/references/playtest.md). |
 | 🧩 **Patch com âncoras verificadas** | Um único ponto de entrada de build. Cada substituição de código verifica sua âncora — se o pacote original mudar, o build *falha com estardalhaço* em vez de entregar um patch quebrado em silêncio. |
 | 🖥️ **Servidor falso local** | Intercepta a camada HTTP/JSON e responde centenas de endpoints a partir de um save local. Inclui uma metodologia para mapear quem chama cada endpoint e o que ele lê, e então gerar valores padrão seguros. |
 | 📦 **Reempacotamento e assinatura** | Recalcula os checksums do cache da engine, reconstrói as tabelas de recursos, faz zipalign e assina. Inclui um algoritmo de checksum de cache obtido por engenharia reversa e patches de loader para LayaAir native. |
 | ✅ **Aceitação no aparelho** | "A tela abre" ≠ "funciona". O estado precisa mudar de verdade e sobreviver a uma reinicialização a frio. Teste guiado pelo tutorial: siga os passos do próprio guia do jogo com toques reais. |
+| 🛡️ **Lançamentos seguros** *(novo)* | Antes de publicar, instale a versão pública anterior, jogue e gere um save, atualize por cima e compare o save chave por chave. Ao instalar no celular do próprio usuário, faça backup do save antes e compare byte a byte depois. Renomeie o pacote para que a edição memorial seja instalada lado a lado com o app oficial. Veja [`verify.md`](../skills/offline-game-revival/references/verify.md) e [`patch.md`](../skills/offline-game-revival/references/patch.md) (seção 5). |
 | 🎞️ **Resgate de dados de screenshots e gravações** *(novo)* | Os números do lado do servidor (preços da loja, taxas de gacha, recompensas, status de cartas) morrem junto com o servidor. O `scripts/harvest.py` transforma **dezenas de GB de screenshots e gravações de tela de jogadores** em algumas centenas de KB de texto categorizado — quadros-chave → remoção de quase duplicatas → OCR local → agrupamento por tela — **totalmente offline, zero tokens** — e então o `scripts/llm_structure.py` processa tudo em lotes com DeepSeek / OpenAI / Qwen / Kimi / Ollama local e gera JSON + CSV consolidados. |
 | ⏩ **Testes de viagem no tempo** *(novo)* | O `scripts/timewarp` roda seu servidor falso em um sandbox com relógio virtual: avance dias, reinicie o app e **audite cada recompensa** — se a resposta diz "+50 gemas" mas o save não mudou, o teste falha. Simule 30 dias de jogo em um segundo e veja em que dia cada barreira se torna alcançável. Zero dependências. |
 | 🤝 **Qualquer agente, qualquer modelo** *(novo)* | Funciona com Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… via `SKILL.md` + `AGENTS.md`. Traz papéis de subagente (scout / worker / verifier) para que um modelo caro tome as decisões e os baratos façam o trabalho braçal. Sem agente nenhum? Cole o `prompts/chat-playbook.md` no DeepSeek / ChatGPT e execute os comandos que ele passar. |
-| 📚 **Registro de falhas** | 100 KB de armadilhas reais: sintoma → causa raiz → correção. Crashes por condição de corrida na inicialização, UI que saiu da tela sem avisar, objetos XHR de pool "envenenados" por respostas falsas, saves que nunca chegavam ao disco… |
+| 📚 **Registro de falhas** | Cerca de 190 KB e 216 entradas de armadilhas reais: sintoma → causa raiz → correção. Crashes por condição de corrida na inicialização, UI que saiu da tela sem avisar, objetos XHR de pool "envenenados" por respostas falsas, saves que nunca chegavam ao disco… |
 
 ## 🏆 Provado em jogos reais
 
@@ -47,7 +49,7 @@ O manual foi destilado da ressurreição de quatro jogos mobile comerciais cujos
 
 Um quinto jogo foi abandonado depois de meio dia: o jogo em si era baixado após a primeira abertura, e esse download morreu junto com o servidor.
 
-Os quatro estudos de caso (anonimizados) estão incluídos em [`references/`](../skills/offline-game-revival/references).
+Os quatro estudos de caso (anonimizados) estão incluídos em [`references/`](../skills/offline-game-revival/references). As anotações de mais dois jogos (casos E e F) foram incorporadas aos arquivos de referência, em vez de virarem estudos de caso separados.
 
 ## 🚀 Instalação
 

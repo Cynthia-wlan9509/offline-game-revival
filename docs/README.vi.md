@@ -27,14 +27,16 @@ Mỗi năm có hàng trăm game mobile đóng cửa. File APK vẫn nằm trong 
 | | |
 |---|---|
 | 🔍 **Trinh sát (Recon)** | Giải nén APK, tìm ra tầng logic thật sự (Lua / JS / C# đã transpile), nhận diện mã hóa và các bước kiểm tra tính toàn vẹn tài nguyên. |
+| ⚡ **Phân loại nhanh hơn & trinh sát sâu hơn** *(mới)* | Trả lời nhanh câu hỏi "có cứu được không?": cài APK gốc trên máy ảo đã root, ngắt mạng rồi khởi động lạnh. Nếu màn hình đăng nhập hiển thị đầy đủ, nghĩa là game và tài nguyên vẫn còn đó, chỉ có tầng đăng nhập là vướng đường. Với các asset bundle chỉ mã hóa một đoạn, hãy xác định chính xác cửa sổ được mã hóa theo từng khối. Các mini-game có toàn bộ luật chơi nằm ở client có thể chạy headless trên PC, nhờ đó kiểm tra được mọi màn chơi cùng lúc. Xem [`recon.md`](../skills/offline-game-revival/references/recon.md) và [`playtest.md`](../skills/offline-game-revival/references/playtest.md). |
 | 🧩 **Vá lỗi có kiểm tra điểm neo** | Chỉ một điểm vào cho quá trình build. Mỗi lần thay thế mã đều kiểm tra điểm neo của nó — nếu gói gốc thay đổi, bản build sẽ *báo lỗi ầm ĩ* thay vì âm thầm tung ra một bản vá hỏng. |
 | 🖥️ **Máy chủ giả cục bộ** | Chặn tầng HTTP/JSON và trả lời hàng trăm endpoint từ dữ liệu lưu cục bộ. Kèm phương pháp lập bản đồ xem ai gọi từng endpoint và nó đọc gì, rồi sinh ra các giá trị mặc định an toàn. |
 | 📦 **Đóng gói lại & ký lại** | Tính lại checksum cache của engine, dựng lại bảng tài nguyên, zipalign, ký. Gồm thuật toán checksum cache được dịch ngược và các bản vá loader cho LayaAir native. |
 | ✅ **Nghiệm thu trên thiết bị** | "Màn hình mở được" ≠ "chạy được". Trạng thái phải thực sự thay đổi và còn nguyên sau khi khởi động lại hoàn toàn. Kiểm thử theo hướng dẫn: làm theo từng bước hướng dẫn của chính game bằng những cú chạm thật. |
+| 🛡️ **Phát hành an toàn** *(mới)* | Trước khi phát hành, hãy cài bản công khai trước đó, chơi một file save, nâng cấp đè lên rồi so sánh file save từng khóa một. Khi cài trên điện thoại của chính người dùng, hãy sao lưu file save trước và so sánh từng byte sau đó. Đổi tên gói để bản tưởng niệm cài song song được với app chính thức. Xem [`verify.md`](../skills/offline-game-revival/references/verify.md) và [`patch.md`](../skills/offline-game-revival/references/patch.md) (mục 5). |
 | 🎞️ **Cứu dữ liệu từ ảnh chụp & video quay màn hình** *(mới)* | Các con số phía máy chủ (giá cửa hàng, tỉ lệ gacha, phần thưởng, chỉ số thẻ) sẽ mất cùng máy chủ. `scripts/harvest.py` biến **hàng chục GB ảnh chụp và video quay màn hình của người chơi** thành vài trăm KB văn bản đã phân loại — khung hình chính → loại bỏ ảnh gần trùng → OCR cục bộ → gom nhóm theo từng màn hình — **hoàn toàn offline, không tốn token**, sau đó `scripts/llm_structure.py` xử lý hàng loạt qua DeepSeek / OpenAI / Qwen / Kimi / Ollama cục bộ và gộp thành JSON + CSV. |
 | ⏩ **Kiểm thử du hành thời gian** *(mới)* | `scripts/timewarp` chạy server giả của bạn trong sandbox có đồng hồ ảo: tua nhanh nhiều ngày, khởi động lại app và **kiểm toán mọi phần thưởng** — nếu phản hồi ghi "+50 gem" mà file save không đổi thì test thất bại. Mô phỏng 30 ngày chơi trong một giây và xem mỗi cột mốc mở được vào ngày thứ mấy. Không phụ thuộc thư viện nào. |
 | 🤝 **Agent nào, model nào cũng được** *(mới)* | Chạy được với Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… qua `SKILL.md` + `AGENTS.md`. Có sẵn các vai trò sub-agent (scout / worker / verifier) để model đắt tiền ra quyết định, còn model rẻ làm phần việc chân tay. Không có agent nào cả? Dán `prompts/chat-playbook.md` vào DeepSeek / ChatGPT rồi chạy các lệnh nó đưa ra. |
-| 📚 **Sổ ghi lỗi** | 100 KB những cái bẫy có thật: triệu chứng → nguyên nhân gốc → cách sửa. Crash do race condition lúc khởi động, UI âm thầm trôi ra ngoài màn hình, đối tượng XHR trong pool bị phản hồi giả "đầu độc", dữ liệu lưu không bao giờ được ghi xuống đĩa… |
+| 📚 **Sổ ghi lỗi** | Khoảng 190 KB và 216 mục về những cái bẫy có thật: triệu chứng → nguyên nhân gốc → cách sửa. Crash do race condition lúc khởi động, UI âm thầm trôi ra ngoài màn hình, đối tượng XHR trong pool bị phản hồi giả "đầu độc", dữ liệu lưu không bao giờ được ghi xuống đĩa… |
 
 ## 🏆 Đã kiểm chứng trên game thật
 
@@ -47,7 +49,7 @@ Cẩm nang này được đúc kết từ việc hồi sinh bốn game mobile th
 
 Game thứ năm bị bỏ sau nửa ngày: bản thân game được tải về sau lần mở đầu tiên, và bản tải đó biến mất cùng máy chủ.
 
-Cả bốn case study (đã ẩn danh) đều có trong [`references/`](../skills/offline-game-revival/references).
+Cả bốn case study (đã ẩn danh) đều có trong [`references/`](../skills/offline-game-revival/references). Ghi chú từ hai game nữa (trường hợp E và F) được gộp vào các file tham khảo thay vì viết thành case study riêng.
 
 ## 🚀 Cài đặt
 

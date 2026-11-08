@@ -27,14 +27,16 @@ Jedes Jahr werden Hunderte Mobile Games eingestellt. Die APK liegt weiter auf de
 | | |
 |---|---|
 | 🔍 **Recon** | Entpackt die APK, findet die eigentliche Logikschicht (Lua / JS / transpiliertes C#) und identifiziert Verschlüsselung sowie Integritätsprüfungen für Ressourcen. |
+| ⚡ **Schnellere Triage & härtere Recon** *(neu)* | Beantworte „Ist es zu retten?" schnell: Installiere die originale APK auf einem gerooteten Emulator, kappe das Netzwerk und starte kalt. Wird der vollständige Login-Bildschirm angezeigt, sind Spiel und Assets vorhanden, und nur die Login-Schicht steht im Weg. Bei Asset-Bundles, in denen nur ein Abschnitt verschlüsselt ist, grenzt du das verschlüsselte Fenster Block für Block genau ein. Mini-Games, deren Regeln komplett im Client liegen, laufen headless auf dem PC, sodass sich alle Level auf einmal prüfen lassen. Siehe [`recon.md`](../skills/offline-game-revival/references/recon.md) und [`playtest.md`](../skills/offline-game-revival/references/playtest.md). |
 | 🧩 **Patching mit geprüften Ankern** | Ein einziger Build-Einstiegspunkt. Jede Code-Ersetzung prüft ihren Anker – ändert sich das Original-Paket, *scheitert der Build laut und deutlich*, statt stillschweigend einen kaputten Patch auszuliefern. |
 | 🖥️ **Lokaler Fake-Server** | Fängt die HTTP/JSON-Schicht ab und beantwortet Hunderte Endpunkte aus einem lokalen Spielstand. Dazu eine Methodik, um für jeden Endpunkt zu ermitteln, wer ihn aufruft und was er liest, und daraus sichere Standardwerte zu erzeugen. |
 | 📦 **Repack & Neu-Signierung** | Berechnet Cache-Prüfsummen der Engine neu, baut Ressourcentabellen um, führt zipalign aus und signiert. Enthält einen per Reverse Engineering rekonstruierten Cache-Prüfsummen-Algorithmus und Loader-Patches für LayaAir native. |
 | ✅ **Abnahme auf dem Gerät** | „Der Bildschirm öffnet sich" ≠ „es funktioniert". Der Zustand muss sich tatsächlich ändern und einen Kaltstart überleben. Tutorial-gesteuertes Testen: den Schritten der spieleigenen Anleitung mit echten Taps folgen. |
+| 🛡️ **Sichere Releases** *(neu)* | Installiere vor der Veröffentlichung die vorherige öffentliche Version, spiele einen Spielstand, aktualisiere darüber und vergleiche den Spielstand Schlüssel für Schlüssel. Wenn du auf dem eigenen Handy des Nutzers installierst, sichere zuerst den Spielstand und vergleiche ihn danach Byte für Byte. Benenne das Paket um, damit die Gedenkausgabe parallel zur offiziellen App installiert werden kann. Siehe [`verify.md`](../skills/offline-game-revival/references/verify.md) und [`patch.md`](../skills/offline-game-revival/references/patch.md) (Abschnitt 5). |
 | 🎞️ **Datenrettung aus Screenshots & Aufnahmen** *(neu)* | Serverseitige Zahlen (Shop-Preise, Gacha-Raten, Belohnungen, Kartenwerte) sterben mit dem Server. `scripts/harvest.py` verwandelt **dutzende GB an Spieler-Screenshots und Bildschirmaufnahmen** in wenige hundert KB kategorisierten Text – Keyframes → Entfernen von Beinahe-Duplikaten → lokales OCR → Gruppierung pro Screen –, **komplett offline, null Token**, danach verarbeitet `scripts/llm_structure.py` alles stapelweise über DeepSeek / OpenAI / Qwen / Kimi / lokales Ollama und führt es zu JSON + CSV zusammen. |
 | ⏩ **Zeitreise-Tests** *(neu)* | `scripts/timewarp` lässt deinen Fake-Server in einer Sandbox mit virtueller Uhr laufen: Tage vorspulen, die App neu starten und **jede Belohnung prüfen** – steht in der Antwort „+50 Edelsteine", der Spielstand hat sich aber nicht geändert, schlägt der Test fehl. Simuliere 30 Spieltage in einer Sekunde und sieh, an welchem Tag jede Hürde erreichbar wird. Null Abhängigkeiten. |
 | 🤝 **Jeder Agent, jedes Modell** *(neu)* | Funktioniert mit Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI … über `SKILL.md` + `AGENTS.md`. Mit Sub-Agent-Rollen (scout / worker / verifier): Ein teures Modell trifft die Entscheidungen, günstige erledigen die Fleißarbeit. Gar kein Agent? Füge `prompts/chat-playbook.md` in DeepSeek / ChatGPT ein und führe die Befehle aus, die es dir gibt. |
-| 📚 **Fehler-Logbuch** | 100 KB echter Stolperfallen: Symptom → Ursache → Lösung. Abstürze durch Race Conditions beim Start, UI, die unbemerkt aus dem Bild gerutscht ist, gepoolte XHR-Objekte, die von Fake-Antworten „vergiftet" wurden, Spielstände, die nie auf der Platte landen … |
+| 📚 **Fehler-Logbuch** | Rund 190 KB und 216 Einträge echter Stolperfallen: Symptom → Ursache → Lösung. Abstürze durch Race Conditions beim Start, UI, die unbemerkt aus dem Bild gerutscht ist, gepoolte XHR-Objekte, die von Fake-Antworten „vergiftet" wurden, Spielstände, die nie auf der Platte landen … |
 
 ## 🏆 An echten Spielen bewährt
 
@@ -47,7 +49,7 @@ Das Playbook entstand aus der Wiederbelebung von vier kommerziellen Mobile Games
 
 Ein fünftes Spiel wurde nach einem halben Tag aufgegeben: Das eigentliche Spiel wurde erst nach dem ersten Start heruntergeladen, und dieser Download verschwand mit dem Server.
 
-Alle vier Fallstudien (anonymisiert) liegen in [`references/`](../skills/offline-game-revival/references).
+Alle vier Fallstudien (anonymisiert) liegen in [`references/`](../skills/offline-game-revival/references). Notizen zu zwei weiteren Spielen (Fälle E und F) sind in die Referenzdateien eingeflossen, statt als eigene Fallstudien ausgearbeitet zu werden.
 
 ## 🚀 Installation
 

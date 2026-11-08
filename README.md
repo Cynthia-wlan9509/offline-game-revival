@@ -28,14 +28,16 @@ Every year, hundreds of mobile games shut down. The APK still sits on players' p
 |---|---|
 | 🩺 **Can it be saved?** | Before any patch, answer three questions within half a day: are the game's rules on the phone, is the game itself inside the APK, and how much server-side data can be recovered. Story, idle and card games usually can be saved; games whose battles are computed on the server, or that download the game itself after first launch, usually can't. |
 | 🔍 **Recon** | Unpack the APK, find the real logic layer (Lua / JS / C# transpiled), identify encryption and resource-integrity checks. |
+| ⚡ **Faster triage & tougher recon** *(new)* | Answer "can it be saved?" fast: install the original APK on a rooted emulator, cut the network and cold-start. If the full login screen renders, the game and its assets are there and only the login layer is in the way. For asset bundles where only one stretch is encrypted, pin down the exact encrypted window block by block. Mini-games whose rules live entirely in the client run headless on a PC, so every level can be checked at once. See [`recon.md`](skills/offline-game-revival/references/recon.md) and [`playtest.md`](skills/offline-game-revival/references/playtest.md). |
 | 🧩 **Anchor-asserted patching** | One build entry point. Every code replacement asserts its anchor — if the upstream package changes, the build *fails loudly* instead of shipping a silently broken patch. |
 | 🖥️ **Local fake server** | Intercept the HTTP/JSON layer and answer hundreds of endpoints from a local save. A methodology for mapping every endpoint's caller and what it reads, then generating safe defaults. |
 | 📦 **Repack & re-sign** | Recompute engine cache checksums, rebuild resource tables, zipalign, sign. Includes a reverse-engineered cache-checksum algorithm and loader patches for LayaAir native. |
 | ✅ **On-device acceptance** | "The screen opens" ≠ "it works". State must actually change and survive a cold restart. Tutorial-driven testing: follow the game's own guide steps with real taps. |
+| 🛡️ **Safe releases** *(new)* | Before shipping, install the previous public build, play a save, upgrade over it and diff the save key by key. When installing on the user's own phone, back up the save first and compare it byte for byte afterwards. Rename the package so the memorial edition installs side by side with the official app. See [`verify.md`](skills/offline-game-revival/references/verify.md) and [`patch.md`](skills/offline-game-revival/references/patch.md) (section 5). |
 | 🎞️ **Data rescue from screenshots & recordings** *(new)* | Server-side numbers (shop prices, gacha rates, rewards, card stats) die with the server. `scripts/harvest.py` turns **tens of GB of player screenshots and screen recordings** into a few hundred KB of categorized text — keyframes → near-duplicate removal → local OCR → per-screen grouping — **fully offline, zero tokens**, then `scripts/llm_structure.py` batches it through DeepSeek / OpenAI / Qwen / Kimi / local Ollama into merged JSON + CSV. |
 | ⏩ **Time-travel tests** *(new)* | `scripts/timewarp` runs your fake server in a sandbox with a virtual clock: fast-forward days, restart the app, and **audit every reward** — if a response says "+50 gems" but the save didn't change, it fails. Simulate 30 days of play in a second and see on which day each gate becomes reachable. Zero dependencies. |
 | 🤝 **Any agent, any model** *(new)* | Works with Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… via `SKILL.md` + `AGENTS.md`. Ships scout / worker / verifier sub-agent roles so an expensive model makes the calls and cheap ones do the legwork. No agent at all? Paste `prompts/chat-playbook.md` into DeepSeek / ChatGPT and run the commands it gives you. |
-| 📚 **Failure ledger** | 100 KB of real pitfalls: symptom → root cause → fix. Crashes from start-up races, UI that silently moved off-screen, pooled XHR objects "poisoned" by fake responses, saves that never hit disk… |
+| 📚 **Failure ledger** | About 190 KB and 216 entries of real pitfalls: symptom → root cause → fix. Crashes from start-up races, UI that silently moved off-screen, pooled XHR objects "poisoned" by fake responses, saves that never hit disk… |
 
 ## 🏆 Proven on real games
 
@@ -48,7 +50,7 @@ The playbook was distilled from reviving four commercial mobile games whose serv
 
 A fifth game was dropped after half a day: the game itself was downloaded after first launch, and that download died with the server.
 
-All four case studies are included (anonymized) in [`references/`](skills/offline-game-revival/references).
+All four case studies are included (anonymized) in [`references/`](skills/offline-game-revival/references). Notes from two more games (cases E and F) are folded into the reference files rather than written up as separate case studies.
 
 ## 💸 What it cost
 
