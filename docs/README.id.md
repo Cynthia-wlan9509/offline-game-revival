@@ -27,14 +27,16 @@ Setiap tahun, ratusan game mobile ditutup. APK-nya masih ada di ponsel para pema
 | | |
 |---|---|
 | 🔍 **Recon** | Membongkar APK, menemukan lapisan logika yang sebenarnya (Lua / JS / C# hasil transpile), serta mengidentifikasi enkripsi dan pemeriksaan integritas resource. |
+| ⚡ **Triase lebih cepat & recon yang lebih tangguh** *(baru)* | Jawab "bisakah diselamatkan?" dengan cepat: pasang APK asli di emulator yang sudah di-root, putuskan jaringan, lalu cold start. Jika layar login tampil utuh, berarti game dan asetnya ada dan hanya lapisan login yang menghalangi. Untuk asset bundle yang hanya satu bagiannya dienkripsi, tentukan jendela enkripsi yang tepat blok demi blok. Mini-game yang aturannya sepenuhnya ada di klien dijalankan headless di PC, sehingga setiap level bisa diperiksa sekaligus. Lihat [`recon.md`](../skills/offline-game-revival/references/recon.md) dan [`playtest.md`](../skills/offline-game-revival/references/playtest.md). |
 | 🧩 **Patching dengan anchor yang diverifikasi** | Satu titik masuk build. Setiap penggantian kode memverifikasi anchor-nya — jika paket aslinya berubah, build akan *gagal dengan keras* alih-alih diam-diam merilis patch yang rusak. |
 | 🖥️ **Server palsu lokal** | Mencegat lapisan HTTP/JSON dan menjawab ratusan endpoint dari save lokal. Dilengkapi metodologi untuk memetakan siapa pemanggil tiap endpoint dan apa yang dibacanya, lalu menghasilkan nilai default yang aman. |
 | 📦 **Repack & tanda tangan ulang** | Menghitung ulang checksum cache engine, membangun ulang tabel resource, zipalign, lalu menandatangani. Termasuk algoritma checksum cache hasil reverse engineering dan patch loader untuk LayaAir native. |
 | ✅ **Akseptansi di perangkat** | "Layar bisa terbuka" ≠ "berfungsi". State harus benar-benar berubah dan bertahan setelah cold restart. Pengujian berbasis tutorial: ikuti langkah panduan bawaan game dengan ketukan sungguhan. |
+| 🛡️ **Rilis yang aman** *(baru)* | Sebelum merilis, pasang build publik sebelumnya, mainkan sebuah save, upgrade di atasnya, lalu bandingkan save kunci demi kunci. Saat memasang di ponsel milik pengguna sendiri, cadangkan save terlebih dahulu dan bandingkan byte demi byte sesudahnya. Ganti nama paket agar edisi kenangan terpasang berdampingan dengan aplikasi resminya. Lihat [`verify.md`](../skills/offline-game-revival/references/verify.md) dan [`patch.md`](../skills/offline-game-revival/references/patch.md) (bagian 5). |
 | 🎞️ **Penyelamatan data dari screenshot & rekaman layar** *(baru)* | Angka di sisi server (harga toko, rate gacha, hadiah, stat kartu) ikut hilang bersama server. `scripts/harvest.py` mengubah **puluhan GB screenshot dan rekaman layar pemain** menjadi beberapa ratus KB teks yang sudah dikategorikan — keyframe → penghapusan gambar yang nyaris kembar → OCR lokal → pengelompokan per layar — **sepenuhnya offline, nol token** — lalu `scripts/llm_structure.py` memprosesnya secara batch lewat DeepSeek / OpenAI / Qwen / Kimi / Ollama lokal dan menggabungkannya menjadi JSON + CSV. |
 | ⏩ **Uji perjalanan waktu** *(baru)* | `scripts/timewarp` menjalankan server palsu Anda di sandbox dengan jam virtual: percepat beberapa hari, restart aplikasi, dan **audit setiap hadiah** — jika respons bilang "+50 gem" tetapi save tidak berubah, tes gagal. Simulasikan 30 hari bermain dalam satu detik dan lihat di hari ke berapa tiap gerbang bisa dilewati. Nol dependensi. |
 | 🤝 **Agen apa pun, model apa pun** *(baru)* | Bekerja dengan Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… lewat `SKILL.md` + `AGENTS.md`. Dilengkapi peran sub-agen (scout / worker / verifier) agar model mahal yang mengambil keputusan dan model murah yang mengerjakan pekerjaan kasarnya. Tidak punya agen sama sekali? Tempel `prompts/chat-playbook.md` ke DeepSeek / ChatGPT lalu jalankan perintah yang diberikannya. |
-| 📚 **Catatan kegagalan** | 100 KB jebakan nyata: gejala → akar masalah → solusi. Crash akibat race saat startup, UI yang diam-diam bergeser ke luar layar, objek XHR dari pool yang "teracuni" respons palsu, save yang tidak pernah tertulis ke disk… |
+| 📚 **Catatan kegagalan** | Sekitar 190 KB dan 216 entri jebakan nyata: gejala → akar masalah → solusi. Crash akibat race saat startup, UI yang diam-diam bergeser ke luar layar, objek XHR dari pool yang "teracuni" respons palsu, save yang tidak pernah tertulis ke disk… |
 
 ## 🏆 Terbukti pada game sungguhan
 
@@ -47,7 +49,7 @@ Panduan ini disarikan dari proses menghidupkan kembali empat game mobile komersi
 
 Game kelima dihentikan setelah setengah hari: game intinya baru diunduh setelah pertama kali dibuka, dan unduhan itu ikut hilang bersama servernya.
 
-Keempat studi kasus (sudah dianonimkan) ada di [`references/`](../skills/offline-game-revival/references).
+Keempat studi kasus (sudah dianonimkan) ada di [`references/`](../skills/offline-game-revival/references). Catatan dari dua game lain (kasus E dan F) dilebur ke dalam file referensi, bukan ditulis sebagai studi kasus tersendiri.
 
 ## 🚀 Instalasi
 
