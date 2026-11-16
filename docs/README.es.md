@@ -40,16 +40,17 @@ Cada año cierran cientos de juegos móviles. El APK sigue en el teléfono de lo
 
 ## 🏆 Probado en juegos reales
 
-El manual se destiló a partir de la resurrección de cuatro juegos móviles comerciales cuyos servidores se apagaron:
+El manual se destiló a partir de la resurrección de cinco juegos móviles comerciales cuyos servidores se apagaron:
 
 - **Caso A — Unity + Lua**: edición conmemorativa completa para un jugador, verificada en un teléfono Android 14 físico.
 - **Caso B — LayaAir native + JavaScript**: 315 endpoints de servidor reimplementados en local, más de 700 aserciones de regresión y todos los sistemas principales (capítulos de historia, combates, gacha, mascotas, citas, torre, eventos) recorridos a mano en un dispositivo.
 - **Caso C — micro cliente de Unity (Mono + SLua)**: el APK solo traía alrededor de una cuarta parte de los recursos del juego; el resto salió de la copia de seguridad del teléfono de un jugador. Ensamblados Mono semicifrados, un empaquetador y un servidor local escrito por completo en Lua.
 - **Caso D — Kotlin nativo + Live2D, chat con personajes por IA**: la función principal, chatear con los personajes, funcionaba con un LLM en el servidor del editor. Ahora el chat va a la API compatible con OpenAI del propio jugador o a un modelo local, y unas fichas de personaje y frases de ejemplo sacadas del guion original mantienen a cada personaje en su papel. Sin modelo, los personajes responden con sus frases originales con voz.
+- **Caso G — LayaAir + protocolo sproto de conexión larga**: el juego entero venía en el APK, así que el trabajo estaba en el servidor: el paquete traía su propio esquema de protocolo (más de 400 peticiones), los sistemas se reconstruyeron en local uno por uno, con un script de juego automático que sigue las guías del juego con toques reales para encontrar el siguiente sistema que falta. Casi todo lo que enseñó está en el registro de fallos: respuestas vacías por defecto que bloquean funciones en silencio, rechazos al reclamar que muestran a los jugadores un error sin sentido, y falsos «jugadores virtuales» que parecen rotos.
 
-Un quinto juego se abandonó tras medio día: el juego en sí se descargaba después del primer inicio, y esa descarga desapareció con el servidor.
+Otro juego se abandonó tras medio día: el juego en sí se descargaba después del primer inicio, y esa descarga desapareció con el servidor.
 
-Los cuatro casos de estudio (anonimizados) están incluidos en [`references/`](../skills/offline-game-revival/references). Las notas de otros dos juegos (casos E y F) están integradas en los archivos de referencia en lugar de redactarse como casos de estudio independientes.
+Los cinco casos de estudio (anonimizados) están incluidos en [`references/`](../skills/offline-game-revival/references). Las notas de otros dos juegos (casos E y F) están integradas en los archivos de referencia en lugar de redactarse como casos de estudio independientes.
 
 ## 🚀 Instalación
 
