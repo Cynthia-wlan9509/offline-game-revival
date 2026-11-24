@@ -149,13 +149,9 @@ Nếu dự án này đã cứu một tựa game bạn yêu thích, một ⭐ s�
 
 Cách tham gia (issue, pull request, trở thành người cùng duy trì): xem [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## ⭐ Sao và lượt clone
+## ⭐ Lịch sử sao
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
-
-[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
-
-GitHub chỉ giữ lưu lượng clone trong 14 ngày, nên biểu đồ clone bắt đầu từ một bản chụp ngày 2026-11-03 và được cập nhật hằng ngày từ đó.
 
 ## 📄 Giấy phép
 

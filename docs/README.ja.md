@@ -149,13 +149,9 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 参加方法（Issue、プルリクエスト、共同メンテナーになるには）は [CONTRIBUTING.md](../CONTRIBUTING.md) を参照してください。
 
-## ⭐ スターとクローン
+## ⭐ スター数の推移
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
-
-[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
-
-GitHub が保持するクローンのトラフィックは 14 日分だけなので、クローンのグラフは 2026-11-03 のスナップショットから始まり、以降は毎日更新しています。
 
 ## 📄 ライセンス
 

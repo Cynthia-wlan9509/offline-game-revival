@@ -186,13 +186,9 @@ What may and may not go into the repo (no game assets, no keys, no player data) 
 
 If this saved a game you loved, a ⭐ helps other players find it.
 
-## ⭐ Stars & clones
+## ⭐ Star history
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
-
-[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
-
-GitHub only keeps 14 days of clone traffic, so the clone chart starts from a snapshot on 2026-11-03 and is updated daily from then on.
 
 ## 📄 License
 

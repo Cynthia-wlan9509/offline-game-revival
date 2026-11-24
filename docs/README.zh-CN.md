@@ -186,13 +186,9 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 如果它帮你救回了一款心爱的游戏，点个 ⭐ 能让更多玩家找到它。
 
-## ⭐ 收藏和克隆
+## ⭐ 收藏数变化
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
-
-[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
-
-GitHub 只保留 14 天的克隆流量数据，所以克隆图从 2026-11-03 的一次快照开始，之后每天更新。
 
 ## 📄 许可证
 

@@ -149,13 +149,9 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 참여 방법(이슈, 풀 리퀘스트, 공동 관리자 되기)은 [CONTRIBUTING.md](../CONTRIBUTING.md)를 참고하세요.
 
-## ⭐ 스타와 클론
+## ⭐ 스타 추이
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
-
-[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
-
-GitHub는 클론 트래픽을 14일치만 보관하므로, 클론 차트는 2026-11-03의 스냅샷에서 시작하고 그 후로는 매일 갱신합니다.
 
 ## 📄 라이선스
 

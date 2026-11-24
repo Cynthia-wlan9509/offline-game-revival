@@ -149,13 +149,9 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 Как поучаствовать (issues, pull requests, стать мейнтейнером): см. [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## ⭐ Звёзды и клоны
+## ⭐ История звёзд
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
-
-[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
-
-GitHub хранит данные о клонировании только за 14 дней, поэтому график клонов начинается со снимка от 2026-11-03 и с тех пор обновляется каждый день.
 
 ## 📄 Лицензия
 

@@ -149,13 +149,9 @@ Wenn dieses Projekt ein Spiel gerettet hat, das du geliebt hast, hilft ein ⭐ a
 
 Wie du mitmachen kannst (Issues, Pull Requests, Mitbetreuer werden): siehe [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## ⭐ Sterne & Klone
+## ⭐ Sterne-Verlauf
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
-
-[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
-
-GitHub speichert den Clone-Traffic nur 14 Tage lang. Das Klon-Diagramm beginnt deshalb mit einer Momentaufnahme vom 2026-11-03 und wird seitdem täglich aktualisiert.
 
 ## 📄 Lizenz
 

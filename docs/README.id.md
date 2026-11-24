@@ -149,13 +149,9 @@ Kalau proyek ini berhasil menyelamatkan game yang Anda cintai, sebuah ⭐ akan m
 
 Cara ikut berkontribusi (issue, pull request, menjadi maintainer): lihat [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## ⭐ Bintang & clone
+## ⭐ Riwayat bintang
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
-
-[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
-
-GitHub hanya menyimpan lalu lintas clone selama 14 hari, jadi grafik clone dimulai dari satu snapshot pada 2026-11-03 dan diperbarui setiap hari sejak itu.
 
 ## 📄 Lisensi
 
