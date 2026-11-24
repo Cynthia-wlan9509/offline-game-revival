@@ -24,6 +24,8 @@ Mỗi năm có hàng trăm game mobile đóng cửa. File APK vẫn nằm trong 
 
 Tất cả những điều này đều do tôi tự mày mò ra. Lúc bắt đầu tôi không biết gì về phát triển game và chưa từng đọc một hướng dẫn nào; ngay từ ngày đầu, tôi chỉ việc ước với AI (Claude, DeepSeek, GPT-6 Astra) và bắt nó làm lại khi kết quả chưa đúng ý. Vì vậy, có chỗ trùng hay khác với điều người khác nói đều là chuyện bình thường. Cách đánh giá, quy trình và những cái bẫy ghi ở đây đều đến từ việc tôi tự thử và sai trên nhiều game thật.
 
+**Cho đến nay: 16 game đã bị tắt máy chủ**, chạy trên Unity + Lua, Unity Mono / SLua, Unity IL2CPP, HybridCLR, LayaAir, Cocos (JS / Lua / LuaJIT), Unity WebGL / H5 và Kotlin native + Live2D — game cốt truyện và hẹn hò, game đấu thẻ bài, một game tiên hiệp, một game chat với nhân vật AI và nhiều game khác. Danh sách đầy đủ nằm ở mục [Đã kiểm chứng trên game thật](#-đã-kiểm-chứng-trên-game-thật).
+
 ## ✨ Bên trong có gì
 
 | | |
@@ -45,17 +47,26 @@ Tất cả những điều này đều do tôi tự mày mò ra. Lúc bắt đ�
 
 ## 🏆 Đã kiểm chứng trên game thật
 
-Cẩm nang này được đúc kết từ việc hồi sinh năm game mobile thương mại đã bị tắt máy chủ:
+Cẩm nang này được đúc kết từ việc hồi sinh 16 game mobile thương mại đã bị tắt máy chủ:
 
 - **Trường hợp A — Unity + Lua**: bản tưởng niệm chơi đơn đầy đủ, đã kiểm chứng trên một điện thoại Android 14 thật.
 - **Trường hợp B — LayaAir native + JavaScript**: 315 endpoint của máy chủ được cài đặt lại cục bộ, hơn 700 assertion hồi quy, và tất cả hệ thống chính (chương cốt truyện, chiến đấu, gacha, thú cưng, hẹn hò, tháp, sự kiện) đều được bấm thử trực tiếp trên thiết bị.
 - **Trường hợp C — micro client Unity (Mono + SLua)**: APK chỉ chứa khoảng một phần tư tài nguyên của game; phần còn lại lấy từ bản sao lưu điện thoại của một người chơi. Assembly Mono mã hóa một nửa, một lớp packer, và một máy chủ cục bộ viết hoàn toàn bằng Lua.
 - **Trường hợp D — Kotlin native + Live2D, trò chuyện với nhân vật AI**: tính năng cốt lõi, trò chuyện với nhân vật, chạy trên LLM ở máy chủ của nhà phát hành. Giờ phần trò chuyện được nối tới API tương thích OpenAI của chính người chơi hoặc một mô hình cục bộ; thẻ nhân vật và câu thoại mẫu lấy từ kịch bản gốc giữ cho nhân vật không lệch vai. Khi không có mô hình, nhân vật trả lời bằng các câu thoại gốc có lồng tiếng.
 - **Trường hợp G — LayaAir + giao thức sproto kết nối dài**: toàn bộ game nằm trong APK, nên việc chính là phía máy chủ: gói cài đặt mang theo lược đồ giao thức riêng (400+ request), các hệ thống được dựng lại cục bộ từng cái một, cùng một script tự chơi làm theo hướng dẫn trong game bằng các cú chạm thật để tìm hệ thống còn thiếu tiếp theo. Phần lớn bài học nằm trong sổ ghi lỗi: phản hồi mặc định rỗng âm thầm khóa tính năng, việc từ chối nhận thưởng hiện cho người chơi một lỗi vô nghĩa, và "người chơi ảo" giả trông như bị hỏng.
+- **Trường hợp H — game thẻ bài Unity IL2CPP, không có lớp script**: runtime Python nhúng ngay trong tiến trình của game đóng vai máy chủ cục bộ, lưu bằng SQLite, kèm một trang web GM. Đã xong cả 847 giao thức, 18 hệ thống và 133 sự kiện, cộng thêm 120 người chơi AI giữ cảm giác "máy chủ đang chạy".
+- **Trường hợp I — micro client Unity WebGL / H5** (APK 237 KB, tiên hiệp): làm H5 trước, bọc vỏ sau cùng. `Hotfix.dll` gốc của game chạy thường trú làm worker tính chiến đấu, nên toàn bộ cốt truyện chính (990/990) và cả 9 lần độ kiếp đều qua được mà không đổi một công thức nào.
+- **Trường hợp J — Unity Mono / ET Hotfix** (`code.unity3d` + `Hotfix.dll`): máy chủ C# nằm trong gói; phản hồi được trả về chậm một frame để giao diện không tự khóa mình.
+- **Trường hợp K — Unity 2021 IL2CPP + HybridCLR**: toàn bộ 15,550 bundle mang một header kép 22 byte — đó là tiền tố, không phải mã hóa. DLL hot-update thật được tách khỏi các DLL metadata AOT đã bị cắt bớt.
+- **Trường hợp L — Cocos Creator JS + Pomelo**: script XXTEA + gzip, máy chủ loopback trong bộ nhớ nằm ngay trong gói.
+- **Trường hợp M — Cocos2d-Lua**: Lua được phục vụ từ bên trong gói, hot push trong lúc phát triển chỉ mất 0,3 giây.
+- **Trường hợp N — Cocos2d-x, hai luồng Lua + TCP thô + protobuf**: tầng mạng được loopback trong bộ nhớ; giá trị `int32` âm và các trường mặc định bị bỏ qua đã được sửa cả hai chiều.
+- **Trường hợp O — Cocos2d-x 2.x + LuaJIT 2.1 + gói mở rộng 4.2 GB**: quá lớn cho một APK (giới hạn ZIP32), nên dữ liệu nằm bên ngoài; một Activity mới mỏng nhẹ tiếp quản launcher mà không động đến DEX gốc.
+- **Trường hợp P — Unity Mono**: một cây override phẳng thay cho chuỗi patch dài, patch neo bằng Mono.Cecil trên host, và `INTERNET` được gỡ thẳng trong manifest.
 
 Một game nữa bị bỏ sau nửa ngày: bản thân game được tải về sau lần mở đầu tiên, và bản tải đó biến mất cùng máy chủ.
 
-Cả năm case study (đã ẩn danh) đều có trong [`references/`](../skills/offline-game-revival/references). Ghi chú từ hai game nữa (trường hợp E và F) được gộp vào các file tham khảo thay vì viết thành case study riêng. Các trang lộ trình theo engine và quy trình khởi động / theo lô / QA còn bao quát thêm bốn họ engine (Unity IL2CPP không có lớp script, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5).
+Các trường hợp A–D và G được viết thành case study đầy đủ (đã ẩn danh) trong [`references/`](../skills/offline-game-revival/references). Các trường hợp E và F được gộp vào các file tham khảo, còn các trường hợp H–P được gộp vào các trang lộ trình theo engine (`route-*.md`), quy trình khởi động / theo lô / QA và sổ ghi lỗi.
 
 ## 🚀 Cài đặt
 
@@ -77,6 +88,8 @@ cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Cod
 Các agent khác sẽ đọc [`AGENTS.md`](../AGENTS.md), file này chỉ dẫn chúng tới skill. Các vai trò sub-agent nằm trong [`agents/`](../agents).
 
 **Chỉ có chat (DeepSeek / ChatGPT / Kimi bản web)** — dán [`prompts/chat-playbook.md`](../prompts/chat-playbook.md) làm tin nhắn đầu tiên. Model sẽ trở thành kỹ sư trưởng của bạn; bạn chạy các lệnh nó đưa ra rồi dán kết quả trả lại.
+
+**Dự án lớn chạy nhiều ngày** — ba prompt để sao chép (trinh sát chỉ đọc → từ khởi động đến QA cuối → tiếp tục sau khi nghỉ), kèm cách cài đặt trong Antigravity: [`prompts/three-stage-prompts.md`](../prompts/three-stage-prompts.md). Làm việc trên nhiều máy? Gộp bài học của từng máy lại bằng [`prompts/merge-lessons.md`](../prompts/merge-lessons.md).
 
 Sau đó chỉ cần nhờ: *"Máy chủ của game này đã đóng — hãy làm cho nó chơi được offline"* hoặc *"Trích giá cửa hàng và tỉ lệ gacha từ 15 GB video quay màn hình này."*
 
@@ -136,9 +149,13 @@ Nếu dự án này đã cứu một tựa game bạn yêu thích, một ⭐ s�
 
 Cách tham gia (issue, pull request, trở thành người cùng duy trì): xem [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## ⭐ Lịch sử sao
+## ⭐ Sao và lượt clone
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
+
+[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
+
+GitHub chỉ giữ lưu lượng clone trong 14 ngày, nên biểu đồ clone bắt đầu từ một bản chụp ngày 2026-11-03 và được cập nhật hằng ngày từ đó.
 
 ## 📄 Giấy phép
 

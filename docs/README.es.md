@@ -24,6 +24,8 @@ Cada año cierran cientos de juegos móviles. El APK sigue en el teléfono de lo
 
 Todo esto lo fui descubriendo por mi cuenta. Empecé sin saber nada de desarrollo de videojuegos y no he leído un solo tutorial: desde el primer día me dediqué a pedirle deseos a la IA (Claude, DeepSeek, GPT-6 Astra) y a hacerle repetir el trabajo cuando el resultado no era el que quería. Por eso es normal que algunas cosas coincidan con lo que dicen otros y otras no. Los criterios de decisión, el flujo de trabajo y los tropiezos que aquí se recogen vienen de mi propio ensayo y error con varios juegos reales.
 
+**Hasta ahora: 16 juegos con los servidores apagados**, sobre Unity + Lua, Unity Mono / SLua, Unity IL2CPP, HybridCLR, LayaAir, Cocos (JS / Lua / LuaJIT), Unity WebGL / H5 y Kotlin nativo + Live2D: juegos de historia y de citas, de cartas, uno de xianxia, uno de chat con personajes de IA y más. La lista completa está en [Probado en juegos reales](#-probado-en-juegos-reales).
+
 ## ✨ Qué incluye
 
 | | |
@@ -45,17 +47,26 @@ Todo esto lo fui descubriendo por mi cuenta. Empecé sin saber nada de desarroll
 
 ## 🏆 Probado en juegos reales
 
-El manual se destiló a partir de la resurrección de cinco juegos móviles comerciales cuyos servidores se apagaron:
+El manual se destiló a partir de la resurrección de 16 juegos móviles comerciales cuyos servidores se apagaron:
 
 - **Caso A — Unity + Lua**: edición conmemorativa completa para un jugador, verificada en un teléfono Android 14 físico.
 - **Caso B — LayaAir native + JavaScript**: 315 endpoints de servidor reimplementados en local, más de 700 aserciones de regresión y todos los sistemas principales (capítulos de historia, combates, gacha, mascotas, citas, torre, eventos) recorridos a mano en un dispositivo.
 - **Caso C — micro cliente de Unity (Mono + SLua)**: el APK solo traía alrededor de una cuarta parte de los recursos del juego; el resto salió de la copia de seguridad del teléfono de un jugador. Ensamblados Mono semicifrados, un empaquetador y un servidor local escrito por completo en Lua.
 - **Caso D — Kotlin nativo + Live2D, chat con personajes por IA**: la función principal, chatear con los personajes, funcionaba con un LLM en el servidor del editor. Ahora el chat va a la API compatible con OpenAI del propio jugador o a un modelo local, y unas fichas de personaje y frases de ejemplo sacadas del guion original mantienen a cada personaje en su papel. Sin modelo, los personajes responden con sus frases originales con voz.
 - **Caso G — LayaAir + protocolo sproto de conexión larga**: el juego entero venía en el APK, así que el trabajo estaba en el servidor: el paquete traía su propio esquema de protocolo (más de 400 peticiones), los sistemas se reconstruyeron en local uno por uno, con un script de juego automático que sigue las guías del juego con toques reales para encontrar el siguiente sistema que falta. Casi todo lo que enseñó está en el registro de fallos: respuestas vacías por defecto que bloquean funciones en silencio, rechazos al reclamar que muestran a los jugadores un error sin sentido, y falsos «jugadores virtuales» que parecen rotos.
+- **Caso H — juego de cartas Unity IL2CPP, sin capa de scripts**: un runtime de Python incrustado en el propio proceso del juego hace de servidor local, con partidas guardadas en SQLite y una página web de GM. Hechos los 847 protocolos, 18 sistemas y 133 eventos, más 120 jugadores de IA que mantienen la sensación de «servidor en vivo».
+- **Caso I — microcliente Unity WebGL / H5** (un APK de 237 KB, xianxia): primero H5 y el empaquetado al final. La `Hotfix.dll` original del juego se ejecuta como proceso residente de combate, así que toda la historia principal (990/990) y las 9 tribulaciones se completan sin cambiar una sola fórmula.
+- **Caso J — Unity Mono / ET Hotfix** (`code.unity3d` + `Hotfix.dll`): un servidor en C# dentro del paquete; las respuestas vuelven un frame después para que la interfaz no se bloquee a sí misma.
+- **Caso K — Unity 2021 IL2CPP + HybridCLR**: los 15,550 bundles llevaban una cabecera doble de 22 bytes: un prefijo, no cifrado. Se distinguieron las DLL de actualización en caliente reales de las DLL de metadatos AOT recortadas.
+- **Caso L — Cocos Creator JS + Pomelo**: scripts con XXTEA + gzip y un servidor de bucle local en memoria dentro del paquete.
+- **Caso M — Cocos2d-Lua**: Lua servido desde dentro del paquete, con envíos en caliente de 0,3 segundos durante el desarrollo.
+- **Caso N — Cocos2d-x, dos hilos de Lua + TCP puro + protobuf**: la capa de red en bucle local en memoria; valores `int32` negativos y campos por defecto omitidos corregidos en ambos sentidos.
+- **Caso O — Cocos2d-x 2.x + LuaJIT 2.1 + un paquete de expansión de 4.2 GB**: demasiado grande para un solo APK (límites de ZIP32), así que los datos viven fuera; una Activity nueva y ligera toma el control del lanzador sin tocar el DEX original.
+- **Caso P — Unity Mono**: un árbol plano de archivos de reemplazo en lugar de una larga cadena de parches, parches de ancla con Mono.Cecil en el host e `INTERNET` eliminado del manifiesto en el sitio.
 
 Otro juego se abandonó tras medio día: el juego en sí se descargaba después del primer inicio, y esa descarga desapareció con el servidor.
 
-Los cinco casos de estudio (anonimizados) están incluidos en [`references/`](../skills/offline-game-revival/references). Las notas de otros dos juegos (casos E y F) están integradas en los archivos de referencia en lugar de redactarse como casos de estudio independientes. Las páginas de rutas por motor y el flujo de arranque / lotes / QA cubren cuatro familias de motores más (Unity IL2CPP sin capa de scripts, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5).
+Los casos A–D y G están redactados como casos de estudio completos (anonimizados) en [`references/`](../skills/offline-game-revival/references). Los casos E y F están integrados en los archivos de referencia, y los casos H–P, en las páginas de rutas por motor (`route-*.md`), el flujo de arranque / lotes / QA y el registro de fallos.
 
 ## 🚀 Instalación
 
@@ -77,6 +88,8 @@ cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Cod
 Los demás agentes leen [`AGENTS.md`](../AGENTS.md), que los remite a la skill. Los roles de subagente están en [`agents/`](../agents).
 
 **Solo chat (DeepSeek / ChatGPT / Kimi web)**: pega [`prompts/chat-playbook.md`](../prompts/chat-playbook.md) como primer mensaje. El modelo se convierte en tu ingeniero principal; tú ejecutas los comandos que te dé y le pegas la salida.
+
+**Proyectos grandes que duran días**: tres prompts para copiar y pegar (reconocimiento de solo lectura → del arranque a la QA final → retomar tras una pausa), más cómo instalarlo en Antigravity: [`prompts/three-stage-prompts.md`](../prompts/three-stage-prompts.md). ¿Trabajas en varios PC? Reúne las lecciones de cada uno con [`prompts/merge-lessons.md`](../prompts/merge-lessons.md).
 
 Después, basta con pedirlo: *«Los servidores de este juego cerraron: hazlo jugable offline»* o *«Extrae los precios de la tienda y las probabilidades del gacha de estos 15 GB de grabaciones de pantalla.»*
 
@@ -136,9 +149,13 @@ Si esto salvó un juego que querías, una ⭐ ayuda a que otros jugadores lo enc
 
 Cómo participar (issues, pull requests, llegar a ser mantenedor): consulta [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## ⭐ Historial de estrellas
+## ⭐ Estrellas y clones
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
+
+[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
+
+GitHub solo conserva 14 días del tráfico de clones, así que el gráfico de clones parte de una instantánea del 2026-11-03 y se actualiza a diario desde entonces.
 
 ## 📄 Licencia
 

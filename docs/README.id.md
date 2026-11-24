@@ -24,6 +24,8 @@ Setiap tahun, ratusan game mobile ditutup. APK-nya masih ada di ponsel para pema
 
 Semua ini saya temukan sendiri. Awalnya saya sama sekali tidak paham pengembangan game dan tidak pernah membaca satu tutorial pun; sejak hari pertama saya hanya meminta ke AI (Claude, DeepSeek, GPT-6 Astra) dan menyuruhnya mengulang kalau hasilnya belum sesuai keinginan saya. Jadi wajar saja kalau ada bagian yang sama atau berbeda dengan penjelasan orang lain. Cara menilai, alur kerja, dan jebakan yang ditulis di sini semuanya berasal dari coba-coba saya sendiri pada beberapa game sungguhan.
 
+**Sampai sekarang: 16 game yang servernya sudah ditutup**, di atas Unity + Lua, Unity Mono / SLua, Unity IL2CPP, HybridCLR, LayaAir, Cocos (JS / Lua / LuaJIT), Unity WebGL / H5, dan Kotlin native + Live2D — game cerita dan kencan, game kartu, satu game xianxia, satu game chat dengan karakter AI, dan lainnya. Daftar lengkapnya ada di [Terbukti pada game sungguhan](#-terbukti-pada-game-sungguhan).
+
 ## ✨ Isinya
 
 | | |
@@ -45,17 +47,26 @@ Semua ini saya temukan sendiri. Awalnya saya sama sekali tidak paham pengembanga
 
 ## 🏆 Terbukti pada game sungguhan
 
-Panduan ini disarikan dari proses menghidupkan kembali lima game mobile komersial yang servernya ditutup:
+Panduan ini disarikan dari proses menghidupkan kembali 16 game mobile komersial yang servernya ditutup:
 
 - **Kasus A — Unity + Lua**: build kenangan single-player yang lengkap, diverifikasi di ponsel Android 14 fisik.
 - **Kasus B — LayaAir native + JavaScript**: 315 endpoint server diimplementasikan ulang secara lokal, 700+ assertion regresi, dan semua sistem utama (bab cerita, pertarungan, gacha, pet, dating, tower, event) dicoba satu per satu langsung di perangkat.
 - **Kasus C — micro client Unity (Mono + SLua)**: APK-nya hanya berisi sekitar seperempat resource game; sisanya didapat dari backup ponsel seorang pemain. Assembly Mono yang setengah terenkripsi, packer, dan server lokal yang seluruhnya ditulis dalam Lua.
 - **Kasus D — Kotlin native + Live2D, chat karakter AI**: fitur utamanya, mengobrol dengan karakter, berjalan di LLM pada server penerbit. Sekarang chat diarahkan ke API kompatibel OpenAI milik pemain sendiri atau ke model lokal; kartu karakter dan contoh dialog dari naskah asli game menjaga karakter tetap sesuai perannya. Tanpa model, karakter membalas dengan dialog asli bersuara.
 - **Kasus G — LayaAir + protokol sproto koneksi panjang**: seluruh game ada di dalam APK, jadi pekerjaannya ada di sisi server: paketnya membawa skema protokolnya sendiri (400+ request), sistem-sistemnya dibangun ulang secara lokal satu per satu, dengan skrip auto-play yang mengikuti panduan di dalam game lewat ketukan sungguhan untuk menemukan sistem berikutnya yang belum ada. Sebagian besar pelajarannya ada di catatan kegagalan: balasan default kosong yang diam-diam mengunci fitur, penolakan klaim yang menampilkan error tak bermakna kepada pemain, dan "pemain virtual" palsu yang terlihat rusak.
+- **Kasus H — game kartu Unity IL2CPP, tanpa lapisan skrip**: runtime Python yang ditanam di proses game itu sendiri berfungsi sebagai server lokal, dengan save SQLite dan halaman web GM. Seluruh 847 protokol, 18 sistem, dan 133 event selesai, ditambah 120 pemain AI yang menjaga kesan "server hidup".
+- **Kasus I — micro client Unity WebGL / H5** (APK 237 KB, xianxia): H5 dulu, pembungkus paling akhir. `Hotfix.dll` asli game berjalan sebagai worker pertempuran yang menetap, sehingga seluruh alur utama (990/990) dan 9 tribulasi bisa dituntaskan tanpa mengubah satu rumus pun.
+- **Kasus J — Unity Mono / ET Hotfix** (`code.unity3d` + `Hotfix.dll`): server C# di dalam paket; balasan dikirim satu frame kemudian supaya UI tidak mengunci dirinya sendiri.
+- **Kasus K — Unity 2021 IL2CPP + HybridCLR**: semua 15,550 bundle membawa header ganda 22 byte — itu prefiks, bukan enkripsi. DLL hot-update yang asli dibedakan dari DLL metadata AOT yang sudah dipangkas.
+- **Kasus L — Cocos Creator JS + Pomelo**: skrip XXTEA + gzip, server loopback di memori di dalam paket.
+- **Kasus M — Cocos2d-Lua**: Lua dilayani dari dalam paket, dengan hot push 0,3 detik selama pengembangan.
+- **Kasus N — Cocos2d-x, dua thread Lua + TCP mentah + protobuf**: lapisan jaringan di-loopback di memori; nilai `int32` negatif dan field default yang hilang diperbaiki di kedua arah.
+- **Kasus O — Cocos2d-x 2.x + LuaJIT 2.1 + paket ekspansi 4.2 GB**: terlalu besar untuk satu APK (batas ZIP32), jadi datanya disimpan di luar; Activity baru yang tipis mengambil alih launcher tanpa menyentuh DEX asli.
+- **Kasus P — Unity Mono**: pohon override yang datar, bukan rantai patch panjang, patch jangkar Mono.Cecil pada host, dan `INTERNET` dihapus langsung dari manifest.
 
 Satu game lagi dihentikan setelah setengah hari: game intinya baru diunduh setelah pertama kali dibuka, dan unduhan itu ikut hilang bersama servernya.
 
-Kelima studi kasus (sudah dianonimkan) ada di [`references/`](../skills/offline-game-revival/references). Catatan dari dua game lain (kasus E dan F) dilebur ke dalam file referensi, bukan ditulis sebagai studi kasus tersendiri. Halaman jalur per engine dan alur kickoff / batch / QA mencakup empat keluarga engine lain (Unity IL2CPP tanpa lapisan skrip, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5).
+Kasus A–D dan G ditulis sebagai studi kasus lengkap (sudah dianonimkan) di [`references/`](../skills/offline-game-revival/references). Kasus E dan F dilebur ke dalam file referensi, sedangkan kasus H–P masuk ke halaman jalur per engine (`route-*.md`), alur kickoff / batch / QA, dan catatan kegagalan.
 
 ## 🚀 Instalasi
 
@@ -77,6 +88,8 @@ cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Cod
 Agen lain membaca [`AGENTS.md`](../AGENTS.md), yang mengarahkan mereka ke skill ini. Peran sub-agen ada di [`agents/`](../agents).
 
 **Hanya chat (DeepSeek / ChatGPT / Kimi versi web)** — tempel [`prompts/chat-playbook.md`](../prompts/chat-playbook.md) sebagai pesan pertama. Modelnya menjadi lead engineer Anda; Anda menjalankan perintah yang diberikannya lalu menempelkan kembali outputnya.
+
+**Proyek besar yang berjalan berhari-hari** — tiga prompt siap salin (pengintaian baca-saja → dari kickoff sampai QA akhir → lanjut setelah jeda), plus cara memasangnya di Antigravity: [`prompts/three-stage-prompts.md`](../prompts/three-stage-prompts.md). Bekerja di beberapa PC? Gabungkan pelajaran dari tiap PC dengan [`prompts/merge-lessons.md`](../prompts/merge-lessons.md).
 
 Setelah itu tinggal minta: *"Server game ini sudah ditutup — buat agar bisa dimainkan offline"* atau *"Ekstrak harga toko dan rate gacha dari 15 GB rekaman layar ini."*
 
@@ -136,9 +149,13 @@ Kalau proyek ini berhasil menyelamatkan game yang Anda cintai, sebuah ⭐ akan m
 
 Cara ikut berkontribusi (issue, pull request, menjadi maintainer): lihat [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## ⭐ Riwayat bintang
+## ⭐ Bintang & clone
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
+
+[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
+
+GitHub hanya menyimpan lalu lintas clone selama 14 hari, jadi grafik clone dimulai dari satu snapshot pada 2026-11-03 dan diperbarui setiap hari sejak itu.
 
 ## 📄 Lisensi
 

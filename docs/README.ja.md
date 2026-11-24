@@ -24,6 +24,8 @@
 
 これはすべて、私が自分で手探りで見つけてきたものです。始めたときはゲーム開発の知識がまったくなく、チュートリアルも一つも読まず、初日からずっと AI（Claude、DeepSeek、GPT-6 Astra）にお願いしては、思いどおりにならなければやり直させてきました。なので、他の人の話と重なるところや違うところがあっても、ごく自然なことです。ここにある判断の仕方、手順、ハマりどころは、どれも私が複数の実在のゲームで試行錯誤して得たものです。
 
+**これまでに 16 本の終了したゲーム**を手がけました。Unity + Lua、Unity Mono / SLua、Unity IL2CPP、HybridCLR、LayaAir、Cocos（JS / Lua / LuaJIT）、Unity WebGL / H5、ネイティブ Kotlin + Live2D と構成はさまざまで、ジャンルもストーリー系や恋愛ゲーム、カードバトル、仙侠ゲーム、AI キャラクターチャットのゲームなどです。全リストは[実在のゲームで実証済み](#-実在のゲームで実証済み)にあります。
+
 ## ✨ 中身
 
 | | |
@@ -45,17 +47,26 @@
 
 ## 🏆 実在のゲームで実証済み
 
-このノウハウは、サーバーが停止した商用モバイルゲーム 5 本の復活作業から抽出したものです。
+このノウハウは、サーバーが停止した商用モバイルゲーム 16 本の復活作業から抽出したものです。
 
 - **ケース A — Unity + Lua**：完全なシングルプレイ記念版。実機の Android 14 端末で動作確認済み。
 - **ケース B — LayaAir native + JavaScript**：サーバーの 315 エンドポイントをローカルで再実装し、700 以上のリグレッションアサーションを用意。主要システム（ストーリーの各章、バトル、ガチャ、ペット、デート、タワー、イベント）をすべて実機で通しプレイして確認しました。
 - **ケース C — Unity マイクロクライアント（Mono + SLua）**：APK に入っていたのはリソースの約 4 分の 1 だけで、残りはプレイヤーのスマホのバックアップから復元。Mono アセンブリの半暗号化とパッカーに対処し、ローカルサーバーはすべて Lua で実装。
 - **ケース D — ネイティブ Kotlin + Live2D の AI チャット**：中心機能のキャラクターとのチャットは運営サーバー上の LLM 頼みだった。接続先をプレイヤー自身の OpenAI 互換 API またはローカルモデルに変え、ゲーム本編のセリフから作ったキャラクターカードと口調サンプルでキャラ崩壊を防止。モデル未設定時はボイス付きの原作セリフで返答。
 - **ケース G — LayaAir + 長時間接続の sproto プロトコル**：ゲームの全体が APK に入っていたので、作業はサーバー側。パッケージに独自のプロトコルスキーマ（400 以上のリクエスト）が同梱されており、各システムをローカルで 1 つずつ再構築。ゲーム内ガイドに実際のタップで従う自動プレイスクリプトで、次の足りないシステムを見つけた。得られた教訓の大半は失敗台帳に収録：何も入っていないデフォルト返答が機能を黙ってロックする、受け取り拒否がプレイヤーに意味不明なエラーを見せる、偽の「仮想プレイヤー」が壊れて見える。
+- **ケース H — Unity IL2CPP のカードゲーム、スクリプト層なし**：ゲーム自身のプロセスに組み込んだ Python ランタイムをローカルサーバーにし、セーブは SQLite、Web の GM ページも付けました。847 プロトコル、18 システム、133 イベントをすべて実装し、「稼働中のサーバー」らしさを保つ AI プレイヤーも 120 人用意。
+- **ケース I — Unity WebGL / H5 マイクロクライアント**（237 KB の APK、仙侠）：まず H5 で動かし、ラッパーは最後。元の `Hotfix.dll` を戦闘計算用のワーカーとして常駐させたので、メインストーリー全体（990/990）と 9 回の天劫をすべてクリアでき、計算式は 1 つも変えていません。
+- **ケース J — Unity Mono / ET Hotfix**（`code.unity3d` + `Hotfix.dll`）：パッケージ内に C# サーバーを持たせ、返答は 1 フレーム遅らせて返すので、UI が自分でデッドロックしません。
+- **ケース K — Unity 2021 IL2CPP + HybridCLR**：全 15,550 個のバンドルに 22 バイトの二重ヘッダーが付いていましたが、暗号化ではなく接頭辞でした。本物のホットアップデート DLL と、削ぎ落とされた AOT メタデータ DLL も見分けています。
+- **ケース L — Cocos Creator JS + Pomelo**：XXTEA + gzip のスクリプトと、パッケージ内のメモリ上ループバックサーバー。
+- **ケース M — Cocos2d-Lua**：パッケージ内から Lua を配信し、開発中のホットプッシュは 0.3 秒。
+- **ケース N — Cocos2d-x、Lua スレッド 2 本 + 生 TCP + protobuf**：ネットワーク層をメモリ内でループバック。負の `int32` 値と省略されるデフォルトフィールドを、送受信の両方向で修正。
+- **ケース O — Cocos2d-x 2.x + LuaJIT 2.1 + 4.2 GB の拡張パック**：1 つの APK には大きすぎる（ZIP32 の制限）ため、データは APK の外に置き、薄い新規 Activity がランチャーを引き継ぎます。元の DEX には触れていません。
+- **ケース P — Unity Mono**：長いパッチの連鎖ではなく、フラットなオーバーライドツリー。ホストには Mono.Cecil のアンカーパッチを当て、マニフェストから `INTERNET` をその場で削除。
 
 もう 1 本は半日で断念しました。ゲーム本体は初回起動後にダウンロードする方式で、そのダウンロードがサーバーと一緒に消えていたためです。
 
-5 つのケーススタディ（匿名化済み）はすべて [`references/`](../skills/offline-game-revival/references) に収録されています。ほかの 2 本のゲーム（ケース E と F）で得た知見は、独立したケーススタディとしてではなく、各リファレンスファイルに織り込まれています。エンジン別ルートのページと、着手 → バッチ進行 → 独立 QA の流れは、さらに 4 系統のエンジン（スクリプト層のない Unity IL2CPP、Unity Mono / ET / HybridCLR、Cocos JS / Lua / LuaJIT、Unity WebGL / H5）をカバーしています。
+ケース A–D と G は、完全なケーススタディ（匿名化済み）として [`references/`](../skills/offline-game-revival/references) にまとめています。ケース E と F はリファレンスファイルに、ケース H–P はエンジン別ルートのページ（`route-*.md`）、着手 → バッチ進行 → 独立 QA の流れ、失敗台帳に織り込んであります。
 
 ## 🚀 インストール
 
@@ -77,6 +88,8 @@ cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Cod
 それ以外のエージェントは [`AGENTS.md`](../AGENTS.md) を読み、そこからスキルへ誘導されます。サブエージェントの役割は [`agents/`](../agents) にあります。
 
 **チャットのみ（DeepSeek / ChatGPT / Kimi の Web 版）** — 最初のメッセージとして [`prompts/chat-playbook.md`](../prompts/chat-playbook.md) を貼り付けます。モデルがリードエンジニアになるので、返ってきたコマンドを実行し、出力を貼り戻してください。
+
+**何日もかかる大きなプロジェクト** — コピーして使える 3 つのプロンプト（読み取り専用の調査 → 着手から最終 QA まで → 中断後の再開）と、Antigravity への導入手順：[`prompts/three-stage-prompts.md`](../prompts/three-stage-prompts.md)。複数の PC で作業しているなら、[`prompts/merge-lessons.md`](../prompts/merge-lessons.md) で各 PC の教訓をまとめられます。
 
 あとは話しかけるだけ。*「このゲームはサーバーが終了した。オフラインで遊べるようにして」*、あるいは *「15 GB の画面録画から、ショップの価格とガチャの排出率を抜き出して」*。
 
@@ -136,9 +149,13 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 参加方法（Issue、プルリクエスト、共同メンテナーになるには）は [CONTRIBUTING.md](../CONTRIBUTING.md) を参照してください。
 
-## ⭐ スター数の推移
+## ⭐ スターとクローン
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
+
+[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
+
+GitHub が保持するクローンのトラフィックは 14 日分だけなので、クローンのグラフは 2026-11-03 のスナップショットから始まり、以降は毎日更新しています。
 
 ## 📄 ライセンス
 

@@ -24,6 +24,8 @@
 
 이 모든 것은 제가 혼자 더듬어 가며 알아낸 것입니다. 시작할 때는 게임 개발을 전혀 몰랐고 튜토리얼도 하나 보지 않았습니다. 첫날부터 AI(Claude, DeepSeek, GPT-6 Astra)에게 소원을 빌었고, 원하는 대로 안 되면 다시 시켰습니다. 그래서 다른 사람들의 이야기와 겹치거나 다른 부분이 있어도 아주 자연스러운 일입니다. 여기 담긴 판단 방법, 작업 순서, 겪은 함정은 모두 제가 여러 실제 게임에서 시행착오를 거치며 얻은 것입니다.
 
+**지금까지 서버가 종료된 게임 16편**을 다뤘습니다. Unity + Lua, Unity Mono / SLua, Unity IL2CPP, HybridCLR, LayaAir, Cocos(JS / Lua / LuaJIT), Unity WebGL / H5, 네이티브 Kotlin + Live2D까지 엔진이 다양하고, 스토리·연애 게임, 카드 배틀, 선협 게임, AI 캐릭터 채팅 게임 등이 있습니다. 전체 목록은 [실제 게임으로 검증](#-실제-게임으로-검증)에 있습니다.
+
 ## ✨ 구성
 
 | | |
@@ -45,17 +47,26 @@
 
 ## 🏆 실제 게임으로 검증
 
-이 플레이북은 서버가 종료된 상용 모바일 게임 다섯 편을 되살리며 정리한 것입니다.
+이 플레이북은 서버가 종료된 상용 모바일 게임 16편을 되살리며 정리한 것입니다.
 
 - **사례 A — Unity + Lua**: 완전한 싱글플레이 추억 빌드. 실제 Android 14 기기에서 검증.
 - **사례 B — LayaAir native + JavaScript**: 서버 엔드포인트 315개를 로컬에서 재구현하고, 700개 이상의 회귀 어설션을 작성했습니다. 주요 시스템(스토리 챕터, 전투, 가챠, 펫, 데이트, 타워, 이벤트)을 모두 기기에서 직접 눌러 확인했습니다.
 - **사례 C — Unity 마이크로 클라이언트(Mono + SLua)**: APK에는 리소스의 약 4분의 1만 들어 있어 나머지는 한 플레이어의 휴대폰 백업에서 복구. 반쯤 암호화된 Mono 어셈블리와 패커를 처리하고, 로컬 서버는 전부 Lua로 구현.
 - **사례 D — 네이티브 Kotlin + Live2D AI 채팅**: 핵심 기능인 캐릭터와의 채팅은 운영사 서버의 대형 언어 모델에 의존. 이제 플레이어 자신의 OpenAI 호환 API나 로컬 모델에 연결하고, 게임 원본 대사로 만든 캐릭터 카드와 말투 샘플로 캐릭터 붕괴를 막음. 모델이 없으면 원본 음성 대사로 대답.
 - **사례 G — LayaAir + 장기 연결 sproto 프로토콜**: 게임 전체가 APK 안에 있어서 작업은 서버 쪽. 패키지에 자체 프로토콜 스키마(요청 400개 이상)가 들어 있었고, 시스템을 로컬에서 하나씩 다시 구축. 게임 내 가이드를 실제 탭으로 따라가는 자동 플레이 스크립트로 다음에 빠진 시스템을 찾음. 얻은 교훈 대부분은 실패 대장에 있음: 빈 기본 응답이 기능을 조용히 잠그고, 수령 거부가 플레이어에게 의미 없는 오류를 보여 주고, 가짜 "가상 플레이어"가 고장 난 것처럼 보임.
+- **사례 H — Unity IL2CPP 카드 게임, 스크립트 계층 없음**: 게임 자체 프로세스 안에 내장한 Python 런타임이 로컬 서버 역할을 하고, 저장은 SQLite, 웹 GM 페이지도 있습니다. 프로토콜 847개, 시스템 18개, 이벤트 133개를 모두 끝냈고, "라이브 서버" 느낌을 유지하는 AI 플레이어도 120명 넣었습니다.
+- **사례 I — Unity WebGL / H5 마이크로 클라이언트**(237 KB APK, 선협): H5를 먼저 만들고 래핑은 마지막에 했습니다. 게임 원본 `Hotfix.dll`을 전투 계산 워커로 상주시켜서, 공식 하나 바꾸지 않고 메인 스토리 전체(990/990)와 천겁 9회를 모두 클리어합니다.
+- **사례 J — Unity Mono / ET Hotfix**(`code.unity3d` + `Hotfix.dll`): 패키지 안에 C# 서버를 두고, 응답을 한 프레임 늦게 돌려줘서 UI가 스스로 교착 상태에 빠지지 않게 했습니다.
+- **사례 K — Unity 2021 IL2CPP + HybridCLR**: 15,550개 번들 전부에 22바이트짜리 이중 헤더가 붙어 있었는데, 암호화가 아니라 접두사였습니다. 진짜 핫 업데이트 DLL과 잘려 나간 AOT 메타데이터 DLL도 구분했습니다.
+- **사례 L — Cocos Creator JS + Pomelo**: XXTEA + gzip 스크립트, 패키지 안의 메모리 내 루프백 서버.
+- **사례 M — Cocos2d-Lua**: 패키지 안에서 Lua를 직접 제공하고, 개발 중 핫 푸시는 0.3초.
+- **사례 N — Cocos2d-x, Lua 스레드 2개 + 원시 TCP + protobuf**: 네트워크 계층을 메모리에서 루프백으로 처리. 음수 `int32` 값과 누락되는 기본 필드를 양방향 모두 고쳤습니다.
+- **사례 O — Cocos2d-x 2.x + LuaJIT 2.1 + 4.2 GB 확장 팩**: APK 하나에 담기엔 너무 커서(ZIP32 한계) 데이터는 APK 밖에 두고, 얇은 새 Activity가 런처를 넘겨받습니다. 원본 DEX는 건드리지 않았습니다.
+- **사례 P — Unity Mono**: 긴 패치 체인 대신 평평한 오버라이드 트리를 쓰고, 호스트에는 Mono.Cecil 앵커 패치를 적용했으며, 매니페스트에서 `INTERNET`을 그 자리에서 제거했습니다.
 
 또 다른 게임 하나는 반나절 만에 포기했습니다. 게임 본체를 첫 실행 후 내려받는 방식이었는데, 그 다운로드가 서버와 함께 사라졌기 때문입니다.
 
-다섯 사례 연구(익명화됨)는 모두 [`references/`](../skills/offline-game-revival/references)에 들어 있습니다. 다른 두 게임(사례 E와 F)에서 얻은 노하우는 별도의 사례 연구로 쓰지 않고 레퍼런스 파일에 녹여 넣었습니다. 엔진별 경로 페이지와 착수 / 배치 / QA 흐름은 네 가지 엔진 계열(스크립트 계층이 없는 Unity IL2CPP, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5)을 더 다룹니다.
+사례 A–D와 G는 완전한 사례 연구(익명화됨)로 정리해 [`references/`](../skills/offline-game-revival/references)에 두었습니다. 사례 E와 F는 레퍼런스 파일에, 사례 H–P는 엔진별 경로 페이지(`route-*.md`)와 착수 / 배치 / QA 흐름, 실패 대장에 녹여 넣었습니다.
 
 ## 🚀 설치
 
@@ -77,6 +88,8 @@ cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Cod
 그 밖의 에이전트는 [`AGENTS.md`](../AGENTS.md)를 읽고, 이 파일이 스킬로 안내합니다. 서브 에이전트 역할은 [`agents/`](../agents)에 있습니다.
 
 **채팅만 가능한 경우 (DeepSeek / ChatGPT / Kimi 웹)** — 첫 메시지로 [`prompts/chat-playbook.md`](../prompts/chat-playbook.md)를 붙여 넣으세요. 모델이 총괄 엔지니어가 되고, 사용자는 모델이 알려 주는 명령을 실행한 뒤 출력을 다시 붙여 넣으면 됩니다.
+
+**며칠씩 이어지는 큰 프로젝트** — 복사해서 쓰는 프롬프트 세 개(읽기 전용 조사 → 착수부터 최종 QA까지 → 중단 후 재개)와 Antigravity에 설치하는 방법: [`prompts/three-stage-prompts.md`](../prompts/three-stage-prompts.md). PC 여러 대에서 작업한다면 [`prompts/merge-lessons.md`](../prompts/merge-lessons.md)로 각 PC에서 얻은 교훈을 한데 모을 수 있습니다.
 
 그다음엔 그냥 말하면 됩니다. *"이 게임 서버가 종료됐어. 오프라인으로 플레이할 수 있게 만들어 줘"* 또는 *"15 GB짜리 화면 녹화에서 상점 가격이랑 가챠 확률을 뽑아 줘."*
 
@@ -136,9 +149,13 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 참여 방법(이슈, 풀 리퀘스트, 공동 관리자 되기)은 [CONTRIBUTING.md](../CONTRIBUTING.md)를 참고하세요.
 
-## ⭐ 스타 추이
+## ⭐ 스타와 클론
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
+
+[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
+
+GitHub는 클론 트래픽을 14일치만 보관하므로, 클론 차트는 2026-11-03의 스냅샷에서 시작하고 그 후로는 매일 갱신합니다.
 
 ## 📄 라이선스
 

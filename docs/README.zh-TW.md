@@ -24,6 +24,8 @@
 
 這套東西全是我自己摸索出來的。我開始時對遊戲開發一竅不通，一個教學都沒看過，從第一天起就是在跟 AI 許願（Claude、DeepSeek、GPT-6 Astra），做不到我想要的樣子就讓它返工。所以跟別人講的有重合、有不一樣的地方，都很正常。這裡的判斷方法、流程和踩過的坑，都來自我在多款真實遊戲上的試錯。
 
+**目前累計：16 款停服遊戲**，涵蓋 Unity + Lua、Unity Mono / SLua、Unity IL2CPP、HybridCLR、LayaAir、Cocos（JS / Lua / LuaJIT）、Unity WebGL / H5，以及原生 Kotlin + Live2D——有劇情和約會遊戲、卡牌對戰、修仙遊戲、AI 角色聊天遊戲等。完整清單見[經過真實遊戲驗證](#-經過真實遊戲驗證)。
+
 ## ✨ 內容總覽
 
 | | |
@@ -45,17 +47,26 @@
 
 ## 🏆 經過真實遊戲驗證
 
-這套實戰手冊，提煉自五款已停服的商業手遊的復活過程：
+這套實戰手冊，提煉自 16 款已停服的商業手遊的復活過程：
 
 - **案例 A——Unity + Lua**：完整的單機紀念版，已在實體 Android 14 手機上驗證。
 - **案例 B——LayaAir native + JavaScript**：在本機重新實作 315 個伺服器端點、700 多條回歸斷言，所有主要系統（劇情章節、戰鬥、抽卡、寵物、約會、爬塔、活動）都在實機上逐一點過。
 - **案例 C——Unity 微端（Mono + SLua）**：安裝包裡只有約四分之一的資源，其餘從一位玩家的手機備份裡找回；Mono 組件半加密、帶加固殼，本機伺服器整個寫在 Lua 裡。
 - **案例 D——原生 Kotlin + Live2D 的 AI 聊天**：核心玩法「和角色聊天」原本跑在官方伺服器的大型語言模型上。現在聊天改接玩家自己的 OpenAI 相容介面或本機模型，用遊戲原台詞寫的角色卡和語氣範例讓角色不出戲；沒接模型時，角色用帶原聲的原台詞回話。
 - **案例 G——LayaAir + 長連線 sproto 協定**：整個遊戲都在安裝包裡，所以工作全在伺服器端：包裡自帶協定定義（400 多個請求），各個系統在本機一個個重建，再用一支自動打通關腳本，照著遊戲內的新手引導真點真按，找出下一個缺的系統。它教會的東西大部分記在失敗紀錄簿裡：空的預設回包會悄悄鎖死功能，領取被拒會給玩家彈出看不懂的錯誤，假的「虛擬玩家」看起來像壞了。
+- **案例 H——Unity IL2CPP 卡牌遊戲，沒有腳本層**：遊戲行程內嵌一個 Python 執行環境當本機伺服器，存檔用 SQLite，另配一個網頁版 GM 頁面。847 個協定、18 個系統、133 個活動全部做完，另有 120 個 AI 玩家，保留「線上伺服器」的感覺。
+- **案例 I——Unity WebGL / H5 微端**（237 KB 的 APK，修仙題材）：先做 H5，最後才封殼。遊戲原版的 `Hotfix.dll` 常駐當戰鬥運算程序，所以整條主線（990/990）和全部 9 次天劫都能通關，沒改過任何一個公式。
+- **案例 J——Unity Mono / ET Hotfix**（`code.unity3d` + `Hotfix.dll`）：包內自帶 C# 伺服器；回包晚一個影格再送，介面就不會把自己卡死。
+- **案例 K——Unity 2021 IL2CPP + HybridCLR**：15,550 個資源包都帶著 22 位元組的雙層檔頭，那是前綴，不是加密。還要把真正的熱更新 DLL 和被裁剪過的 AOT 中繼資料 DLL 區分開。
+- **案例 L——Cocos Creator JS + Pomelo**：腳本是 XXTEA + gzip，伺服器是包內的記憶體迴路伺服器。
+- **案例 M——Cocos2d-Lua**：Lua 直接從包內提供，開發時熱推送只要 0.3 秒。
+- **案例 N——Cocos2d-x，兩條 Lua 執行緒 + 原始 TCP + protobuf**：網路層在記憶體裡迴路；負的 `int32` 值和被丟掉的預設欄位，兩個方向都修好了。
+- **案例 O——Cocos2d-x 2.x + LuaJIT 2.1 + 4.2 GB 擴充包**：一個 APK 裝不下（ZIP32 的限制），所以資料放在包外；一個很薄的新 Activity 接管啟動入口，原本的 DEX 一點沒動。
+- **案例 P——Unity Mono**：不用一長串補丁鏈，改用一棵扁平的覆蓋目錄樹；在宿主上用 Mono.Cecil 打錨點補丁，直接在原清單裡拿掉 `INTERNET`。
 
 還有一款半天就停了：遊戲本體是進遊戲後才下載的，伺服器一關就沒了。
 
-五份案例研究（已匿名處理）都收錄在 [`references/`](../skills/offline-game-revival/references)。另外兩款遊戲（案例 E 和 F）的筆記，已經併入各份參考文件，沒有單獨寫成案例研究。按引擎分的路線頁和「開工 → 批次推進 → 獨立終驗」這套流程，又涵蓋了四類引擎：沒有腳本層的 Unity IL2CPP、Unity Mono / ET / HybridCLR、Cocos JS / Lua / LuaJIT、Unity WebGL / H5。
+案例 A–D 和 G 寫成了完整的案例研究（已匿名處理），收錄在 [`references/`](../skills/offline-game-revival/references)。案例 E 和 F 併入了各份參考文件，案例 H–P 併入了按引擎分的路線頁（`route-*.md`）、「開工 → 批次推進 → 獨立終驗」流程和失敗紀錄簿。
 
 ## 🚀 安裝
 
@@ -77,6 +88,8 @@ cp -r offline-game-revival/skills/offline-game-revival ~/.codex/skills/    # Cod
 其他 Agent 會讀取 [`AGENTS.md`](../AGENTS.md)，由它指向這個技能。子 Agent 角色放在 [`agents/`](../agents)。
 
 **只有聊天網頁（DeepSeek / ChatGPT / Kimi）**——第一則訊息貼上 [`prompts/chat-playbook.md`](../prompts/chat-playbook.md)，模型就會成為你的主工程師；你照它給的指令執行，再把輸出貼回去。
+
+**要連跑好幾天的大專案**——三段可以直接複製的提示詞（唯讀偵察 → 從開工到最終驗收 → 中斷後接著做），另外說明怎麼安裝到 Antigravity：[`prompts/three-stage-prompts.md`](../prompts/three-stage-prompts.md)。在好幾台電腦上作業？用 [`prompts/merge-lessons.md`](../prompts/merge-lessons.md) 把每一台的心得合併回來。
 
 接著直接開口：*「這款遊戲的伺服器關了——幫我做成可以離線玩的版本」*，或是 *「從這 15 GB 的螢幕錄影裡，把商店價格和抽卡機率整理出來。」*
 
@@ -136,9 +149,13 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 怎麼參與（提 Issue、提 PR、成為共同維護者）：見 [CONTRIBUTING.md](../CONTRIBUTING.md)。
 
-## ⭐ 收藏數變化
+## ⭐ 收藏與克隆
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Cynthia-wlan9509/offline-game-revival&type=Date)](https://star-history.com/#Cynthia-wlan9509/offline-game-revival&Date)
+
+[![Clone history](https://raw.githubusercontent.com/Cynthia-wlan9509/offline-game-revival/traffic/clones.svg)](https://github.com/Cynthia-wlan9509/offline-game-revival/blob/traffic/clones.csv)
+
+GitHub 只保留 14 天的克隆流量資料，所以克隆圖從 2026-11-03 的一次快照開始，之後每天更新。
 
 ## 📄 授權
 
