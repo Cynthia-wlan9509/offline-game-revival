@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 毎年、何百ものモバイルゲームがサービスを終了します。APK はプレイヤーのスマホに残っているのに、サーバーがなければログインもセーブデータの読み込みもできません。何年分ものストーリーやキャラクター、思い出に、もう手が届かなくなってしまうのです。
 
 **Offline Game Revival** は、実戦で鍛えられたノウハウを [Agent Skill](https://docs.claude.com/en/docs/claude-code/skills) にまとめたものです。コーディングエージェント（Claude Code や、`SKILL.md` を読み込める他のエージェント）に終了したゲームの APK を渡せば、**単体で動く記念版**へと作り替える方法をエージェントが心得ています。APK をインストールするだけで、ネットワークなし・root なし・PC なし・実行時インジェクションなしで、ゲームを最後まで遊べます。
+
+これはすべて、私が自分で手探りで見つけてきたものです。始めたときはゲーム開発の知識がまったくなく、チュートリアルも一つも読まず、初日からずっと AI（Claude、DeepSeek、GPT-6 Astra）にお願いしては、思いどおりにならなければやり直させてきました。なので、他の人の話と重なるところや違うところがあっても、ごく自然なことです。ここにある判断の仕方、手順、ハマりどころは、どれも私が複数の実在のゲームで試行錯誤して得たものです。
 
 ## ✨ 中身
 
@@ -36,7 +38,10 @@
 | 🎞️ **スクリーンショット・録画からのデータ救出** *(新機能)* | ショップの価格、ガチャの排出率、報酬、カードのステータスなど、サーバー側の数値はサーバーと共に消えます。`scripts/harvest.py` は、**数十 GB ものプレイヤーのスクリーンショットや画面録画**を、分類済みの数百 KB のテキストに変換します。キーフレーム抽出 → 類似画像の除去 → ローカル OCR → 画面ごとのグルーピング、という流れで、**完全オフライン・トークン消費ゼロ**。そのうえで `scripts/llm_structure.py` が、DeepSeek / OpenAI / Qwen / Kimi / ローカルの Ollama にまとめて投げ、結合した JSON と CSV にします。 |
 | ⏩ **タイムトラベルテスト** *(新機能)* | `scripts/timewarp` は、偽サーバーを仮想時計つきのサンドボックスで動かします。数日分の時間を早送りし、アプリを再起動し、**すべての報酬を監査**します。レスポンスに「ジェム +50」とあるのにセーブデータが変わっていなければ、テストは失敗。30 日分のプレイを 1 秒でシミュレートし、各ゲートが何日目に到達可能になるかも確認できます。依存ライブラリはゼロ。 |
 | 🤝 **どのエージェントでも、どのモデルでも** *(新機能)* | `SKILL.md` と `AGENTS.md` により、Claude Code、Codex、Cursor、Copilot、OpenCode、Gemini CLI などで動作します。scout / worker / verifier のサブエージェントの役割を同梱しているので、高価なモデルが判断を下し、安価なモデルが下働きを担当できます。エージェントがまったくなくても大丈夫。`prompts/chat-playbook.md` を DeepSeek / ChatGPT に貼り付けて、返ってきたコマンドを実行するだけです。 |
-| 📚 **失敗台帳** | 実際にハマった落とし穴を約 190 KB・216 項目分収録。症状 → 根本原因 → 対処の順に整理しています。起動時のレースによるクラッシュ、いつの間にか画面外へ消える UI、偽レスポンスで「汚染」されるプール済み XHR オブジェクト、ディスクに書き込まれないセーブデータ……。 |
+| 🚦 **着手 → バッチ進行 → 独立 QA** *(新機能)* | 何日も無人で走らせる大きなプロジェクト向け。最初に 2 分で済む事前承認シートを用意し、あとは 1 バッチずつ、厳しい時間枠（調査 2 ラウンド、または進展なしで 45 分 → 記録して次へ）で進めます。最後は別セッションが検収し、開発側の「全部グリーン」を信用しません。甘い合格は格下げ、全ボタンを巡回、戦闘は勝ちも負けも台帳と照合、取引の途中でプロセスを強制終了、仮想時計で 10 日、そしてデータを消し・ホットアップデート用フォルダを空にし・ネットを切った状態でコールドスタートを 2 回。事前承認シート、引き継ぎ、進捗マトリクス、バグ一覧のテンプレートも付属します。 |
+| 🧭 **エンジン別ルート** *(新機能)* | アーキテクチャごとに 1 ページ。スクリプト層のない Unity IL2CPP（同一プロセスに Python のループバックサーバーを組み込み）、Unity Mono / ET / HybridCLR（パッケージ内の C# サーバー）、Cocos JS / Lua / LuaJIT + Protobuf（メモリ内ループバック、薄い Activity で引き継ぎ）、Unity WebGL / H5 マイクロクライアント（まず H5 で動かし、ラッパーは最後、元の DLL は戦闘計算用に常駐）。 |
+| 🧰 **調査・ガード用スクリプト** *(新機能)* | Python 標準ライブラリのみ。読み取り専用で APK を一括調査（エンジン、ABI、ZIP32 の上限、パッカー、UnityFS の接頭辞、マニフェスト差分）、1 台専用のデバイスロックと非 ASCII パスでも安全な push、ジャンクションをたどらないディスク容量ヒューズ、ログ判定、apktool なしで `INTERNET` 権限を除去、保存済み音声を無圧縮のまま保つ APK エントリ置換、そして `adb kill-server` や `svc wifi disable` など他プロジェクトのエミュレーターを壊すコマンドを止める任意のフック。 |
+| 📚 **失敗台帳** | 実際にハマった落とし穴を約 230 KB・300 項目近く分収録。症状 → 根本原因 → 対処の順に整理しています。起動時のレースによるクラッシュ、いつの間にか画面外へ消える UI、偽レスポンスで「汚染」されるプール済み XHR オブジェクト、ディスクに書き込まれないセーブデータ……。 |
 
 ## 🏆 実在のゲームで実証済み
 
@@ -50,7 +55,7 @@
 
 もう 1 本は半日で断念しました。ゲーム本体は初回起動後にダウンロードする方式で、そのダウンロードがサーバーと一緒に消えていたためです。
 
-5 つのケーススタディ（匿名化済み）はすべて [`references/`](../skills/offline-game-revival/references) に収録されています。ほかの 2 本のゲーム（ケース E と F）で得た知見は、独立したケーススタディとしてではなく、各リファレンスファイルに織り込まれています。
+5 つのケーススタディ（匿名化済み）はすべて [`references/`](../skills/offline-game-revival/references) に収録されています。ほかの 2 本のゲーム（ケース E と F）で得た知見は、独立したケーススタディとしてではなく、各リファレンスファイルに織り込まれています。エンジン別ルートのページと、着手 → バッチ進行 → 独立 QA の流れは、さらに 4 系統のエンジン（スクリプト層のない Unity IL2CPP、Unity Mono / ET / HybridCLR、Cocos JS / Lua / LuaJIT、Unity WebGL / H5）をカバーしています。
 
 ## 🚀 インストール
 
@@ -139,4 +144,4 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · タイムトラベルテスト · マルチエージェント · 時間経過テスト · サービス終了 · オフライン化 · ゲーム保存 · 配信終了 · 録画OCR · スマホゲー復活</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · Cocos · IL2CPP · HybridCLR · WebGL · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · タイムトラベルテスト · マルチエージェント · 時間経過テスト · サービス終了 · オフライン化 · ゲーム保存 · 配信終了 · 録画OCR · スマホゲー復活</sub>

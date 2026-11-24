@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 Mỗi năm có hàng trăm game mobile đóng cửa. File APK vẫn nằm trong điện thoại của người chơi, nhưng không có máy chủ thì không thể đăng nhập, không tải được dữ liệu lưu, không làm được gì cả. Bao nhiêu năm cốt truyện, nhân vật và kỷ niệm bỗng nằm ngoài tầm với.
 
 **Offline Game Revival** là một cẩm nang đã được thử lửa thực tế, đóng gói thành [Agent Skill](https://docs.claude.com/en/docs/claude-code/skills). Chỉ cần trỏ agent lập trình của bạn (Claude Code và các agent khác đọc được `SKILL.md`) vào file APK của một game đã chết, nó sẽ biết cách biến game đó thành một **bản tưởng niệm chạy độc lập**: cài APK là chơi trọn game — không cần mạng, không cần root, không cần PC, không cần chèn mã lúc chạy.
+
+Tất cả những điều này đều do tôi tự mày mò ra. Lúc bắt đầu tôi không biết gì về phát triển game và chưa từng đọc một hướng dẫn nào; ngay từ ngày đầu, tôi chỉ việc ước với AI (Claude, DeepSeek, GPT-6 Astra) và bắt nó làm lại khi kết quả chưa đúng ý. Vì vậy, có chỗ trùng hay khác với điều người khác nói đều là chuyện bình thường. Cách đánh giá, quy trình và những cái bẫy ghi ở đây đều đến từ việc tôi tự thử và sai trên nhiều game thật.
 
 ## ✨ Bên trong có gì
 
@@ -36,7 +38,10 @@ Mỗi năm có hàng trăm game mobile đóng cửa. File APK vẫn nằm trong 
 | 🎞️ **Cứu dữ liệu từ ảnh chụp & video quay màn hình** *(mới)* | Các con số phía máy chủ (giá cửa hàng, tỉ lệ gacha, phần thưởng, chỉ số thẻ) sẽ mất cùng máy chủ. `scripts/harvest.py` biến **hàng chục GB ảnh chụp và video quay màn hình của người chơi** thành vài trăm KB văn bản đã phân loại — khung hình chính → loại bỏ ảnh gần trùng → OCR cục bộ → gom nhóm theo từng màn hình — **hoàn toàn offline, không tốn token**, sau đó `scripts/llm_structure.py` xử lý hàng loạt qua DeepSeek / OpenAI / Qwen / Kimi / Ollama cục bộ và gộp thành JSON + CSV. |
 | ⏩ **Kiểm thử du hành thời gian** *(mới)* | `scripts/timewarp` chạy server giả của bạn trong sandbox có đồng hồ ảo: tua nhanh nhiều ngày, khởi động lại app và **kiểm toán mọi phần thưởng** — nếu phản hồi ghi "+50 gem" mà file save không đổi thì test thất bại. Mô phỏng 30 ngày chơi trong một giây và xem mỗi cột mốc mở được vào ngày thứ mấy. Không phụ thuộc thư viện nào. |
 | 🤝 **Agent nào, model nào cũng được** *(mới)* | Chạy được với Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… qua `SKILL.md` + `AGENTS.md`. Có sẵn các vai trò sub-agent (scout / worker / verifier) để model đắt tiền ra quyết định, còn model rẻ làm phần việc chân tay. Không có agent nào cả? Dán `prompts/chat-playbook.md` vào DeepSeek / ChatGPT rồi chạy các lệnh nó đưa ra. |
-| 📚 **Sổ ghi lỗi** | Khoảng 190 KB và 216 mục về những cái bẫy có thật: triệu chứng → nguyên nhân gốc → cách sửa. Crash do race condition lúc khởi động, UI âm thầm trôi ra ngoài màn hình, đối tượng XHR trong pool bị phản hồi giả "đầu độc", dữ liệu lưu không bao giờ được ghi xuống đĩa… |
+| 🚦 **Khởi động → theo lô → QA độc lập** *(mới)* | Dành cho dự án lớn chạy nhiều ngày không ai trông: đầu tiên là một phiếu tiền ủy quyền làm trong hai phút, sau đó mỗi lần chỉ làm một lô với giới hạn thời gian cứng (hai vòng thăm dò hoặc 45 phút không tiến triển → ghi lại rồi chuyển sang việc khác), và cuối cùng là một phiên riêng nghiệm thu, không tin vào "toàn xanh" của nhánh phát triển: các lượt pass lạc quan bị hạ xuống, mọi nút đều được duyệt qua, trận đấu thắng *và* thua đều đối chiếu với sổ, tắt tiến trình giữa chừng một giao dịch, chạy 10 ngày ảo, rồi dữ liệu sạch + thư mục hot-update trống + tắt mạng, khởi động nguội hai lần. Có sẵn mẫu cho phiếu ủy quyền, bàn giao, ma trận tiến độ và danh sách bug. |
+| 🧭 **Lộ trình theo engine** *(mới)* | Mỗi kiến trúc một trang: Unity IL2CPP không có lớp script (server Python loopback nhúng trong cùng tiến trình), Unity Mono / ET / HybridCLR (server C# nằm trong gói), Cocos JS / Lua / LuaJIT + Protobuf (loopback trong bộ nhớ, Activity mỏng tiếp quản), Unity WebGL / client mini H5 (chạy H5 trước, bọc vỏ sau cùng, DLL gốc chạy thường trú làm worker tính trận đấu). |
+| 🧰 **Script trinh sát & bảo vệ** *(mới)* | Chỉ dùng thư viện chuẩn của Python: trinh sát APK một lần và chỉ đọc (engine, ABI, giới hạn ZIP32, packer, tiền tố UnityFS, khác biệt manifest), khóa một thiết bị duy nhất kèm cách push an toàn cho đường dẫn không phải ASCII, cầu chì giới hạn dung lượng ổ đĩa không đi theo junction, log oracle, gỡ `INTERNET` mà không cần apktool, công cụ thay entry APK giữ nguyên âm thanh không nén, và một hook tùy chọn chặn `adb kill-server`, `svc wifi disable` cùng các lệnh khác làm hỏng trình giả lập của dự án khác. |
+| 📚 **Sổ ghi lỗi** | Khoảng 230 KB và gần 300 mục về những cái bẫy có thật: triệu chứng → nguyên nhân gốc → cách sửa. Crash do race condition lúc khởi động, UI âm thầm trôi ra ngoài màn hình, đối tượng XHR trong pool bị phản hồi giả "đầu độc", dữ liệu lưu không bao giờ được ghi xuống đĩa… |
 
 ## 🏆 Đã kiểm chứng trên game thật
 
@@ -50,7 +55,7 @@ Cẩm nang này được đúc kết từ việc hồi sinh năm game mobile th�
 
 Một game nữa bị bỏ sau nửa ngày: bản thân game được tải về sau lần mở đầu tiên, và bản tải đó biến mất cùng máy chủ.
 
-Cả năm case study (đã ẩn danh) đều có trong [`references/`](../skills/offline-game-revival/references). Ghi chú từ hai game nữa (trường hợp E và F) được gộp vào các file tham khảo thay vì viết thành case study riêng.
+Cả năm case study (đã ẩn danh) đều có trong [`references/`](../skills/offline-game-revival/references). Ghi chú từ hai game nữa (trường hợp E và F) được gộp vào các file tham khảo thay vì viết thành case study riêng. Các trang lộ trình theo engine và quy trình khởi động / theo lô / QA còn bao quát thêm bốn họ engine (Unity IL2CPP không có lớp script, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5).
 
 ## 🚀 Cài đặt
 
@@ -139,4 +144,4 @@ Cách tham gia (issue, pull request, trở thành người cùng duy trì): xem 
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · kiểm thử du hành thời gian · đa agent · nhiều AI agent · game ngừng hoạt động · đóng máy chủ · chơi offline · bảo tồn game · game mobile không cần server · hồi sinh game</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · Cocos · IL2CPP · HybridCLR · WebGL · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · kiểm thử du hành thời gian · đa agent · nhiều AI agent · game ngừng hoạt động · đóng máy chủ · chơi offline · bảo tồn game · game mobile không cần server · hồi sinh game</sub>

@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 매년 수백 개의 모바일 게임이 서비스를 종료합니다. APK는 여전히 플레이어의 폰에 남아 있지만, 서버가 없으면 로그인도, 세이브 불러오기도, 아무것도 할 수 없습니다. 수년간 쌓인 이야기와 캐릭터, 추억에 더는 닿을 수 없게 됩니다.
 
 **Offline Game Revival**은 실전에서 검증된 노하우를 [Agent Skill](https://docs.claude.com/en/docs/claude-code/skills)로 묶은 플레이북입니다. 코딩 에이전트(Claude Code 및 `SKILL.md`를 읽는 다른 에이전트)에게 서비스가 종료된 게임의 APK를 건네기만 하면, 에이전트가 이를 **독립 실행형 추억 에디션**으로 바꾸는 방법을 알고 있습니다. APK를 설치하면 게임을 끝까지 즐길 수 있습니다. 네트워크도, 루팅도, PC도, 런타임 인젝션도 필요 없습니다.
+
+이 모든 것은 제가 혼자 더듬어 가며 알아낸 것입니다. 시작할 때는 게임 개발을 전혀 몰랐고 튜토리얼도 하나 보지 않았습니다. 첫날부터 AI(Claude, DeepSeek, GPT-6 Astra)에게 소원을 빌었고, 원하는 대로 안 되면 다시 시켰습니다. 그래서 다른 사람들의 이야기와 겹치거나 다른 부분이 있어도 아주 자연스러운 일입니다. 여기 담긴 판단 방법, 작업 순서, 겪은 함정은 모두 제가 여러 실제 게임에서 시행착오를 거치며 얻은 것입니다.
 
 ## ✨ 구성
 
@@ -36,7 +38,10 @@
 | 🎞️ **스크린샷·녹화 영상에서 데이터 구출** *(신규)* | 상점 가격, 가챠 확률, 보상, 카드 능력치 같은 서버 측 수치는 서버와 함께 사라집니다. `scripts/harvest.py`는 **수십 GB의 플레이어 스크린샷과 화면 녹화**를 분류된 수백 KB의 텍스트로 바꿔 줍니다. 키프레임 추출 → 유사 중복 제거 → 로컬 OCR → 화면별 그룹화 순으로 진행되며, **완전 오프라인에 토큰 소모 0**입니다. 이후 `scripts/llm_structure.py`가 DeepSeek / OpenAI / Qwen / Kimi / 로컬 Ollama로 일괄 처리해 하나로 병합된 JSON + CSV를 만들어 줍니다. |
 | ⏩ **타임트래블 테스트** *(신규)* | `scripts/timewarp`는 가짜 서버를 가상 시계가 있는 샌드박스에서 실행합니다. 며칠씩 빨리 감기하고, 앱을 재시작하고, **모든 보상을 감사**합니다. 응답에는 "보석 +50"이라고 되어 있는데 세이브가 그대로라면 실패로 처리됩니다. 30일치 플레이를 1초 만에 시뮬레이션해서 각 관문이 며칠째에 열리는지 확인할 수 있습니다. 의존성 없음. |
 | 🤝 **어떤 에이전트든, 어떤 모델이든** *(신규)* | `SKILL.md` + `AGENTS.md`로 Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI 등에서 동작합니다. scout / worker / verifier 서브 에이전트 역할이 포함되어 있어, 비싼 모델은 판단을 맡고 저렴한 모델은 잡무를 처리합니다. 에이전트가 아예 없나요? `prompts/chat-playbook.md`를 DeepSeek / ChatGPT에 붙여 넣고, 모델이 알려 주는 명령을 실행하면 됩니다. |
-| 📚 **실패 대장** | 실제로 겪은 함정 약 190 KB, 216개 항목: 증상 → 근본 원인 → 해결 순서로 정리했습니다. 시작 시점 레이스로 인한 크래시, 조용히 화면 밖으로 밀려난 UI, 가짜 응답에 "오염"된 풀링 XHR 객체, 디스크에 쓰이지 않던 세이브…… |
+| 🚦 **착수 → 배치 → 독립 QA** *(신규)* | 며칠씩 사람 없이 돌아가는 큰 프로젝트용입니다. 처음에 2분이면 끝나는 사전 승인 시트를 받고, 이후에는 한 번에 한 배치씩 엄격한 시간 제한(탐색 2라운드 또는 진전 없이 45분 → 기록하고 다음으로)으로 진행하며, 마지막에는 별도 세션이 검수합니다. 이 세션은 개발 쪽의 "전부 통과"를 믿지 않습니다. 낙관적인 통과는 강등하고, 모든 버튼을 순회하고, 전투는 이기는 경우와 지는 경우 모두 대장과 대조하고, 트랜잭션 도중 프로세스를 강제 종료하고, 가상 시간으로 10일을 돌린 뒤, 데이터를 지우고 핫 업데이트 폴더를 비우고 네트워크를 끈 상태에서 콜드 부팅을 두 번 합니다. 사전 승인 시트, 인수인계, 진행 매트릭스, 버그 목록 템플릿이 들어 있습니다. |
+| 🧭 **엔진별 경로** *(신규)* | 아키텍처마다 한 페이지씩입니다. 스크립트 계층이 없는 Unity IL2CPP(같은 프로세스에 내장한 Python 루프백 서버), Unity Mono / ET / HybridCLR(패키지 안의 C# 서버), Cocos JS / Lua / LuaJIT + Protobuf(메모리 내 루프백, 얇은 Activity가 넘겨받음), Unity WebGL / H5 마이크로 클라이언트(H5부터 돌리고 래핑은 마지막, 원본 DLL은 전투 계산용 상주 워커). |
+| 🧰 **정찰·보호 스크립트** *(신규)* | Python 표준 라이브러리만 씁니다. 읽기 전용 APK 일괄 정찰(엔진, ABI, ZIP32 한계, 패커, UnityFS 접두어, 매니페스트 차이), 단일 기기 잠금과 비ASCII 경로용 안전 푸시, 정션을 따라가지 않는 디스크 용량 퓨즈, 로그 판정기, apktool 없이 `INTERNET` 제거, 저장(무압축) 상태의 오디오를 그대로 유지하는 APK 항목 교체기, 그리고 다른 프로젝트의 에뮬레이터를 망가뜨리는 `adb kill-server`, `svc wifi disable` 같은 명령을 막는 선택형 훅. |
+| 📚 **실패 대장** | 실제로 겪은 함정 약 230 KB, 300개에 가까운 항목: 증상 → 근본 원인 → 해결 순서로 정리했습니다. 시작 시점 레이스로 인한 크래시, 조용히 화면 밖으로 밀려난 UI, 가짜 응답에 "오염"된 풀링 XHR 객체, 디스크에 쓰이지 않던 세이브…… |
 
 ## 🏆 실제 게임으로 검증
 
@@ -50,7 +55,7 @@
 
 또 다른 게임 하나는 반나절 만에 포기했습니다. 게임 본체를 첫 실행 후 내려받는 방식이었는데, 그 다운로드가 서버와 함께 사라졌기 때문입니다.
 
-다섯 사례 연구(익명화됨)는 모두 [`references/`](../skills/offline-game-revival/references)에 들어 있습니다. 다른 두 게임(사례 E와 F)에서 얻은 노하우는 별도의 사례 연구로 쓰지 않고 레퍼런스 파일에 녹여 넣었습니다.
+다섯 사례 연구(익명화됨)는 모두 [`references/`](../skills/offline-game-revival/references)에 들어 있습니다. 다른 두 게임(사례 E와 F)에서 얻은 노하우는 별도의 사례 연구로 쓰지 않고 레퍼런스 파일에 녹여 넣었습니다. 엔진별 경로 페이지와 착수 / 배치 / QA 흐름은 네 가지 엔진 계열(스크립트 계층이 없는 Unity IL2CPP, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5)을 더 다룹니다.
 
 ## 🚀 설치
 
@@ -139,4 +144,4 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 타임트래블 테스트 · 멀티 에이전트 · 시간 여행 테스트 · 서비스 종료 · 서비스 종료 게임 · 오프라인화 · 게임 보존 · 모바일 게임 복구 · 화면 녹화 OCR</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · Cocos · IL2CPP · HybridCLR · WebGL · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 타임트래블 테스트 · 멀티 에이전트 · 시간 여행 테스트 · 서비스 종료 · 서비스 종료 게임 · 오프라인화 · 게임 보존 · 모바일 게임 복구 · 화면 녹화 OCR</sub>

@@ -35,6 +35,8 @@ metadata:
 - **电源**：电脑插电。防睡眠 agent 自己会调，但合盖之类的操作要人自己避免。
 - **git 基线**：项目最好已经是 git 仓库、工作区干净；不是的话 agent 第一次醒来会 init 并做基线提交，之后每晚都有能回退的点。
 
+每一批怎么挑、卡住多久换项、什么时候停下找人，细则见 `../offline-game-revival/references/autopilot.md`；收工前的独立终验见同目录 `independent-qa.md`。
+
 ## 机制
 
 **每次醒来的固定步骤**（按顺序，不跳）：

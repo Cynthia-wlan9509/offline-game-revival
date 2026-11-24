@@ -1,7 +1,7 @@
 {
   "name": "offline-game-revival",
-  "version": "1.4.0",
-  "description": "Turn server-dead mobile games into offline, playable preservation builds; time-travel test the fake server; recover lost game data from player screenshots and screen recordings. Includes a night-shift skill for unattended overnight runs through a to-do list. Works with any agent or model.",
+  "version": "1.5.0",
+  "description": "Turn server-dead mobile games into offline, playable preservation builds; time-travel test the fake server; recover lost game data from player screenshots and screen recordings. Includes engine-route playbooks (Unity IL2CPP / Mono / HybridCLR, Cocos, WebGL), a kickoff → batches → independent QA workflow with templates and guard scripts, and a night-shift skill for unattended overnight runs through a to-do list. Works with any agent or model.",
   "author": {
     "name": "Cynthia-wlan9509"
   },
@@ -27,6 +27,10 @@
     "codex",
     "agents-md",
     "night-shift",
-    "autonomous-agent"
+    "autonomous-agent",
+    "cocos",
+    "il2cpp",
+    "hybridclr",
+    "webgl"
   ]
 }

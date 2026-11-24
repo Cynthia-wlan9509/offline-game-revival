@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 每年都有數以百計的手機遊戲宣布停止營運。APK 還留在玩家的手機裡，但少了伺服器，就無法登入、讀不到存檔，什麼也做不了。多年來的故事、角色與回憶，從此再也碰不到。
 
 **Offline Game Revival** 是一份身經百戰的實戰手冊，並封裝成 [Agent Skill](https://docs.claude.com/en/docs/claude-code/skills)。只要讓你的程式開發 Agent（Claude Code，以及其他會讀取 `SKILL.md` 的 Agent）去處理一款已停服遊戲的 APK，它就知道怎麼把它變成**獨立運作的紀念版**：裝上 APK 就能玩完整款遊戲，不用網路、不用 root、不用電腦，也不需要執行期注入。
+
+這套東西全是我自己摸索出來的。我開始時對遊戲開發一竅不通，一個教學都沒看過，從第一天起就是在跟 AI 許願（Claude、DeepSeek、GPT-6 Astra），做不到我想要的樣子就讓它返工。所以跟別人講的有重合、有不一樣的地方，都很正常。這裡的判斷方法、流程和踩過的坑，都來自我在多款真實遊戲上的試錯。
 
 ## ✨ 內容總覽
 
@@ -36,7 +38,10 @@
 | 🎞️ **從截圖與錄影搶救資料** *(新)* | 伺服器端的數值（商店價格、抽卡機率、獎勵、卡牌數據）會隨伺服器一起消失。`scripts/harvest.py` 能把**數十 GB 的玩家截圖與螢幕錄影**，濃縮成幾百 KB 分好類的文字——關鍵影格 → 去除近似重複 → 本機 OCR → 依畫面分組——**全程離線、零 token**，再用 `scripts/llm_structure.py` 批次交給 DeepSeek / OpenAI / 通義 / Kimi / 本機 Ollama，合併成 JSON + CSV。 |
 | ⏩ **時間快轉測試** *(新)* | `scripts/timewarp` 把你的假伺服器放進虛擬時鐘沙盒：快轉好幾天、模擬重啟 App，並**逐筆稽核每一項獎勵**——回應寫著「獲得 50 鑽石」但存檔沒變，就判定失敗。一秒鐘模擬 30 天的遊玩，看每道關卡門檻在第幾天才解得開。零相依套件。 |
 | 🤝 **任何 Agent、任何模型** *(新)* | 透過 `SKILL.md` + `AGENTS.md`，支援 Claude Code、Codex、Cursor、Copilot、OpenCode、Gemini CLI 等。內附 scout / worker / verifier 三種子 Agent 角色，讓昂貴的模型負責決策、便宜的模型負責跑腿。完全沒有 Agent？把 `prompts/chat-playbook.md` 貼進 DeepSeek / ChatGPT，照它給的指令執行就行。 |
-| 📚 **失敗紀錄簿** | 約 190 KB、216 條真實踩坑紀錄：症狀 → 根本原因 → 解法。包括啟動競態造成的崩潰、UI 悄悄跑到畫面外、被假回應「毒化」的池化 XHR 物件、永遠寫不進磁碟的存檔…… |
+| 🚦 **開工 → 批次推進 → 獨立終驗** *(新)* | 給要連跑好幾天、沒人盯著的大型專案：開頭讓你花兩分鐘勾一張預先授權單；之後一次只推一項，卡住兩輪探針或 45 分鐘就記下來換下一項；最後換一個工作階段來驗，不信開發線自己報的「全綠」——先把虛的通過降級，再走遍所有按鈕、戰鬥贏一次輸一次都對帳、領獎中途強殺、虛擬時鐘跑 10 天，最後清資料、清空熱更新目錄、斷網，連續冷啟動兩次。預先授權單、交接、進度矩陣、bug 清單都有範本。 |
+| 🧭 **依引擎分的路線** *(新)* | 每種架構一頁：Unity IL2CPP 沒有腳本層（同行程內嵌 Python 本機回環伺服器）、Unity Mono / ET / HybridCLR（套件內 C# 模擬伺服器）、Cocos JS / Lua / LuaJIT + Protobuf（記憶體內回環、薄殼 Activity 接管）、Unity WebGL / H5 微端（先讓 H5 跑通再封殼，原版 DLL 常駐做戰鬥計算）。 |
+| 🧰 **偵察與防護腳本** *(新)* | 只用 Python 標準函式庫：一次唯讀偵察 APK（引擎、ABI、ZIP32 上限、加固殼、UnityFS 前綴、資源清單差集）；單裝置鎖和中文路徑安全推送；不順著目錄連結刪東西的磁碟熔斷；日誌裁判；不用 apktool 移除 `INTERNET` 權限；替換 APK 項目時保持音訊不壓縮；可選的工具鉤子，攔住 `adb kill-server`、`svc wifi disable` 這類會打斷其他專案模擬器的指令。 |
+| 📚 **失敗紀錄簿** | 約 230 KB、近 300 條真實踩坑紀錄：症狀 → 根本原因 → 解法。包括啟動競態造成的崩潰、UI 悄悄跑到畫面外、被假回應「毒化」的池化 XHR 物件、永遠寫不進磁碟的存檔…… |
 
 ## 🏆 經過真實遊戲驗證
 
@@ -50,7 +55,7 @@
 
 還有一款半天就停了：遊戲本體是進遊戲後才下載的，伺服器一關就沒了。
 
-五份案例研究（已匿名處理）都收錄在 [`references/`](../skills/offline-game-revival/references)。另外兩款遊戲（案例 E 和 F）的筆記，已經併入各份參考文件，沒有單獨寫成案例研究。
+五份案例研究（已匿名處理）都收錄在 [`references/`](../skills/offline-game-revival/references)。另外兩款遊戲（案例 E 和 F）的筆記，已經併入各份參考文件，沒有單獨寫成案例研究。按引擎分的路線頁和「開工 → 批次推進 → 獨立終驗」這套流程，又涵蓋了四類引擎：沒有腳本層的 Unity IL2CPP、Unity Mono / ET / HybridCLR、Cocos JS / Lua / LuaJIT、Unity WebGL / H5。
 
 ## 🚀 安裝
 
@@ -139,4 +144,4 @@ BUGGY=1 node skills/offline-game-revival/scripts/timewarp/examples/mini.test.js 
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 時間快轉測試 · 多 Agent 協作 · 多模型協作 · 停服遊戲 · 遊戲停運 · 單機化 · 離線版 · 遊戲保存 · 螢幕錄影 OCR</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · Cocos · IL2CPP · HybridCLR · WebGL · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 時間快轉測試 · 多 Agent 協作 · 多模型協作 · 停服遊戲 · 遊戲停運 · 單機化 · 離線版 · 遊戲保存 · 螢幕錄影 OCR</sub>

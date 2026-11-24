@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 Jedes Jahr werden Hunderte Mobile Games eingestellt. Die APK liegt weiter auf den Handys der Spieler – doch ohne Server lässt sich niemand mehr einloggen, kein Spielstand laden, nichts mehr tun. Jahre voller Geschichten, Charaktere und Erinnerungen sind plötzlich außer Reichweite.
 
 **Offline Game Revival** ist ein praxiserprobtes Playbook, verpackt als [Agent Skill](https://docs.claude.com/en/docs/claude-code/skills). Richte deinen Coding-Agenten (Claude Code und andere Agenten, die `SKILL.md` lesen) auf die APK eines toten Spiels, und er weiß, wie man daraus eine **eigenständige Gedenkausgabe** macht: APK installieren, das ganze Spiel durchspielen – ohne Netzwerk, ohne Root, ohne PC, ohne Laufzeit-Injection.
+
+All das habe ich mir selbst erarbeitet. Am Anfang hatte ich von Spieleentwicklung keine Ahnung, und ich habe kein einziges Tutorial gelesen: Vom ersten Tag an habe ich der KI (Claude, DeepSeek, GPT-6 Astra) einfach Wünsche genannt und sie nachbessern lassen, wenn das Ergebnis nicht so war, wie ich es wollte. Dass sich manches mit dem deckt, was andere sagen, und manches nicht, ist also ganz normal. Die Entscheidungskriterien, der Ablauf und die Stolperfallen hier stammen alle aus meinem eigenen Ausprobieren an mehreren echten Spielen.
 
 ## ✨ Was drinsteckt
 
@@ -36,7 +38,10 @@ Jedes Jahr werden Hunderte Mobile Games eingestellt. Die APK liegt weiter auf de
 | 🎞️ **Datenrettung aus Screenshots & Aufnahmen** *(neu)* | Serverseitige Zahlen (Shop-Preise, Gacha-Raten, Belohnungen, Kartenwerte) sterben mit dem Server. `scripts/harvest.py` verwandelt **dutzende GB an Spieler-Screenshots und Bildschirmaufnahmen** in wenige hundert KB kategorisierten Text – Keyframes → Entfernen von Beinahe-Duplikaten → lokales OCR → Gruppierung pro Screen –, **komplett offline, null Token**, danach verarbeitet `scripts/llm_structure.py` alles stapelweise über DeepSeek / OpenAI / Qwen / Kimi / lokales Ollama und führt es zu JSON + CSV zusammen. |
 | ⏩ **Zeitreise-Tests** *(neu)* | `scripts/timewarp` lässt deinen Fake-Server in einer Sandbox mit virtueller Uhr laufen: Tage vorspulen, die App neu starten und **jede Belohnung prüfen** – steht in der Antwort „+50 Edelsteine", der Spielstand hat sich aber nicht geändert, schlägt der Test fehl. Simuliere 30 Spieltage in einer Sekunde und sieh, an welchem Tag jede Hürde erreichbar wird. Null Abhängigkeiten. |
 | 🤝 **Jeder Agent, jedes Modell** *(neu)* | Funktioniert mit Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI … über `SKILL.md` + `AGENTS.md`. Mit Sub-Agent-Rollen (scout / worker / verifier): Ein teures Modell trifft die Entscheidungen, günstige erledigen die Fleißarbeit. Gar kein Agent? Füge `prompts/chat-playbook.md` in DeepSeek / ChatGPT ein und führe die Befehle aus, die es dir gibt. |
-| 📚 **Fehler-Logbuch** | Rund 190 KB und 216 Einträge echter Stolperfallen: Symptom → Ursache → Lösung. Abstürze durch Race Conditions beim Start, UI, die unbemerkt aus dem Bild gerutscht ist, gepoolte XHR-Objekte, die von Fake-Antworten „vergiftet" wurden, Spielstände, die nie auf der Platte landen … |
+| 🚦 **Kickoff → Batches → unabhängige QA** *(neu)* | Für große Projekte, die tagelang unbeaufsichtigt laufen: vorab ein Freigabeblatt, das zwei Minuten dauert, danach immer nur ein Batch mit harten Zeitlimits (zwei Probe-Runden oder 45 Minuten ohne Fortschritt → protokollieren und weiter) und zum Schluss eine Abnahme durch eine separate Sitzung, die dem „Alles grün“ der Entwicklungslinie nicht traut: optimistische Passes werden herabgestuft, jeder Button wird durchgeklickt, Kämpfe werden gewonnen *und* verloren und gegen das Logbuch abgeglichen, Prozess mitten in der Transaktion beenden, 10 virtuelle Tage, dann saubere Daten + leerer Hot-Update-Ordner + Netzwerk aus, zweimal kalt starten. Vorlagen für Freigabeblatt, Übergabe, Fortschrittsmatrix und Bug-Liste liegen bei. |
+| 🧭 **Engine-Routen** *(neu)* | Eine Seite pro Architektur: Unity IL2CPP ohne Skriptebene (eingebetteter Python-Loopback-Server im selben Prozess), Unity Mono / ET / HybridCLR (C#-Server im Paket), Cocos JS / Lua / LuaJIT + Protobuf (Loopback im Speicher, Übernahme durch eine schlanke Activity), Unity WebGL / H5-Mikro-Clients (erst H5, Hülle zuletzt, Original-DLL als dauerhafter Kampf-Worker). |
+| 🧰 **Recon- & Schutzskripte** *(neu)* | Nur Python-Standardbibliothek: einmalige, schreibgeschützte APK-Recon (Engine, ABI, ZIP32-Grenzen, Packer, UnityFS-Präfixe, Manifest-Diff), eine Ein-Geräte-Sperre mit sicherem Push bei Nicht-ASCII-Pfaden, eine Speicherplatz-Sicherung, die Junctions nicht folgt, ein Log-Orakel, `INTERNET` entfernen ohne apktool, ein APK-Eintrags-Ersetzer, der gespeicherte Audiodateien unkomprimiert lässt, und ein optionaler Hook, der `adb kill-server`, `svc wifi disable` und andere Befehle blockiert, die die Emulatoren anderer Projekte stören. |
+| 📚 **Fehler-Logbuch** | Rund 230 KB und knapp 300 Einträge echter Stolperfallen: Symptom → Ursache → Lösung. Abstürze durch Race Conditions beim Start, UI, die unbemerkt aus dem Bild gerutscht ist, gepoolte XHR-Objekte, die von Fake-Antworten „vergiftet" wurden, Spielstände, die nie auf der Platte landen … |
 
 ## 🏆 An echten Spielen bewährt
 
@@ -50,7 +55,7 @@ Das Playbook entstand aus der Wiederbelebung von fünf kommerziellen Mobile Game
 
 Ein weiteres Spiel wurde nach einem halben Tag aufgegeben: Das eigentliche Spiel wurde erst nach dem ersten Start heruntergeladen, und dieser Download verschwand mit dem Server.
 
-Alle fünf Fallstudien (anonymisiert) liegen in [`references/`](../skills/offline-game-revival/references). Notizen zu zwei weiteren Spielen (Fälle E und F) sind in die Referenzdateien eingeflossen, statt als eigene Fallstudien ausgearbeitet zu werden.
+Alle fünf Fallstudien (anonymisiert) liegen in [`references/`](../skills/offline-game-revival/references). Notizen zu zwei weiteren Spielen (Fälle E und F) sind in die Referenzdateien eingeflossen, statt als eigene Fallstudien ausgearbeitet zu werden. Die Engine-Routen-Seiten und der Ablauf Kickoff / Batches / QA decken vier weitere Engine-Familien ab (Unity IL2CPP ohne Skriptebene, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5).
 
 ## 🚀 Installation
 
@@ -139,4 +144,4 @@ Wie du mitmachen kannst (Issues, Pull Requests, Mitbetreuer werden): siehe [CONT
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · Zeitreise-Tests · Multi-Agent-System · KI-Agenten · Spiel eingestellt · Server abgeschaltet · Offline spielen · Spielebewahrung · Mobile Game ohne Server · Serverabschaltung</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · Cocos · IL2CPP · HybridCLR · WebGL · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · Zeitreise-Tests · Multi-Agent-System · KI-Agenten · Spiel eingestellt · Server abgeschaltet · Offline spielen · Spielebewahrung · Mobile Game ohne Server · Serverabschaltung</sub>

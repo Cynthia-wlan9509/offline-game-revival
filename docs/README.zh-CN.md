@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 每年都有大批手游停服。安装包还躺在玩家手机里，可服务器一关，登录不了、读不了档、什么都做不了——那些剧情、角色和回忆，就这样再也打不开了。
 
 **Offline Game Revival** 是一套在真实停服游戏上反复验证过的方法论，打包成 [Agent Skill](https://docs.claude.com/en/docs/claude-code/skills)。把停服游戏的 APK 交给你的编程 Agent（Claude Code，以及其他能读 `SKILL.md` 的 Agent），它就知道怎么把它改成**独立运行的纪念版**：装上就能从头玩到尾，不联网、不 root、不依赖电脑、不靠运行时注入。
+
+这套东西全是我自己摸索出来的。我开始时对游戏开发一窍不通，一个教程都没看过，从第一天起就是在跟 AI 许愿（Claude、DeepSeek、GPT-6 Astra），做不到我想要的样子就让它返工。所以跟别人讲的有重合、有不一样的地方，都很正常。这里的判断方法、流程和踩过的坑，都来自我在多款真实游戏上的试错。
 
 ## ✨ 包含什么
 
@@ -37,7 +39,10 @@
 | 🎞️ **从截图录屏里抢救数据**（新） | 商店价格、卡池概率、奖励、卡牌数值这些服务端配置会随停服消失。`scripts/harvest.py` 把玩家**几十 GB 的截图和录屏**在本地压成几百 KB 的分类文字——关键帧 → 近似去重 → 本地 OCR → 按界面分组——**全程离线、0 token**，再用 `scripts/llm_structure.py` 批量交给 DeepSeek / OpenAI / 通义 / Kimi / 本地 Ollama，合并成 JSON + CSV。 |
 | ⏩ **时间快进测试**（新） | `scripts/timewarp` 把假服务器放进虚拟时钟沙箱：快进几天、模拟杀进程重开、**每次调用自动对账**——回包写着"获得 50 钻石"但存档没变就报错。一秒跑完 30 天游玩，看每道门槛第几天能过。零依赖。 |
 | 🤝 **任何 Agent、任何模型**（新） | 通过 `SKILL.md` + `AGENTS.md` 支持 Claude Code、Codex、Cursor、Copilot、OpenCode、Gemini CLI 等；自带 scout / worker / verifier 三种子 agent 角色，贵模型做判断、便宜模型干体力活。没有 Agent？把 `prompts/chat-playbook.md` 贴进 DeepSeek / ChatGPT，照它给的命令跑就行。 |
-| 📚 **失败账本** | 约 190 KB、216 条真实踩坑记录：现象 → 根因 → 修法。启动竞态崩溃、被悄悄挪到屏幕外的 UI、被假回包"毒化"的复用 XHR、从没落盘的存档…… |
+| 🚦 **开工 → 批次推进 → 独立终验** *（新）* | 给要连跑好几天、没人盯着的大项目：开头让你花两分钟勾一张预授权单；之后一次只推一项，卡住两轮探针或 45 分钟就记下来换下一项；最后换一个会话来验，不信开发线自己报的"全绿"——先把虚的通过降级，再遍历所有按钮、战斗赢一次输一次都对账、领奖中途强杀、虚拟时钟跑 10 天，最后清数据、清空热更目录、断网，连续冷启动两次。预授权单、交接、进度矩阵、bug 清单都有模板。 |
+| 🧭 **按引擎分的路线** *（新）* | 每种架构一页：Unity IL2CPP 没有脚本层（同进程内嵌 Python 本地回环服）、Unity Mono / ET / HybridCLR（包内 C# 模拟服）、Cocos JS / Lua / LuaJIT + Protobuf（内存环回、薄壳 Activity 接管）、Unity WebGL / H5 微端（先 H5 跑通再封壳，原版 DLL 常驻做战斗计算）。 |
+| 🧰 **侦察和防护脚本** *（新）* | 只用 Python 标准库：一次只读侦察 APK（引擎、ABI、ZIP32 上限、加固壳、UnityFS 前缀、资源清单差集）；单设备锁和中文路径安全推送；不顺着目录链接删东西的磁盘熔断；日志裁判；不用 apktool 去掉 `INTERNET` 权限；换 APK 条目时保持音频不压缩；可选的工具钩子，拦住 `adb kill-server`、`svc wifi disable` 这类会打断别的项目模拟器的命令。 |
+| 📚 **失败账本** | 约 230 KB、近 300 条真实踩坑记录：现象 → 根因 → 修法。启动竞态崩溃、被悄悄挪到屏幕外的 UI、被假回包"毒化"的复用 XHR、从没落盘的存档…… |
 
 ## 🏆 在真实游戏上验证过
 
@@ -51,24 +56,27 @@
 
 还有一款半天就停了：游戏本体是进游戏后才下载的，服务器一关就没了。
 
-五个案例都已脱敏收录在 [`references/`](../skills/offline-game-revival/references)。另外两款游戏（案例 E 和 F）的经验没有单独写成案例，而是并入了各参考文件。
+五个案例都已脱敏收录在 [`references/`](../skills/offline-game-revival/references)。另外两款游戏（案例 E 和 F）的经验没有单独写成案例，而是并入了各参考文件。按引擎分的路线页和"开工 → 批次推进 → 独立终验"这套流程，又覆盖了四类引擎：没有脚本层的 Unity IL2CPP、Unity Mono / ET / HybridCLR、Cocos JS / Lua / LuaJIT、Unity WebGL / H5。
 
 ## 💸 花了多少
 
 大部分工作是用 Claude Code（订阅制）完成的。为了让大家对规模有个数，下面是本地会话记录（含子代理）里的 token 用量，按 Anthropic API 标价折算成钱——只是折算，不是实际扣费，实际付的是订阅费。
 
-| 案例 | 天数 | token | 按 API 标价折算 |
+| 案例 | 有用量的天数 | token | 按 API 标价折算 |
 |---|---|---|---|
-| A —— Unity + Lua | 18 | 74 亿 | ≈ $2,140（约 1.5 万元） |
-| B —— LayaAir 原生 + JS | 9 | 26 亿 | ≈ $720 |
-| C —— Unity 微端（Mono + SLua） | 5 | 23 亿 | ≈ $620 |
-| 游戏复活合计（A + B + C，外加一款只侦察了一天的） | | 124 亿 | ≈ $3,500（约 2.5 万元） |
+| A —— Unity + Lua | 28 | 84 亿 | ≈ $2,470（约 1.8 万元） |
+| B —— LayaAir 原生 + JS | 16 | 32 亿 | ≈ $910 |
+| C —— Unity 微端（Mono + SLua） | 10 | 25 亿 | ≈ $690 |
+| D —— 原生 Kotlin + Live2D 的 AI 聊天 | 4 | 4.1 亿 | ≈ $115 |
+| 只侦察了一天就放弃的一款 | 1 | 0.6 亿 | ≈ $26 |
+| 游戏复活合计（A + B + C + D，外加放弃的那款） | | 146 亿 | ≈ $4,215（约 3 万元） |
 
-表里只算 Claude。算上下面的 Codex 阶段，总计约 $3,900（约 2.8 万元）。
+表里只算 Claude。算上下面的 Codex 阶段，总计约 168.5 亿 token，约 $4,635（约 3.3 万元）。
 
-- 98.5% 是缓存读取：AI 每一轮都要把前面的对话重新读一遍，这部分单价很低。AI 真正写出来的只有约 3500 万 token。（这两个数按同期全部 Claude 用量 141 亿 token 统计，没有按案例拆。）
+- 98.7% 是缓存读取：AI 每一轮都要把前面的对话重新读一遍，这部分单价很低。AI 真正写出来的只有约 3300 万 token。（这两个数按这几款游戏的 Claude 用量统计，没有按案例拆。）
 - 案例 A 早期有约 10 天是在 Codex 里跑的，背后接的是 DeepSeek V4.1 Flash 和 GPT-6 Astra，一共约 22.5 亿 token，按标价约 $420（约 3,000 元）。其中 DeepSeek 约 20 亿 token，只要约 $27–54（约 190–380 元，按空闲价到高峰价）；GPT-6 Astra 约 2.6 亿 token，约 $387（约 2,750 元）。
-- 统计截至 2026-10-25，汇率按 1 美元 ≈ 7.1 元。
+- 天数是有用量的天数。各款都包含后来的修 bug，D 才做完几天，所以它的低价不能直接当成“做一款的价格”。
+- 统计截至 2026-11-04，汇率按 1 美元 ≈ 7.1 元。
 
 ## 🚀 安装
 

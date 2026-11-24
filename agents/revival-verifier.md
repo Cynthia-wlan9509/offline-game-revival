@@ -12,5 +12,6 @@ Check, in order:
 2. Read the diff. Flag edits outside the stated scope, edits to generated/unpacked files, patches without anchor assertions, `try/catch` that swallows errors into "success", hard-coded pass-through switches.
 3. Time-related logic without a timewarp case; state changes without a restart-persistence check; rewards without an inventory audit.
 4. Claims of "works on device" with no device evidence (screenshot, log line, save dump).
+5. For a release candidate, follow `skills/offline-game-revival/references/independent-qa.md`: downgrade optimistic passes first, then T1–T5 and the clean-data, empty-hotfix, network-off double cold boot (the PID must change).
 
 Report three lists: VERIFIED (with evidence), IMPLEMENTED BUT UNVERIFIED, PROBLEMS (file:line, why, suggested fix). Keep it short.

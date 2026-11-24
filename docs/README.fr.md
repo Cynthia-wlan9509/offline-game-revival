@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 Chaque année, des centaines de jeux mobiles ferment leurs portes. L'APK reste sur le téléphone des joueurs, mais sans serveur, impossible de se connecter, de charger une sauvegarde, de faire quoi que ce soit. Des années d'histoires, de personnages et de souvenirs deviennent inaccessibles.
 
 **Offline Game Revival** est un guide éprouvé sur le terrain, empaqueté sous forme d'[Agent Skill](https://docs.claude.com/en/docs/claude-code/skills). Pointez votre agent de code (Claude Code et les autres agents qui lisent `SKILL.md`) vers l'APK d'un jeu mort, et il saura le transformer en **édition commémorative autonome** : vous installez l'APK, vous jouez au jeu en entier, sans réseau, sans root, sans PC, sans injection à l'exécution.
+
+Tout ceci, je l'ai découvert par moi-même. Au départ, je ne connaissais rien au développement de jeux et je n'ai lu aucun tutoriel : dès le premier jour, j'ai fait des vœux à l'IA (Claude, DeepSeek, GPT-6 Astra) et je lui ai fait refaire le travail quand le résultat n'était pas celui que je voulais. Il est donc normal que certaines choses recoupent ce que disent d'autres personnes, et que d'autres en diffèrent. Les critères de décision, la méthode et les pièges décrits ici viennent tous de mes propres essais et erreurs sur plusieurs vrais jeux.
 
 ## ✨ Au programme
 
@@ -37,7 +39,10 @@ Chaque année, des centaines de jeux mobiles ferment leurs portes. L'APK reste s
 | 🎞️ **Sauvetage de données depuis des captures et des enregistrements** *(nouveau)* | Les chiffres côté serveur (prix de la boutique, taux de gacha, récompenses, stats des cartes) disparaissent avec le serveur. `scripts/harvest.py` transforme **des dizaines de Go de captures d'écran et d'enregistrements de joueurs** en quelques centaines de Ko de texte classé : images clés → suppression des quasi-doublons → OCR local → regroupement par écran, **entièrement hors ligne, zéro token** — puis `scripts/llm_structure.py` le fait traiter par lots par DeepSeek / OpenAI / Qwen / Kimi / Ollama en local, et fusionne le tout en JSON + CSV. |
 | ⏩ **Tests de voyage dans le temps** *(nouveau)* | `scripts/timewarp` exécute votre faux serveur dans un bac à sable à horloge virtuelle : avancez de plusieurs jours, redémarrez l'app et **auditez chaque récompense** — si une réponse annonce « +50 gemmes » mais que la sauvegarde n'a pas bougé, le test échoue. Simulez 30 jours de jeu en une seconde et voyez à quel jour chaque palier devient accessible. Zéro dépendance. |
 | 🤝 **N'importe quel agent, n'importe quel modèle** *(nouveau)* | Fonctionne avec Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… via `SKILL.md` + `AGENTS.md`. Fournit des rôles de sous-agents (scout / worker / verifier) pour qu'un modèle coûteux prenne les décisions pendant que les modèles bon marché font le gros du travail. Pas d'agent du tout ? Collez `prompts/chat-playbook.md` dans DeepSeek / ChatGPT et exécutez les commandes qu'il vous donne. |
-| 📚 **Registre des échecs** | Environ 190 Ko et 216 entrées de pièges bien réels : symptôme → cause racine → correctif. Plantages dus à des courses au démarrage, interface qui sort de l'écran sans prévenir, objets XHR du pool « empoisonnés » par de fausses réponses, sauvegardes qui n'atteignent jamais le disque… |
+| 🚦 **Lancement → lots → QA indépendante** *(nouveau)* | Pour les gros projets qui tournent plusieurs jours sans surveillance : une fiche de pré-autorisation de deux minutes au départ, puis un lot à la fois avec des limites de temps strictes (deux tours de sondage ou 45 minutes sans progrès → on note et on passe au suivant), et une recette finale menée par une session distincte qui ne fait pas confiance au « tout est vert » de la ligne de développement : les réussites optimistes sont rétrogradées, chaque bouton est parcouru, les combats sont gagnés *et* perdus puis comparés au registre, le processus est tué en pleine transaction, 10 jours virtuels, puis données vierges + dossier de mise à jour à chaud vide + réseau coupé, avec deux démarrages à froid. Des modèles sont fournis pour la fiche, le passage de relais, la matrice d'avancement et la liste des bugs. |
+| 🧭 **Routes par moteur** *(nouveau)* | Une page par architecture : Unity IL2CPP sans couche de script (serveur Python en boucle locale intégré au même processus), Unity Mono / ET / HybridCLR (serveur C# dans le paquet), Cocos JS / Lua / LuaJIT + Protobuf (boucle locale en mémoire, Activity minimale qui prend la main), Unity WebGL / micro-clients H5 (d'abord H5, l'enveloppe en dernier, la DLL d'origine comme processus résident de combat). |
+| 🧰 **Scripts de reconnaissance et de garde-fou** *(nouveau)* | Uniquement la bibliothèque standard de Python : reconnaissance d'APK en un passage et en lecture seule (moteur, ABI, limites ZIP32, packers, préfixes UnityFS, différences de manifeste), verrou à un seul appareil avec envoi sûr pour les chemins non ASCII, fusible de budget disque qui ne suit pas les junctions, oracle de logs, suppression de `INTERNET` sans apktool, remplaçant d'entrées d'APK qui garde l'audio non compressé, et un hook optionnel qui bloque `adb kill-server`, `svc wifi disable` et d'autres commandes qui cassent les émulateurs des autres projets. |
+| 📚 **Registre des échecs** | Environ 230 Ko et près de 300 entrées de pièges bien réels : symptôme → cause racine → correctif. Plantages dus à des courses au démarrage, interface qui sort de l'écran sans prévenir, objets XHR du pool « empoisonnés » par de fausses réponses, sauvegardes qui n'atteignent jamais le disque… |
 
 ## 🏆 Éprouvé sur de vrais jeux
 
@@ -51,7 +56,7 @@ Ce guide est né de la résurrection de cinq jeux mobiles commerciaux dont les s
 
 Un autre jeu a été abandonné au bout d'une demi-journée : le jeu lui-même se téléchargeait après le premier lancement, et ce téléchargement a disparu avec le serveur.
 
-Les cinq études de cas (anonymisées) sont incluses dans [`references/`](../skills/offline-game-revival/references). Les notes de deux autres jeux (cas E et F) sont intégrées aux fichiers de référence plutôt que rédigées comme études de cas séparées.
+Les cinq études de cas (anonymisées) sont incluses dans [`references/`](../skills/offline-game-revival/references). Les notes de deux autres jeux (cas E et F) sont intégrées aux fichiers de référence plutôt que rédigées comme études de cas séparées. Les pages de routes par moteur et le flux lancement / lots / QA couvrent quatre autres familles de moteurs (Unity IL2CPP sans couche de script, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5).
 
 ## 🚀 Installation
 
@@ -140,4 +145,4 @@ Comment participer (issues, pull requests, devenir mainteneur) : voir [CONTRIBUT
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · tests de voyage dans le temps · multi-agents · agents IA multiples · jeu fermé · fermeture des serveurs · jouer hors ligne · préservation du jeu vidéo · jeu mobile sans serveur · fin de service</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · Cocos · IL2CPP · HybridCLR · WebGL · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · tests de voyage dans le temps · multi-agents · agents IA multiples · jeu fermé · fermeture des serveurs · jouer hors ligne · préservation du jeu vidéo · jeu mobile sans serveur · fin de service</sub>

@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 Cada año cierran cientos de juegos móviles. El APK sigue en el teléfono de los jugadores, pero sin servidor no puede iniciar sesión, ni cargar una partida, ni hacer absolutamente nada. Años de historias, personajes y recuerdos quedan fuera de alcance.
 
 **Offline Game Revival** es un manual probado en batalla, empaquetado como una [Agent Skill](https://docs.claude.com/en/docs/claude-code/skills). Apunta a tu agente de programación (Claude Code y otros agentes que lean `SKILL.md`) hacia el APK de un juego muerto y sabrá cómo convertirlo en una **edición conmemorativa independiente**: instalas el APK y juegas el juego entero, sin red, sin root, sin PC y sin inyección en tiempo de ejecución.
+
+Todo esto lo fui descubriendo por mi cuenta. Empecé sin saber nada de desarrollo de videojuegos y no he leído un solo tutorial: desde el primer día me dediqué a pedirle deseos a la IA (Claude, DeepSeek, GPT-6 Astra) y a hacerle repetir el trabajo cuando el resultado no era el que quería. Por eso es normal que algunas cosas coincidan con lo que dicen otros y otras no. Los criterios de decisión, el flujo de trabajo y los tropiezos que aquí se recogen vienen de mi propio ensayo y error con varios juegos reales.
 
 ## ✨ Qué incluye
 
@@ -36,7 +38,10 @@ Cada año cierran cientos de juegos móviles. El APK sigue en el teléfono de lo
 | 🎞️ **Rescate de datos desde capturas y grabaciones** *(nuevo)* | Los números del lado del servidor (precios de la tienda, probabilidades del gacha, recompensas, estadísticas de cartas) mueren con el servidor. `scripts/harvest.py` convierte **decenas de GB de capturas y grabaciones de pantalla de jugadores** en unos cientos de KB de texto categorizado: fotogramas clave → eliminación de casi duplicados → OCR local → agrupación por pantalla, **totalmente offline y con cero tokens**; después, `scripts/llm_structure.py` lo procesa por lotes con DeepSeek / OpenAI / Qwen / Kimi / Ollama local y lo fusiona en JSON + CSV. |
 | ⏩ **Pruebas de viaje en el tiempo** *(nuevo)* | `scripts/timewarp` ejecuta tu servidor falso en un sandbox con reloj virtual: adelanta días, reinicia la app y **audita cada recompensa**; si una respuesta dice «+50 gemas» pero la partida guardada no cambió, la prueba falla. Simula 30 días de juego en un segundo y comprueba en qué día se vuelve alcanzable cada barrera. Cero dependencias. |
 | 🤝 **Cualquier agente, cualquier modelo** *(nuevo)* | Funciona con Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… mediante `SKILL.md` + `AGENTS.md`. Incluye roles de subagente (scout / worker / verifier) para que un modelo caro tome las decisiones y los baratos hagan el trabajo de campo. ¿Sin agente? Pega `prompts/chat-playbook.md` en DeepSeek / ChatGPT y ejecuta los comandos que te dé. |
-| 📚 **Registro de fallos** | Unos 190 KB y 216 entradas de trampas reales: síntoma → causa raíz → solución. Cierres por condiciones de carrera al arrancar, interfaces que se salen de la pantalla sin avisar, objetos XHR de un pool «envenenados» por respuestas falsas, partidas que nunca llegan al disco… |
+| 🚦 **Arranque → lotes → QA independiente** *(nuevo)* | Para proyectos grandes que corren varios días sin supervisión: una hoja de preautorización de dos minutos al principio, luego un lote cada vez con límites de tiempo estrictos (dos rondas de sondeo o 45 minutos sin avance → se anota y se pasa al siguiente) y, al final, una revisión hecha por otra sesión que no se fía del «todo en verde» de la línea de desarrollo: se rebajan los aprobados optimistas, se recorre cada botón, se gana *y* se pierde cada combate y se compara con el registro, se mata el proceso a mitad de una transacción, 10 días virtuales y, por último, datos limpios + carpeta de actualización en caliente vacía + sin red, con dos arranques en frío. Incluye plantillas para la hoja, el traspaso, la matriz de progreso y la lista de bugs. |
+| 🧭 **Rutas por motor** *(nuevo)* | Una página por arquitectura: Unity IL2CPP sin capa de scripts (servidor Python de loopback incrustado en el mismo proceso), Unity Mono / ET / HybridCLR (servidor C# dentro del paquete), Cocos JS / Lua / LuaJIT + Protobuf (loopback en memoria, Activity mínima que toma el control), Unity WebGL / microclientes H5 (primero H5, el envoltorio al final, la DLL original como proceso residente de combate). |
+| 🧰 **Scripts de reconocimiento y protección** *(nuevo)* | Solo biblioteca estándar de Python: reconocimiento de APK de una sola pasada y de solo lectura (motor, ABI, límites de ZIP32, empaquetadores, prefijos de UnityFS, diferencias del manifiesto), bloqueo de un único dispositivo con envío seguro para rutas no ASCII, un fusible de presupuesto de disco que no sigue las junctions, un oráculo de logs, eliminación de `INTERNET` sin apktool, un reemplazador de entradas del APK que mantiene el audio sin comprimir y un hook opcional que bloquea `adb kill-server`, `svc wifi disable` y otros comandos que rompen los emuladores de otros proyectos. |
+| 📚 **Registro de fallos** | Unos 230 KB y casi 300 entradas de trampas reales: síntoma → causa raíz → solución. Cierres por condiciones de carrera al arrancar, interfaces que se salen de la pantalla sin avisar, objetos XHR de un pool «envenenados» por respuestas falsas, partidas que nunca llegan al disco… |
 
 ## 🏆 Probado en juegos reales
 
@@ -50,7 +55,7 @@ El manual se destiló a partir de la resurrección de cinco juegos móviles come
 
 Otro juego se abandonó tras medio día: el juego en sí se descargaba después del primer inicio, y esa descarga desapareció con el servidor.
 
-Los cinco casos de estudio (anonimizados) están incluidos en [`references/`](../skills/offline-game-revival/references). Las notas de otros dos juegos (casos E y F) están integradas en los archivos de referencia en lugar de redactarse como casos de estudio independientes.
+Los cinco casos de estudio (anonimizados) están incluidos en [`references/`](../skills/offline-game-revival/references). Las notas de otros dos juegos (casos E y F) están integradas en los archivos de referencia en lugar de redactarse como casos de estudio independientes. Las páginas de rutas por motor y el flujo de arranque / lotes / QA cubren cuatro familias de motores más (Unity IL2CPP sin capa de scripts, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5).
 
 ## 🚀 Instalación
 
@@ -139,4 +144,4 @@ Cómo participar (issues, pull requests, llegar a ser mantenedor): consulta [CON
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · pruebas de viaje en el tiempo · multiagente · múltiples agentes de IA · juego cerrado · servidores cerrados · jugar sin conexión · preservación de videojuegos · juego sin servidor · cierre de servidores</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · Cocos · IL2CPP · HybridCLR · WebGL · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · pruebas de viaje en el tiempo · multiagente · múltiples agentes de IA · juego cerrado · servidores cerrados · jugar sin conexión · preservación de videojuegos · juego sin servidor · cierre de servidores</sub>

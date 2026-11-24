@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 Every year, hundreds of mobile games shut down. The APK still sits on players' phones — but without the server it can't log in, can't load a save, can't do anything. Years of stories, characters and memories become unreachable.
 
 **Offline Game Revival** is a battle-tested playbook packaged as an [Agent Skill](https://docs.claude.com/en/docs/claude-code/skills). Point your coding agent (Claude Code and other agents that read `SKILL.md`) at a dead game's APK, and it knows how to turn it into a **standalone memorial edition**: install the APK, play the whole game, no network, no root, no PC, no runtime injection.
+
+Everything here is something I figured out on my own. I started out knowing nothing about game development and have never read a single tutorial; from day one I was just making wishes to AI (Claude, DeepSeek, GPT-6 Astra) and sending the work back whenever it wasn't what I wanted. So if parts of this overlap with or differ from what others say, that's perfectly normal. The judgment calls, the workflow and the pitfalls here all come from my own trial and error on multiple real games.
 
 ## ✨ What's inside
 
@@ -37,7 +39,10 @@ Every year, hundreds of mobile games shut down. The APK still sits on players' p
 | 🎞️ **Data rescue from screenshots & recordings** *(new)* | Server-side numbers (shop prices, gacha rates, rewards, card stats) die with the server. `scripts/harvest.py` turns **tens of GB of player screenshots and screen recordings** into a few hundred KB of categorized text — keyframes → near-duplicate removal → local OCR → per-screen grouping — **fully offline, zero tokens**, then `scripts/llm_structure.py` batches it through DeepSeek / OpenAI / Qwen / Kimi / local Ollama into merged JSON + CSV. |
 | ⏩ **Time-travel tests** *(new)* | `scripts/timewarp` runs your fake server in a sandbox with a virtual clock: fast-forward days, restart the app, and **audit every reward** — if a response says "+50 gems" but the save didn't change, it fails. Simulate 30 days of play in a second and see on which day each gate becomes reachable. Zero dependencies. |
 | 🤝 **Any agent, any model** *(new)* | Works with Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… via `SKILL.md` + `AGENTS.md`. Ships scout / worker / verifier sub-agent roles so an expensive model makes the calls and cheap ones do the legwork. No agent at all? Paste `prompts/chat-playbook.md` into DeepSeek / ChatGPT and run the commands it gives you. |
-| 📚 **Failure ledger** | About 190 KB and 216 entries of real pitfalls: symptom → root cause → fix. Crashes from start-up races, UI that silently moved off-screen, pooled XHR objects "poisoned" by fake responses, saves that never hit disk… |
+| 🚦 **Kickoff → batches → independent QA** *(new)* | For big projects that run unattended for days: a two-minute pre-authorization sheet up front, then one batch at a time with hard timeboxes (two probe rounds or 45 minutes without progress → log it and move on), and a final check run by a separate session that doesn't trust the dev line's "all green": optimistic passes downgraded, every button crawled, battles won *and* lost against the ledger, kill mid-transaction, 10 virtual days, then clean data + empty hot-update folder + network off, cold boot twice. Templates for the sheet, handoff, progress matrix and bug list included. |
+| 🧭 **Engine routes** *(new)* | One page per architecture: Unity IL2CPP with no script layer (embedded Python loopback server in the same process), Unity Mono / ET / HybridCLR (in-package C# server), Cocos JS / Lua / LuaJIT + Protobuf (in-memory loopback, thin-shell Activity takeover), Unity WebGL / H5 micro clients (H5 first, wrap last, original DLL as a resident battle worker). |
+| 🧰 **Recon & guard scripts** *(new)* | Standard-library-only Python: one-shot read-only APK recon (engine, ABI, ZIP32 limits, packers, UnityFS prefixes, manifest diff), a single-device lock with safe pushes for non-ASCII paths, a disk-budget fuse that refuses to follow junctions, a log oracle, zero-apktool `INTERNET` removal, an APK entry replacer that keeps stored audio stored, and an opt-in hook that blocks `adb kill-server`, `svc wifi disable` and other commands that break other projects' emulators. |
+| 📚 **Failure ledger** | About 230 KB and nearly 300 entries of real pitfalls: symptom → root cause → fix. Crashes from start-up races, UI that silently moved off-screen, pooled XHR objects "poisoned" by fake responses, saves that never hit disk… |
 
 ## 🏆 Proven on real games
 
@@ -51,24 +56,27 @@ The playbook was distilled from reviving five commercial mobile games whose serv
 
 One more game was dropped after half a day: the game itself was downloaded after first launch, and that download died with the server.
 
-All five case studies are included (anonymized) in [`references/`](skills/offline-game-revival/references). Notes from two more games (cases E and F) are folded into the reference files rather than written up as separate case studies.
+All five case studies are included (anonymized) in [`references/`](skills/offline-game-revival/references). Notes from two more games (cases E and F) are folded into the reference files rather than written up as separate case studies. The engine-route pages and the kickoff / batch / QA workflow cover four more engine families (Unity IL2CPP without a script layer, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5).
 
 ## 💸 What it cost
 
 Most of the work was done with Claude Code on a subscription. To give a sense of scale, here is the token usage from the local session logs (sub-agents included), converted at Anthropic's public API prices. That is a conversion, not what was actually billed.
 
-| Case | Calendar days | Tokens | At API list price |
+| Case | Active days | Tokens | At API list price |
 |---|---|---|---|
-| A — Unity + Lua | 18 | 7.4 B | ≈ $2,140 |
-| B — LayaAir native + JS | 9 | 2.6 B | ≈ $720 |
-| C — Unity micro client (Mono + SLua) | 5 | 2.3 B | ≈ $620 |
-| All game-revival work (A + B + C, plus one day of recon on the game that was dropped) | | 12.4 B | ≈ $3,500 |
+| A — Unity + Lua | 28 | 8.43 B | ≈ $2,470 |
+| B — LayaAir native + JS | 16 | 3.21 B | ≈ $910 |
+| C — Unity micro client (Mono + SLua) | 10 | 2.48 B | ≈ $690 |
+| D — native Kotlin + Live2D, AI character chat | 4 | 0.41 B | ≈ $115 |
+| The game dropped after recon | 1 | 0.06 B | ≈ $26 |
+| All game-revival work (A + B + C + D, plus the dropped game) | | 14.6 B | ≈ $4,215 |
 
-The table counts Claude only. With the Codex phase below added, the total is about $3,900.
+The table counts Claude only. With the Codex phase below added, the total is about 16.85 B tokens, ≈ $4,635.
 
-- 98.5% of the tokens are cache reads: every turn, the model re-reads the conversation so far, and that is billed at a small fraction of the normal input price. The text the model actually wrote is only about 35 M tokens. (Both figures are measured over all Claude usage in the same period, 14.1 B tokens, not per case.)
+- 98.7% of the tokens are cache reads: every turn, the model re-reads the conversation so far, and that is billed at a small fraction of the normal input price. The text the model actually wrote is only about 33 M tokens. (Both figures are measured over the Claude usage on these games, not per case.)
 - Case A started with about 10 days in Codex, backed by DeepSeek V4.1 Flash and GPT-6 Astra: about 2.25 B tokens, ≈ $420 at list price. DeepSeek took about 2.0 B tokens for only ≈ $27–54 (off-peak to peak price); GPT-6 Astra took about 0.26 B tokens for ≈ $387.
-- Counted up to 2026-10-25.
+- Active days are days with any usage. Every case includes the bug fixing that came later, and D was finished only days ago, so its low price can't be read as what one game costs.
+- Counted up to 2026-11-04.
 
 ## 🚀 Install
 
@@ -173,4 +181,4 @@ If this saved a game you loved, a ⭐ helps other players find it.
 
 [MIT](LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 停服游戏 · 单机化 · 离线版 · 游戏保存 · 録画OCR · サービス終了 · 서비스 종료</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · Cocos · IL2CPP · HybridCLR · WebGL · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · 停服游戏 · 单机化 · 离线版 · 游戏保存 · 録画OCR · サービス終了 · 서비스 종료</sub>

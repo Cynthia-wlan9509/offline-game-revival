@@ -14,7 +14,7 @@ Thanks for helping keep dead games playable.
 
 ### What is most useful
 
-- **New failure-ledger entries** in [`pitfalls.md`](skills/offline-game-revival/references/pitfalls.md): a bold one-line title with the date, then **Symptom → Cause → Fix**. Say how you confirmed the cause.
+- **New failure-ledger entries** in the matching file under [`references/pitfalls/`](skills/offline-game-revival/references/pitfalls.md) (the index lists which file covers which stage): a bold one-line title with the date, then **Symptom → Cause → Fix**. Say how you confirmed the cause.
 - **New engine case studies** (Cocos, Unreal, Godot, IL2CPP…) as a new `references/case-*.md`: where the logic layer is, how the scripts are packed or encrypted, which entry points you patched, how you verified on a device.
 - Fixes to the scripts in `skills/offline-game-revival/scripts/`, with a short note on how you tested them.
 
@@ -46,7 +46,7 @@ This project is about games whose official service has ended. Please keep live g
 
 ### 最需要什么
 
-- **失败账本新条目**，写进 [`pitfalls.md`](skills/offline-game-revival/references/pitfalls.md)：加粗的一行标题带日期，下面写 **现象 → 原因 → 修法**，再说一句原因是怎么确认的。
+- **失败账本新条目**，写进 [`references/pitfalls/`](skills/offline-game-revival/references/pitfalls.md) 下对应阶段的分文件（索引里写了哪个文件管哪一段）：加粗的一行标题带日期，下面写 **现象 → 原因 → 修法**，再说一句原因是怎么确认的。
 - **新引擎案例**（Cocos、Unreal、Godot、IL2CPP……），新建 `references/case-*.md`：逻辑层在哪、脚本怎么打包或加密、补了哪些入口、真机上怎么验收。
 - 修 `skills/offline-game-revival/scripts/` 里的脚本，附一句怎么测的。
 

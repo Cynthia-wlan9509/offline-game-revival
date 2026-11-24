@@ -10,7 +10,7 @@
 
 ![Agent Skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-8A2BE2)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)
-![Engines](https://img.shields.io/badge/engines-Unity%20%2B%20Lua%20%7C%20LayaAir%20%2B%20JS-2ea44f)
+![Engines](https://img.shields.io/badge/engines-Unity%20%7C%20LayaAir%20%7C%20Cocos%20%7C%20WebGL-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 [![GitHub stars](https://img.shields.io/github/stars/Cynthia-wlan9509/offline-game-revival?style=flat&logo=github&label=stars&color=f5c518)](https://github.com/Cynthia-wlan9509/offline-game-revival/stargazers)
 
@@ -21,6 +21,8 @@
 Setiap tahun, ratusan game mobile ditutup. APK-nya masih ada di ponsel para pemain, tetapi tanpa server ia tidak bisa login, tidak bisa memuat save, tidak bisa apa-apa. Bertahun-tahun cerita, karakter, dan kenangan pun tak lagi terjangkau.
 
 **Offline Game Revival** adalah panduan yang sudah teruji di lapangan, dikemas sebagai [Agent Skill](https://docs.claude.com/en/docs/claude-code/skills). Arahkan agen coding Anda (Claude Code dan agen lain yang membaca `SKILL.md`) ke APK sebuah game yang sudah mati, dan ia tahu cara mengubahnya menjadi **edisi kenangan yang berdiri sendiri**: pasang APK, mainkan seluruh game — tanpa jaringan, tanpa root, tanpa PC, tanpa injeksi saat runtime.
+
+Semua ini saya temukan sendiri. Awalnya saya sama sekali tidak paham pengembangan game dan tidak pernah membaca satu tutorial pun; sejak hari pertama saya hanya meminta ke AI (Claude, DeepSeek, GPT-6 Astra) dan menyuruhnya mengulang kalau hasilnya belum sesuai keinginan saya. Jadi wajar saja kalau ada bagian yang sama atau berbeda dengan penjelasan orang lain. Cara menilai, alur kerja, dan jebakan yang ditulis di sini semuanya berasal dari coba-coba saya sendiri pada beberapa game sungguhan.
 
 ## ✨ Isinya
 
@@ -36,7 +38,10 @@ Setiap tahun, ratusan game mobile ditutup. APK-nya masih ada di ponsel para pema
 | 🎞️ **Penyelamatan data dari screenshot & rekaman layar** *(baru)* | Angka di sisi server (harga toko, rate gacha, hadiah, stat kartu) ikut hilang bersama server. `scripts/harvest.py` mengubah **puluhan GB screenshot dan rekaman layar pemain** menjadi beberapa ratus KB teks yang sudah dikategorikan — keyframe → penghapusan gambar yang nyaris kembar → OCR lokal → pengelompokan per layar — **sepenuhnya offline, nol token** — lalu `scripts/llm_structure.py` memprosesnya secara batch lewat DeepSeek / OpenAI / Qwen / Kimi / Ollama lokal dan menggabungkannya menjadi JSON + CSV. |
 | ⏩ **Uji perjalanan waktu** *(baru)* | `scripts/timewarp` menjalankan server palsu Anda di sandbox dengan jam virtual: percepat beberapa hari, restart aplikasi, dan **audit setiap hadiah** — jika respons bilang "+50 gem" tetapi save tidak berubah, tes gagal. Simulasikan 30 hari bermain dalam satu detik dan lihat di hari ke berapa tiap gerbang bisa dilewati. Nol dependensi. |
 | 🤝 **Agen apa pun, model apa pun** *(baru)* | Bekerja dengan Claude Code, Codex, Cursor, Copilot, OpenCode, Gemini CLI… lewat `SKILL.md` + `AGENTS.md`. Dilengkapi peran sub-agen (scout / worker / verifier) agar model mahal yang mengambil keputusan dan model murah yang mengerjakan pekerjaan kasarnya. Tidak punya agen sama sekali? Tempel `prompts/chat-playbook.md` ke DeepSeek / ChatGPT lalu jalankan perintah yang diberikannya. |
-| 📚 **Catatan kegagalan** | Sekitar 190 KB dan 216 entri jebakan nyata: gejala → akar masalah → solusi. Crash akibat race saat startup, UI yang diam-diam bergeser ke luar layar, objek XHR dari pool yang "teracuni" respons palsu, save yang tidak pernah tertulis ke disk… |
+| 🚦 **Kickoff → batch → QA independen** *(baru)* | Untuk proyek besar yang berjalan berhari-hari tanpa diawasi: lembar pra-otorisasi dua menit di awal, lalu satu batch dalam satu waktu dengan batas waktu ketat (dua putaran probe atau 45 menit tanpa kemajuan → catat lalu lanjut), dan pemeriksaan akhir oleh sesi terpisah yang tidak percaya pada "semua hijau" dari jalur pengembangan: hasil lulus yang terlalu optimistis diturunkan, setiap tombol ditelusuri, pertempuran dimenangkan *dan* dikalahkan lalu dicocokkan dengan catatan, proses dimatikan paksa di tengah transaksi, 10 hari virtual, lalu data bersih + folder hot-update kosong + jaringan mati, boot dingin dua kali. Template untuk lembar pra-otorisasi, serah terima, matriks progres, dan daftar bug sudah disertakan. |
+| 🧭 **Jalur per engine** *(baru)* | Satu halaman per arsitektur: Unity IL2CPP tanpa lapisan skrip (server Python loopback tertanam di proses yang sama), Unity Mono / ET / HybridCLR (server C# di dalam paket), Cocos JS / Lua / LuaJIT + Protobuf (loopback di memori, Activity tipis yang mengambil alih), Unity WebGL / klien mikro H5 (H5 dulu, bungkus terakhir, DLL asli sebagai worker pertempuran yang terus berjalan). |
+| 🧰 **Skrip recon & pengaman** *(baru)* | Hanya memakai pustaka standar Python: recon APK sekali jalan yang hanya membaca (engine, ABI, batas ZIP32, packer, prefiks UnityFS, selisih manifest), kunci satu perangkat dengan push aman untuk path non-ASCII, sekring anggaran disk yang tidak mengikuti junction, log oracle, penghapusan `INTERNET` tanpa apktool, pengganti entri APK yang menjaga audio tetap tidak terkompresi, dan hook opsional yang memblokir `adb kill-server`, `svc wifi disable`, serta perintah lain yang merusak emulator proyek lain. |
+| 📚 **Catatan kegagalan** | Sekitar 230 KB dan hampir 300 entri jebakan nyata: gejala → akar masalah → solusi. Crash akibat race saat startup, UI yang diam-diam bergeser ke luar layar, objek XHR dari pool yang "teracuni" respons palsu, save yang tidak pernah tertulis ke disk… |
 
 ## 🏆 Terbukti pada game sungguhan
 
@@ -50,7 +55,7 @@ Panduan ini disarikan dari proses menghidupkan kembali lima game mobile komersia
 
 Satu game lagi dihentikan setelah setengah hari: game intinya baru diunduh setelah pertama kali dibuka, dan unduhan itu ikut hilang bersama servernya.
 
-Kelima studi kasus (sudah dianonimkan) ada di [`references/`](../skills/offline-game-revival/references). Catatan dari dua game lain (kasus E dan F) dilebur ke dalam file referensi, bukan ditulis sebagai studi kasus tersendiri.
+Kelima studi kasus (sudah dianonimkan) ada di [`references/`](../skills/offline-game-revival/references). Catatan dari dua game lain (kasus E dan F) dilebur ke dalam file referensi, bukan ditulis sebagai studi kasus tersendiri. Halaman jalur per engine dan alur kickoff / batch / QA mencakup empat keluarga engine lain (Unity IL2CPP tanpa lapisan skrip, Unity Mono / ET / HybridCLR, Cocos JS / Lua / LuaJIT, Unity WebGL / H5).
 
 ## 🚀 Instalasi
 
@@ -139,4 +144,4 @@ Cara ikut berkontribusi (issue, pull request, menjadi maintainer): lihat [CONTRI
 
 [MIT](../LICENSE)
 
-<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · uji perjalanan waktu · multi-agen · banyak agen AI · game server ditutup · game offline · game mobile mati · pelestarian game · main game tanpa server · game tutup server</sub>
+<sub>Keywords: game preservation · time travel testing · multi-agent · DeepSeek · ChatGPT · Codex · shut down game · server shutdown · offline mode · APK repack · Lua · LayaAir · Unity · Cocos · IL2CPP · HybridCLR · WebGL · reverse engineering for preservation · screen recording OCR · keyframe extraction · Claude Code skill · agent skills · uji perjalanan waktu · multi-agen · banyak agen AI · game server ditutup · game offline · game mobile mati · pelestarian game · main game tanpa server · game tutup server</sub>

@@ -1,0 +1,6 @@
+module_id,category,name,priority,host_pass,entry_open,action_or_battle_win,action_or_battle_loss,ledger_reconciled,cold_restart_persist,negative_guard,visual_reviewed,scope_profile,status,offline_rule,blocker,evidence_path,updated
+M001,core,断网冷启与本地登录建角,P0,TODO,TODO,TODO,NA,TODO,TODO,TODO,TODO,formal,TODO,,,work/analysis/STEP0-ASSESSMENT.md,
+M002,core,主线首关原引擎战斗与结算,P0,TODO,TODO,TODO,TODO,TODO,TODO,TODO,TODO,formal,TODO,,,,
+M003,growth,英雄养成与背包消耗,P1,TODO,TODO,TODO,NA,TODO,TODO,TODO,TODO,gm,TODO,,,,
+M004,economy,商店与代金券充值闭环,P1,TODO,TODO,TODO,NA,TODO,TODO,TODO,TODO,formal,TODO,,,,
+M005,daily,签到日常任务与跨日重置,P1,TODO,TODO,TODO,NA,TODO,TODO,TODO,TODO,gm,TODO,,,,
